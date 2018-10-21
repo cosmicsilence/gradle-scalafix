@@ -1,0 +1,15 @@
+plugins {
+    id 'groovy'
+}
+
+group 'io.cosmicsilence'
+version '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+}
