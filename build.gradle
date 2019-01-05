@@ -1,5 +1,6 @@
 plugins {
     id 'groovy'
+    id 'maven'
 }
 
 group 'io.cosmicsilence'
@@ -10,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
+    implementation gradleApi()
+    implementation localGroovy()
 
     testCompile 'junit:junit:4.12'
 }
