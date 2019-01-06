@@ -1,5 +1,6 @@
 package io.cosmicsilence.scalafix
 
+import io.cosmicsilence.scalafix.api.BuildInfo
 import io.cosmicsilence.scalafix.tasks.CheckScalafix
 import io.cosmicsilence.scalafix.tasks.Scalafix
 import org.gradle.api.Plugin
@@ -27,7 +28,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
         if (project.configurations.findByName(CONFIGURATION) == null) {
             project.configurations.create(CONFIGURATION)
-            project.dependencies.add(CONFIGURATION, "ch.epfl.scala:scalafix-cli_2.12.7:0.9.1")
+            project.dependencies.add(CONFIGURATION, "ch.epfl.scala:scalafix-cli_${BuildInfo.scala212Version}:${BuildInfo.scalafixVersion}")
         }
 
         configureTasks(project)

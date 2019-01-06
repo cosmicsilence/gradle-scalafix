@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix
+package io.cosmicsilence.scalafix.api
 
 /**
  * A classloader that shares only scalafix-interfaces classes from the parent classloader.
@@ -7,11 +7,11 @@ package io.cosmicsilence.scalafix
  * By using this classloader as a parent, it's possible to cast runtime instances from
  * the scalafix-cli classloader into `scalafix.interfaces.Scalafix` from this classloader.
  */
-class ScalafixInterfacesClassloader extends ClassLoader {
+class InterfacesClassloader extends ClassLoader {
 
     private final ClassLoader _parent
 
-    ScalafixInterfacesClassloader(ClassLoader parent) {
+    InterfacesClassloader(ClassLoader parent) {
         super(null)
         _parent = parent
     }
