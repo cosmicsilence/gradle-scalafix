@@ -1,12 +1,12 @@
-package io.cosmicsilence.scalafix.tasks
+package io.cosmicsilence.scalafix
 
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 
-class CheckScalafix extends SourceTask {
+class ScalafixTask extends SourceTask {
 
     @TaskAction
-    def check() {
+    def run() {
         println(">>>> Config file: " + project.extensions.scalafix.configFile)
         println(">>>>> Checking files...")
         source.files.each {

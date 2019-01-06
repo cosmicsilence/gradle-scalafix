@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix.api
+package io.cosmicsilence.scalafix.internal
 
 /**
  * A classloader that shares only scalafix-interfaces classes from the parent classloader.
