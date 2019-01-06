@@ -6,7 +6,9 @@ abstract class BuildInfo {
     private static final Properties PROPERTIES = new Properties()
 
     static {
-        PROPERTIES.load(BuildInfo.classLoader.getResourceAsStream(PATH))
+        def file = BuildInfo.classLoader.getResourceAsStream(PATH)
+        assert file != null, "File ${PATH} not found in the classpath"
+        PROPERTIES.load(file)
     }
 
     private BuildInfo() {
