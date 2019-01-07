@@ -10,7 +10,8 @@ import org.gradle.api.tasks.SourceSet
 
 class ScalafixPlugin implements Plugin<Project> {
 
-    private static final String EXTENSION_NAME = "scalafix"
+    static final String EXTENSION = "scalafix"
+    static final String CONFIGURATION = "scalafix"
     private static final String TASK_GROUP = "scalafix"
     private static final String FIX_TASK = "scalafix"
     private static final String CHECK_TASK = "checkScalafix"
@@ -19,14 +20,23 @@ class ScalafixPlugin implements Plugin<Project> {
     void apply(Project project) {
         project.pluginManager.apply(ScalaPlugin)
 
-        project.extensions.create(EXTENSION_NAME, ScalafixPluginExtension)
-        if (project.rootProject.extensions.findByName(EXTENSION_NAME) == null) {
-            project.rootProject.extensions.create(EXTENSION_NAME, ScalafixPluginExtension)
+        project.extensions.create(EXTENSION, ScalafixPluginExtension)
+        if (project.rootProject.extensions.findByName(EXTENSION) == null) {
+            project.rootProject.extensions.create(EXTENSION, ScalafixPluginExtension)
         }
 
+        if (project.configurations.findByName(CONFIGURATION) == null) {
+            project.configurations.create(CONFIGURATION)
+            project.dependencies.add(CONFIGURATION, "ch.epfl.scala:scalafix-cli_2.12.7:0.9.1")
+        }
+
+        configureTasks(project)
+    }
+
+    private void configureTasks(Project project) {
         def mainFixTask = project.tasks.create(FIX_TASK)
         mainFixTask.setGroup(TASK_GROUP)
-        mainFixTask.setDescription('Run Scalafix on Scala sources')
+        mainFixTask.setDescription('Runs Scalafix on Scala sources')
 
         def mainCheckTask = project.tasks.create(CHECK_TASK)
         mainCheckTask.setGroup(TASK_GROUP)
@@ -40,10 +50,9 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private void configureTaskForSourceSet(Class<Task> taskClass, SourceSet sourceSet, Task mainTask, Project project) {
-        def name = mainTask.name + sourceSet.name.capitalize()
-        def description = "${mainTask.description} in ${sourceSet.getName()}"
-        def task = project.tasks.create(name, taskClass)
-        task.setDescription(description)
+        def task = project.tasks.create(mainTask.name + sourceSet.name.capitalize(), taskClass)
+        task.setDescription("${mainTask.description} in ${sourceSet.getName()}")
+        task.setGroup(mainTask.group)
         task.setSource(sourceSet.getAllSource().matching { include '**/*.scala'})
         mainTask.dependsOn += task
     }
