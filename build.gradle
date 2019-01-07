@@ -13,6 +13,6 @@ repositories {
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
-
+    compile 'ch.epfl.scala:scalafix-interfaces:0.9.1'
     testCompile 'junit:junit:4.12'
 }
