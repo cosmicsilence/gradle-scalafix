@@ -6,6 +6,7 @@ import scalafix.interfaces.ScalafixLintID
 import scalafix.interfaces.ScalafixMainCallback
 import scalafix.interfaces.ScalafixSeverity
 
+// TODO remove it?
 class ScalafixLogger implements ScalafixMainCallback {
 
     private final Logger logger

@@ -1,6 +1,5 @@
 package io.cosmicsilence.scalafix
 
-import io.cosmicsilence.scalafix.internal.BuildInfo
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -17,42 +16,44 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        project.pluginManager.apply(ScalaPlugin)
+        def extension = project.extensions.create(EXTENSION, ScalafixPluginExtension, project)
+        def configuration = project.configurations.create(CONFIGURATION)
+        configuration.description = "Dependencies containing custom Scalafix rules"
+        configuration.visible = false
 
-        project.extensions.create(EXTENSION, ScalafixPluginExtension)
-        if (project.rootProject.extensions.findByName(EXTENSION) == null) {
-            project.rootProject.extensions.create(EXTENSION, ScalafixPluginExtension)
+        project.plugins.withType(ScalaPlugin) {
+            configureTasks(project, extension)
         }
-
-        if (project.configurations.findByName(CONFIGURATION) == null) {
-            project.configurations.create(CONFIGURATION)
-            project.dependencies.add(CONFIGURATION, BuildInfo.scalafixCli)
-        }
-
-        configureTasks(project)
     }
 
-    private void configureTasks(Project project) {
+    private void configureTasks(Project project, ScalafixPluginExtension extension) {
         def scalafixTask = project.tasks.create(SCALAFIX_TASK)
-        scalafixTask.setGroup(TASK_GROUP)
-        scalafixTask.setDescription('Runs Scalafix on Scala sources')
+        scalafixTask.group = TASK_GROUP
+        scalafixTask.description = 'Runs Scalafix on Scala sources'
 
         def checkScalafixTask = project.tasks.create(CHECK_SCALAFIX_TASK)
-        checkScalafixTask.setGroup(TASK_GROUP)
-        checkScalafixTask.setDescription('Fails the build if running Scalafix produces a diff or a linter error message')
-        project.tasks.check.dependsOn(checkScalafixTask)
+        checkScalafixTask.group = TASK_GROUP
+        checkScalafixTask.description = 'Fails the build if running Scalafix produces a diff or a linter error message'
+        project.tasks['check'].dependsOn(checkScalafixTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, scalafixTask, project)
-            configureTaskForSourceSet(sourceSet, checkScalafixTask, project)
+            configureTaskForSourceSet(sourceSet, scalafixTask, false, project, extension)
+            configureTaskForSourceSet(sourceSet, checkScalafixTask, true, project, extension)
         }
     }
 
-    private void configureTaskForSourceSet(SourceSet sourceSet, Task mainTask, Project project) {
-        def task = project.tasks.create(mainTask.name + sourceSet.name.capitalize(), ScalafixTask)
-        task.setDescription("${mainTask.description} in ${sourceSet.getName()}")
-        task.setGroup(mainTask.group)
-        task.setSource(sourceSet.getAllSource().matching { include '**/*.scala'})
+    private void configureTaskForSourceSet(SourceSet sourceSet,
+                                           Task mainTask,
+                                           boolean checkTask,
+                                           Project project,
+                                           ScalafixPluginExtension extension) {
+        def name = mainTask.name + sourceSet.name.capitalize()
+        def task = project.tasks.create(name, ScalafixTask)
+        task.description = "${mainTask.description} in ${sourceSet.getName()}"
+        task.group = mainTask.group
+        task.source = sourceSet.getAllSource().matching { include '**/*.scala' }
+        task.checkOnly = checkTask
+        task.configFile = extension.configFile
         mainTask.dependsOn += task
     }
 }
