@@ -36,11 +36,11 @@ class ScalafixTask extends SourceTask {
     final Property<Boolean> checkOnly = project.objects.property(Boolean)
 
     @TaskAction
-    def run() {
+    void run() {
         def scalafixConfig = resolveConfigFile()
         logger.debug("Using config file: {}", scalafixConfig)
 
-        def sources = source.collect { it.toPath() }
+        def sources = selectSources()
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCli)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CONFIGURATION)
@@ -62,7 +62,7 @@ class ScalafixTask extends SourceTask {
 
         if (!sources.empty) {
             if (!args.rulesThatWillRun().empty) {
-                logger.quiet("Running Scalafix on ${sources.size} Scala source files...")
+                logger.quiet("Running Scalafix on ${sources.size} Scala source files")
                 def errors = args.run()
                 if (errors.size() > 0) throw new ScalafixFailed(errors.toList())
             } else {
@@ -88,5 +88,9 @@ class ScalafixTask extends SourceTask {
 
         def file = configFile.map { it.asFile.toPath() }.orNull ?: defaultConfig(project) ?: defaultConfig(project.rootProject)
         java.util.Optional.ofNullable(file)
+    }
+
+    private List<Path> selectSources() {
+        source.collect { it.toPath() }
     }
 }

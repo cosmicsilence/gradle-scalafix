@@ -34,7 +34,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def checkScalafixTask = project.tasks.create(CHECK_SCALAFIX_TASK)
         checkScalafixTask.group = TASK_GROUP
         checkScalafixTask.description = 'Fails the build if running Scalafix produces a diff or a linter error message'
-        project.tasks['check'].dependsOn(checkScalafixTask)
+        project.tasks.check.dependsOn(checkScalafixTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
             configureTaskForSourceSet(sourceSet, scalafixTask, false, project, extension)
@@ -51,7 +51,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def task = project.tasks.create(name, ScalafixTask)
         task.description = "${mainTask.description} in ${sourceSet.getName()}"
         task.group = mainTask.group
-        task.source = sourceSet.getAllSource().matching { include '**/*.scala' }
+        task.source = sourceSet.allScala
         task.checkOnly = checkTask
         task.configFile = extension.configFile
         mainTask.dependsOn += task
