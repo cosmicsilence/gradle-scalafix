@@ -1,5 +1,6 @@
-package io.cosmicsilence.scalafix
+package io.cosmicsilence.scalafix.tasks
 
+import io.cosmicsilence.scalafix.ScalafixPlugin
 import io.cosmicsilence.scalafix.internal.BuildInfo
 import io.cosmicsilence.scalafix.internal.InterfacesClassloader
 import io.cosmicsilence.scalafix.internal.ScalafixFailed
@@ -8,8 +9,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
@@ -21,19 +20,14 @@ import scalafix.interfaces.ScalafixMainMode
 
 import java.nio.file.Path
 
-class ScalafixTask extends SourceTask {
-
-    private static final Logger logger = Logging.getLogger(ScalafixTask.class)
+abstract class BaseScalafixTask extends SourceTask {
     private static final String DEFAULT_SCALAFIX_CONF = ".scalafix.conf"
+    private final Logger logger = Logging.getLogger(getClass())
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
     @Optional
     final RegularFileProperty configFile = newInputFile()
-
-    @Input
-    @Optional
-    final Property<Boolean> checkOnly = project.objects.property(Boolean)
 
     @TaskAction
     void run() {
@@ -54,7 +48,7 @@ class ScalafixTask extends SourceTask {
                 .withToolClasspath(toolsClassloader)
                 .withConfig(scalafixConfig)
                 .withPaths(sources)
-                .withMode(selectScalafixMode())
+                .withMode(scalafixMode)
 
         logger.debug("Scalafix rules available: {}", args.availableRules())
         logger.debug("Scalafix rules that will run: {}", args.rulesThatWillRun())
@@ -76,10 +70,6 @@ class ScalafixTask extends SourceTask {
         new URLClassLoader(jars, parent)
     }
 
-    private ScalafixMainMode selectScalafixMode() {
-        checkOnly.getOrElse(false) ? ScalafixMainMode.CHECK : ScalafixMainMode.IN_PLACE
-    }
-
     private java.util.Optional<Path> resolveConfigFile() {
         def defaultConfig = { Project proj ->
             def file = proj.file(DEFAULT_SCALAFIX_CONF)
@@ -93,4 +83,6 @@ class ScalafixTask extends SourceTask {
     private List<Path> selectSources() {
         source.collect { it.toPath() }
     }
+
+    abstract ScalafixMainMode getScalafixMode()
 }

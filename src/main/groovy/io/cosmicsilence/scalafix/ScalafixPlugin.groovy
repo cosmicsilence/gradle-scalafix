@@ -1,5 +1,8 @@
 package io.cosmicsilence.scalafix
 
+import io.cosmicsilence.scalafix.tasks.BaseScalafixTask
+import io.cosmicsilence.scalafix.tasks.CheckScalafixTask
+import io.cosmicsilence.scalafix.tasks.ScalafixTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -37,22 +40,21 @@ class ScalafixPlugin implements Plugin<Project> {
         project.tasks.check.dependsOn(checkScalafixTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, scalafixTask, false, project, extension)
-            configureTaskForSourceSet(sourceSet, checkScalafixTask, true, project, extension)
+            configureTaskForSourceSet(sourceSet, ScalafixTask, scalafixTask, project, extension)
+            configureTaskForSourceSet(sourceSet, CheckScalafixTask, checkScalafixTask, project, extension)
         }
     }
 
     private void configureTaskForSourceSet(SourceSet sourceSet,
+                                           Class<BaseScalafixTask> taskClass,
                                            Task mainTask,
-                                           boolean checkTask,
                                            Project project,
                                            ScalafixPluginExtension extension) {
         def name = mainTask.name + sourceSet.name.capitalize()
-        def task = project.tasks.create(name, ScalafixTask)
+        def task = project.tasks.create(name, taskClass)
         task.description = "${mainTask.description} in ${sourceSet.getName()}"
         task.group = mainTask.group
         task.source = sourceSet.allScala
-        task.checkOnly = checkTask
         task.configFile = extension.configFile
         mainTask.dependsOn += task
     }
