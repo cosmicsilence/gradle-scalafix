@@ -7,8 +7,6 @@ import io.cosmicsilence.scalafix.internal.ScalafixFailed
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
@@ -22,7 +20,6 @@ import java.nio.file.Path
 
 abstract class BaseScalafixTask extends SourceTask {
     private static final String DEFAULT_SCALAFIX_CONF = ".scalafix.conf"
-    private final Logger logger = Logging.getLogger(getClass())
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)

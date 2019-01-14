@@ -9,6 +9,9 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
 
+/**
+ * Gradle plugin for running Scalafix.
+ */
 class ScalafixPlugin implements Plugin<Project> {
 
     static final String EXTENSION = "scalafix"
@@ -36,7 +39,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
         def checkScalafixTask = project.tasks.create(CHECK_SCALAFIX_TASK)
         checkScalafixTask.group = TASK_GROUP
-        checkScalafixTask.description = 'Fails the build if running Scalafix produces a diff or a linter error message'
+        checkScalafixTask.description = 'Fails if running Scalafix produces a diff or a linter error message'
         project.tasks.check.dependsOn(checkScalafixTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
@@ -52,9 +55,12 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixPluginExtension extension) {
         def name = mainTask.name + sourceSet.name.capitalize()
         def task = project.tasks.create(name, taskClass)
-        task.description = "${mainTask.description} in ${sourceSet.getName()}"
+        task.description = "${mainTask.description} in '${sourceSet.getName()}'"
         task.group = mainTask.group
-        task.source = sourceSet.allScala
+        task.source = sourceSet.allScala.matching {
+            include(extension.includes.get())
+            exclude(extension.excludes.get())
+        }
         task.configFile = extension.configFile
         mainTask.dependsOn += task
     }
