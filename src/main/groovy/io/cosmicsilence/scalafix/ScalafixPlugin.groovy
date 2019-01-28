@@ -7,16 +7,19 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
 
+import java.util.concurrent.Callable
+
 /**
  * Gradle plugin for running Scalafix.
  */
 class ScalafixPlugin implements Plugin<Project> {
 
-    static final String EXTENSION = "scalafix"
-    static final String CONFIGURATION = "scalafix"
+    private static final String EXTENSION = "scalafix"
+    private static final String CONFIGURATION = "scalafix"
     private static final String TASK_GROUP = "scalafix"
     private static final String SCALAFIX_TASK = "scalafix"
     private static final String CHECK_SCALAFIX_TASK = "checkScalafix"
+    private static final String RULES_PROPERTY = "scalafix.rules"
 
     @Override
     void apply(Project project) {
@@ -52,7 +55,7 @@ class ScalafixPlugin implements Plugin<Project> {
                                            Project project,
                                            ScalafixPluginExtension extension) {
         def name = mainTask.name + sourceSet.name.capitalize()
-        def task = project.tasks.create(name, ScalafixTask)
+        def task = project.tasks.create(name, ScalafixTask, checkOnly)
         task.description = "${mainTask.description} in '${sourceSet.getName()}'"
         task.group = mainTask.group
         task.source = sourceSet.allScala.matching {
@@ -60,7 +63,10 @@ class ScalafixPlugin implements Plugin<Project> {
             exclude(extension.excludes.get())
         }
         task.configFile = extension.configFile
-        task.checkOnly = checkOnly
+        task.rules.set(project.provider({
+            String prop = project.findProperty(RULES_PROPERTY) ?: ""
+            prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
+        }))
         mainTask.dependsOn += task
     }
 }

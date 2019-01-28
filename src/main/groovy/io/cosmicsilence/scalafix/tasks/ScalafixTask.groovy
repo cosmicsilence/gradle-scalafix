@@ -9,6 +9,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
@@ -18,18 +20,29 @@ import org.gradle.api.tasks.TaskAction
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 
+import javax.inject.Inject
 import java.nio.file.Path
 
 class ScalafixTask extends SourceTask {
+
     private static final Logger logger = Logging.getLogger(ScalafixTask)
     private static final String DEFAULT_SCALAFIX_CONF = ".scalafix.conf"
+
+    private final ScalafixMainMode scalafixMode
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
     @Optional
     final RegularFileProperty configFile = newInputFile()
 
-    boolean checkOnly
+    @Input
+    @Optional
+    final ListProperty<String> rules = project.objects.listProperty(String)
+
+    @Inject
+    ScalafixTask(boolean checkOnly) {
+        scalafixMode = checkOnly ? ScalafixMainMode.CHECK : ScalafixMainMode.IN_PLACE
+    }
 
     @TaskAction
     void run() {
@@ -50,7 +63,8 @@ class ScalafixTask extends SourceTask {
                 .withToolClasspath(toolsClassloader)
                 .withConfig(scalafixConfig)
                 .withPaths(sources)
-                .withMode(selectScalafixMode())
+                .withMode(scalafixMode)
+                .withRules(rules.get())
 
         logger.debug("Scalafix rules available: {}", args.availableRules())
         logger.debug("Scalafix rules that will run: {}", args.rulesThatWillRun())
@@ -80,9 +94,5 @@ class ScalafixTask extends SourceTask {
 
         def file = configFile.map { it.asFile.toPath() }.orNull ?: defaultConfig(project) ?: defaultConfig(project.rootProject)
         java.util.Optional.ofNullable(file)
-    }
-
-    private ScalafixMainMode selectScalafixMode() {
-        checkOnly ? ScalafixMainMode.CHECK : ScalafixMainMode.IN_PLACE
     }
 }
