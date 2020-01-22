@@ -18,6 +18,10 @@ abstract class BuildInfo {
         PROPERTIES.getProperty("scalafixVersion")
     }
 
+    static String getScalametaVersion() {
+        PROPERTIES.getProperty("scalametaVersion")
+    }
+
     static String getScala212Version() {
         PROPERTIES.getProperty("scala212")
     }

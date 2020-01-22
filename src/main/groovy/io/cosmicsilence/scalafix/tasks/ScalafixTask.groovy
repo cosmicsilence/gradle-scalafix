@@ -52,7 +52,7 @@ class ScalafixTask extends SourceTask {
         def sources = source.collect { it.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCli)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
-        def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CONFIGURATION)
+        def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
         logger.debug("Tools classpath: {}", toolsClasspath.asPath)
 
         def interfacesClassloader = new InterfacesClassloader(getClass().classLoader)
