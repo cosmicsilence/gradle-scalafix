@@ -17,8 +17,8 @@ class ScalafixPlugin implements Plugin<Project> {
     private static final String CUSTOM_RULES_CONFIGURATION = "scalafix"
     private static final String SEMANTICDB_CONFIGURATION = "semanticdb"
     private static final String TASK_GROUP = "scalafix"
-    private static final String SCALAFIX_TASK = "scalafix"
-    private static final String CHECK_SCALAFIX_TASK = "checkScalafix"
+    private static final String FIX_TASK = "scalafix"
+    private static final String CHECK_TASK = "checkScalafix"
     private static final String RULES_PROPERTY = "scalafix.rules"
 
     @Override
@@ -29,7 +29,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
         def semanticDbConfiguration = project.configurations.create(SEMANTICDB_CONFIGURATION)
         semanticDbConfiguration.description = "SemanticDB compiler plugin"
-        project.dependencies.add(SEMANTICDB_CONFIGURATION, "org.scalameta:semanticdb-scalac_${BuildInfo.scala212Version}:${BuildInfo.scalametaVersion}")
+        project.dependencies.add(SEMANTICDB_CONFIGURATION, BuildInfo.semanticdbArtifact)
 
         project.plugins.withType(ScalaPlugin) {
             configureTasks(project, extension)
@@ -37,18 +37,18 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private void configureTasks(Project project, ScalafixPluginExtension extension) {
-        def scalafixTask = project.tasks.create(SCALAFIX_TASK)
-        scalafixTask.group = TASK_GROUP
-        scalafixTask.description = 'Runs Scalafix on Scala sources'
+        def fixTask = project.tasks.create(FIX_TASK)
+        fixTask.group = TASK_GROUP
+        fixTask.description = 'Runs Scalafix on Scala sources'
 
-        def checkScalafixTask = project.tasks.create(CHECK_SCALAFIX_TASK)
-        checkScalafixTask.group = TASK_GROUP
-        checkScalafixTask.description = 'Fails if running Scalafix produces a diff or a linter error message'
-        project.tasks.check.dependsOn(checkScalafixTask)
+        def checkTask = project.tasks.create(CHECK_TASK)
+        checkTask.group = TASK_GROUP
+        checkTask.description = 'Fails if running Scalafix produces a diff or a linter error message'
+        project.tasks.check.dependsOn(checkTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, false, scalafixTask, project, extension)
-            configureTaskForSourceSet(sourceSet, true, checkScalafixTask, project, extension)
+            configureTaskForSourceSet(sourceSet, false, fixTask, project, extension)
+            configureTaskForSourceSet(sourceSet, true, checkTask, project, extension)
         }
     }
 

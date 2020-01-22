@@ -9,6 +9,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -33,7 +34,7 @@ class ScalafixTask extends SourceTask {
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
     @Optional
-    final RegularFileProperty configFile = newInputFile()
+    final RegularFileProperty configFile = project.objects.fileProperty()
 
     @Input
     @Optional
@@ -50,7 +51,7 @@ class ScalafixTask extends SourceTask {
         logger.debug("Using config file: {}", scalafixConfig)
 
         def sources = source.collect { it.toPath() }
-        def cliDependency = project.dependencies.create(BuildInfo.scalafixCli)
+        def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
         logger.debug("Tools classpath: {}", toolsClasspath.asPath)

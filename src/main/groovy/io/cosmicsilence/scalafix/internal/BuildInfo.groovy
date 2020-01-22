@@ -26,7 +26,11 @@ abstract class BuildInfo {
         PROPERTIES.getProperty("scala212")
     }
 
-    static String getScalafixCli() {
+    static String getScalafixCliArtifact() {
         "ch.epfl.scala:scalafix-cli_${scala212Version}:${scalafixVersion}"
+    }
+
+    static String getSemanticdbArtifact() {
+        "org.scalameta:semanticdb-scalac_${scala212Version}:${scalametaVersion}"
     }
 }

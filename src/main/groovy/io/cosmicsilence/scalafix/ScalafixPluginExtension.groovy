@@ -31,7 +31,7 @@ class ScalafixPluginExtension {
 
     ScalafixPluginExtension(Project project) {
         this.project = project
-        configFile = project.layout.fileProperty()
+        configFile = project.objects.fileProperty()
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
     }
