@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.scala.ScalaCompile
 
 /**
  * Gradle plugin for running Scalafix.
@@ -15,7 +16,6 @@ class ScalafixPlugin implements Plugin<Project> {
 
     private static final String EXTENSION = "scalafix"
     private static final String CUSTOM_RULES_CONFIGURATION = "scalafix"
-    private static final String SEMANTICDB_CONFIGURATION = "semanticdb"
     private static final String TASK_GROUP = "scalafix"
     private static final String FIX_TASK = "scalafix"
     private static final String CHECK_TASK = "checkScalafix"
@@ -27,12 +27,12 @@ class ScalafixPlugin implements Plugin<Project> {
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
-        def semanticDbConfiguration = project.configurations.create(SEMANTICDB_CONFIGURATION)
-        semanticDbConfiguration.description = "SemanticDB compiler plugin"
-        project.dependencies.add(SEMANTICDB_CONFIGURATION, BuildInfo.semanticdbArtifact)
-
         project.plugins.withType(ScalaPlugin) {
             configureTasks(project, extension)
+
+            if (extension.enableSemanticdb) {
+                configureSemanticdbCompilerPlugin(project)
+            }
         }
     }
 
@@ -71,5 +71,22 @@ class ScalafixPlugin implements Plugin<Project> {
             prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
         }))
         mainTask.dependsOn += task
+    }
+
+    private void configureSemanticdbCompilerPlugin(Project project) {
+        def dependency = project.dependencies.create(BuildInfo.semanticdbArtifact)
+        def configuration = project.configurations.detachedConfiguration(dependency)
+        def compilerParameters = [
+                "-Xplugin:" + configuration.asPath,
+                "-P:semanticdb:sourceroot:" + project.projectDir,
+                "-Yrangepos"
+        ]
+
+        project.afterEvaluate {
+            project.tasks.withType(ScalaCompile) { ScalaCompile task ->
+                task.scalaCompileOptions.additionalParameters =
+                        (task.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
+            }
+        }
     }
 }

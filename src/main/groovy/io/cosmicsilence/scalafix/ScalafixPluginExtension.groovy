@@ -27,6 +27,12 @@ class ScalafixPluginExtension {
      */
     final SetProperty<String> excludes
 
+    /**
+     * Auto configures the SemanticDB Scala compiler. This is required to run any
+     * Scalafix semantic rule.
+     */
+    final SetProperty<Boolean> enableSemanticdb
+
     private final Project project
 
     ScalafixPluginExtension(Project project) {
@@ -34,6 +40,7 @@ class ScalafixPluginExtension {
         configFile = project.objects.fileProperty()
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
+        enableSemanticdb = project.objects.setProperty(Boolean)
     }
 
     /**

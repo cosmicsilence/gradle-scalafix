@@ -9,15 +9,9 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.SourceTask
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
+import org.gradle.api.tasks.scala.ScalaCompile
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 
@@ -47,14 +41,24 @@ class ScalafixTask extends SourceTask {
 
     @TaskAction
     void run() {
-        def scalafixConfig = resolveConfigFile()
-        logger.debug("Using config file: {}", scalafixConfig)
-
+        def configFile = resolveConfigFile()
         def sources = source.collect { it.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
-        logger.debug("Tools classpath: {}", toolsClasspath.asPath)
+        def scalacOptions = project.tasks.withType(ScalaCompile).stream().findFirst()
+                .map { it.scalaCompileOptions.additionalParameters }.orElse([])
+        def classpath = project.sourceSets.collect { SourceSet sourceSet ->
+            sourceSet.output.classesDirs.collect { it.toPath() }
+        }.flatten()
+
+        logger.debug(
+                """Running Scalafix with the following parameters:
+                  | - Config file: ${configFile}
+                  | - Tools classpath: ${toolsClasspath.asPath}
+                  | - Scalac options: ${scalacOptions}
+                  | - Classpath: ${classpath}
+                  |""".stripMargin())
 
         def interfacesClassloader = new InterfacesClassloader(getClass().classLoader)
         def cliClassloader = classloaderFrom(cliClasspath, interfacesClassloader)
@@ -62,9 +66,11 @@ class ScalafixTask extends SourceTask {
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
                 .withToolClasspath(toolsClassloader)
-                .withConfig(scalafixConfig)
+                .withConfig(configFile)
                 .withPaths(sources)
                 .withMode(scalafixMode)
+                .withScalacOptions(scalacOptions)
+                .withClasspath(classpath)
                 .withRules(rules.get())
 
         logger.debug("Scalafix rules available: {}", args.availableRules())
