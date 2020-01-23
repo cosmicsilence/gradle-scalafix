@@ -30,8 +30,10 @@ class ScalafixPlugin implements Plugin<Project> {
         project.plugins.withType(ScalaPlugin) {
             configureTasks(project, extension)
 
-            if (extension.enableSemanticdb) {
-                configureSemanticdbCompilerPlugin(project)
+            project.afterEvaluate {
+                if (extension.enableSemanticdb) {
+                    configureSemanticdbCompilerPlugin(project)
+                }
             }
         }
     }
@@ -82,11 +84,9 @@ class ScalafixPlugin implements Plugin<Project> {
                 "-Yrangepos"
         ]
 
-        project.afterEvaluate {
-            project.tasks.withType(ScalaCompile) { ScalaCompile task ->
-                task.scalaCompileOptions.additionalParameters =
-                        (task.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
-            }
+        project.tasks.withType(ScalaCompile) { ScalaCompile task ->
+            task.scalaCompileOptions.additionalParameters =
+                    (task.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
         }
     }
 }
