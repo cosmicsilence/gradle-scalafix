@@ -70,6 +70,7 @@ class ScalafixTask extends SourceTask {
                 .withPaths(sources)
                 .withMode(scalafixMode)
                 .withScalacOptions(scalacOptions)
+                .withSourceroot(project.projectDir.toPath())
                 .withClasspath(classpath)
                 .withRules(rules.get())
 
