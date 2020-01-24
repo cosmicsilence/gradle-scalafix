@@ -17,9 +17,9 @@ import java.nio.file.Path
 class ScalafixTask extends SourceTask {
 
     private static final Logger logger = Logging.getLogger(ScalafixTask)
-    private static final String DEFAULT_SCALAFIX_CONF = ".scalafix.conf"
+    private static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
 
-    private final ScalafixMainMode scalafixMode
+    private final ScalafixMainMode mode
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
@@ -31,8 +31,8 @@ class ScalafixTask extends SourceTask {
     final ListProperty<String> rules = project.objects.listProperty(String)
 
     @Inject
-    ScalafixTask(boolean checkOnly) {
-        scalafixMode = checkOnly ? ScalafixMainMode.CHECK : ScalafixMainMode.IN_PLACE
+    ScalafixTask(ScalafixMainMode mode) {
+        this.mode = mode
     }
 
     @TaskAction
@@ -64,7 +64,7 @@ class ScalafixTask extends SourceTask {
                 .withToolClasspath(toolsClassloader)
                 .withConfig(configFile)
                 .withPaths(sources)
-                .withMode(scalafixMode)
+                .withMode(mode)
                 .withScalacOptions(scalacOptions)
                 .withSourceroot(project.projectDir.toPath())
                 .withClasspath(classpath)
@@ -92,7 +92,7 @@ class ScalafixTask extends SourceTask {
 
     private java.util.Optional<Path> resolveConfigFile() {
         def defaultConfig = { Project proj ->
-            def file = proj.file(DEFAULT_SCALAFIX_CONF)
+            def file = proj.file(DEFAULT_CONFIG_FILE)
             if (file.exists()) file.toPath() else null
         }
 

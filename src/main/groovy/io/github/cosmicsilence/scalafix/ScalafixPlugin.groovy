@@ -6,6 +6,9 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.scala.ScalaCompile
+import scalafix.interfaces.ScalafixMainMode
+
+import static scalafix.interfaces.ScalafixMainMode.*
 
 /**
  * Gradle plugin for running Scalafix.
@@ -48,18 +51,18 @@ class ScalafixPlugin implements Plugin<Project> {
         project.tasks.check.dependsOn(checkTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, false, fixTask, project, extension)
-            configureTaskForSourceSet(sourceSet, true, checkTask, project, extension)
+            configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
+            configureTaskForSourceSet(sourceSet, CHECK, checkTask, project, extension)
         }
     }
 
     private void configureTaskForSourceSet(SourceSet sourceSet,
-                                           boolean checkOnly,
+                                           ScalafixMainMode mode,
                                            Task mainTask,
                                            Project project,
                                            ScalafixExtension extension) {
         def name = mainTask.name + sourceSet.name.capitalize()
-        def task = project.tasks.create(name, ScalafixTask, checkOnly)
+        def task = project.tasks.create(name, ScalafixTask, mode)
         task.description = "${mainTask.description} in '${sourceSet.getName()}'"
         task.group = mainTask.group
         task.source = sourceSet.allScala.matching {
@@ -72,7 +75,7 @@ class ScalafixPlugin implements Plugin<Project> {
             String prop = project.findProperty(RULES_PROPERTY) ?: ""
             prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
         }))
-        mainTask.dependsOn += task
+        mainTask.dependsOn task
         project.afterEvaluate {
             if (extension.enableSemanticdb) {
                 task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
