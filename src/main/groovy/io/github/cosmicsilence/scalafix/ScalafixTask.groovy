@@ -37,52 +37,69 @@ class ScalafixTask extends SourceTask {
 
     @TaskAction
     void run() {
+        if (!source.isEmpty()) processSources()
+        else logger.warn("No sources to be processed")
+    }
+
+    private void processSources() {
+        def sourcePaths = source.collect { it.toPath() }
         def configFile = resolveConfigFile()
-        def sources = source.collect { it.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
-        def toolsClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
-        def scalacOptions = project.tasks.withType(ScalaCompile).stream().findFirst()
-                .map { it.scalaCompileOptions.additionalParameters }.orElse([])
-        def classpath = project.sourceSets.collect { SourceSet sourceSet ->
-            sourceSet.output.classesDirs.collect { it.toPath() }
-        }.flatten()
+        def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
+        def scalacOptions = getScalacOptions()
+        def projectClasspath = getProjectClasspath()
 
         logger.debug(
-                """Running Scalafix with the following parameters:
+                """Initialising Scalafix with the following parameters:
+                  | - Mode: ${mode}
                   | - Config file: ${configFile}
-                  | - Tools classpath: ${toolsClasspath.asPath}
+                  | - Custom rules classpath: ${customRulesClasspath.asPath}
                   | - Scalac options: ${scalacOptions}
-                  | - Classpath: ${classpath}
+                  | - Sources: ${sourcePaths}
+                  | - Classpath: ${projectClasspath}
                   |""".stripMargin())
 
         def interfacesClassloader = new InterfacesClassloader(getClass().classLoader)
         def cliClassloader = classloaderFrom(cliClasspath, interfacesClassloader)
-        def toolsClassloader = classloaderFrom(toolsClasspath, cliClassloader)
+        def toolsClassloader = classloaderFrom(customRulesClasspath, cliClassloader)
+
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
                 .withToolClasspath(toolsClassloader)
                 .withConfig(configFile)
-                .withPaths(sources)
+                .withPaths(sourcePaths)
                 .withMode(mode)
                 .withScalacOptions(scalacOptions)
                 .withSourceroot(project.projectDir.toPath())
-                .withClasspath(classpath)
+                .withClasspath(projectClasspath)
                 .withRules(rules.get())
 
-        logger.debug("Scalafix rules available: {}", args.availableRules())
-        logger.debug("Scalafix rules that will run: {}", args.rulesThatWillRun())
-        logger.debug("Source files to be processed: {}", sources)
+        logger.debug(
+                """Scalafix initialised!:
+                  | - Rules available: ${args.availableRules().collect { it.name() }}
+                  | - Rules that will run: ${args.rulesThatWillRun().collect { it.name() }}
+                  |""".stripMargin())
 
-        if (!sources.empty) {
-            if (!args.rulesThatWillRun().empty) {
-                logger.quiet("Running Scalafix on ${sources.size} Scala source files")
-                def errors = args.run()
-                if (errors.size() > 0) throw new ScalafixFailed(errors.toList())
-            } else {
-                logger.warn("No Scalafix rules to run")
-            }
+        if (!args.rulesThatWillRun().empty) {
+            logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source files...")
+            def errors = args.run()
+            if (errors.size() > 0) throw new ScalafixFailed(errors.toList())
+        } else {
+            logger.warn("No Scalafix rules to run")
         }
+    }
+
+    private List<String> getScalacOptions() {
+        def maybeCompileTask = project.tasks.withType(ScalaCompile).stream().findFirst()
+        maybeCompileTask.map { it.scalaCompileOptions.additionalParameters }.orElse([])
+    }
+
+    private List<Path> getProjectClasspath() {
+        def classesDirs = project.sourceSets.collect { SourceSet ss ->
+            ss.output.classesDirs.toList()
+        }.flatten()
+        classesDirs.collect { it.toPath() }
     }
 
     private static URLClassLoader classloaderFrom(Configuration configuration, ClassLoader parent) {
