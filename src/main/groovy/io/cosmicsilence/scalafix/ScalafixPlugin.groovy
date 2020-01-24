@@ -27,6 +27,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
+        // TODO: fail if scala plugin is not applied
         project.plugins.withType(ScalaPlugin) {
             configureTasks(project, extension)
 
@@ -64,6 +65,7 @@ class ScalafixPlugin implements Plugin<Project> {
         task.description = "${mainTask.description} in '${sourceSet.getName()}'"
         task.group = mainTask.group
         task.source = sourceSet.allScala.matching {
+            // This is applied after evaluating the project
             include(extension.includes.get())
             exclude(extension.excludes.get())
         }
@@ -73,6 +75,11 @@ class ScalafixPlugin implements Plugin<Project> {
             prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
         }))
         mainTask.dependsOn += task
+        project.afterEvaluate {
+            if (extension.enableSemanticdb) {
+                task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
+            }
+        }
     }
 
     private void configureSemanticdbCompilerPlugin(Project project) {
