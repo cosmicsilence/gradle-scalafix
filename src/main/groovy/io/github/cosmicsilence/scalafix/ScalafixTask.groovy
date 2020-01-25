@@ -87,7 +87,7 @@ class ScalafixTask extends SourceTask {
         if (!args.rulesThatWillRun().empty) {
             logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source files")
             def errors = args.run()
-            if (errors.size() > 0) throw new ScalafixFailed(errors.toList())
+            if (errors.size() > 0) throw new ScalafixFailed(errors)
         } else {
             logger.warn("No Scalafix rules to run")
         }
