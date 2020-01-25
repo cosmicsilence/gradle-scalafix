@@ -1,6 +1,6 @@
 plugins {
     id 'groovy'
-    id 'maven'
+    id 'maven-publish'
 }
 
 group 'io.cosmicsilence'
@@ -16,3 +16,21 @@ dependencies {
     compile 'ch.epfl.scala:scalafix-interfaces:0.9.11'
     testCompile 'junit:junit:4.12'
 }
+
+//publishing {
+//    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/cosmicsilence/gradle-scalafix")
+//            credentials {
+//                username = project.findProperty("gpr.user") ?: System.getenv("GPR_USER")
+//                password = project.findProperty("gpr.key") ?: System.getenv("GPR_KEY")
+//            }
+//        }
+//    }
+//    publications {
+//        gpr(MavenPublication) {
+//            from(components.java)
+//        }
+//    }
+//}
