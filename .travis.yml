@@ -3,7 +3,7 @@ jdk: openjdk8
 
 deploy:
   - provider: script
-    script: ./gradlew publish
+    script: ./gradlew publish bintrayUpload
     on:
       tags: true
   - provider: releases

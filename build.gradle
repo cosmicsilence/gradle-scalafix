@@ -1,7 +1,8 @@
 plugins {
     id 'groovy'
-    id 'maven-publish'
     id 'org.ajoberstar.reckon' version '0.12.0'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.8.4'
 }
 
 group 'io.cosmicsilence'
@@ -17,9 +18,62 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
 reckon {
     scopeFromProp()
     stageFromProp('beta', 'rc', 'final')
+}
+
+bintray {
+    user = project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER")
+    key  = project.findProperty("bintray.key")  ?: System.getenv("BINTRAY_KEY")
+    pkg {
+        repo = 'maven'
+        name = 'gradle-scalafix'
+        userOrg = 'cosmicsilence'
+        version {
+            name = project.version
+        }
+    }
+    publications = ['jar']
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name 'BSD 3-Clause License'
+            url 'https://opensource.org/licenses/BSD-3-Clause'
+        }
+    }
+    developers {
+        developer {
+            name 'Marcelo Cenerino'
+            email 'marcelocenerine@gmail.com'
+            organization 'Cosmic Silence'
+            organizationUrl 'https://github.com/cosmicsilence'
+        }
+        developer {
+            name 'Felix Sanjuan'
+            email 'fsanjuan@gmail.com'
+            organization 'Cosmic Silence'
+            organizationUrl 'https://github.com/cosmicsilence'
+        }
+    }
+
+    scm {
+        url 'https://github.com/cosmicsilence/gradle-scalafix'
+        connection 'git@github.com:cosmicsilence/gradle-scalafix.git'
+        developerConnection 'git@github.com:cosmicsilence/gradle-scalafix.git'
+    }
 }
 
 publishing {
@@ -35,7 +89,16 @@ publishing {
     }
     publications {
         jar(MavenPublication) {
-            from(components.java)
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Scalafix plugin for Gradle')
+                root.appendNode('name', 'Gradle Scalafix Plugin')
+                root.appendNode('url', 'https://github.com/cosmicsilence/gradle-scalafix')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
