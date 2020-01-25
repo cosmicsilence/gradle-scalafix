@@ -47,6 +47,7 @@ class ScalafixTask extends SourceTask {
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
+        def scalacVersion = getScalaVersion()
         def scalacOptions = getScalacOptions()
         def projectClasspath = getProjectClasspath()
 
@@ -55,6 +56,7 @@ class ScalafixTask extends SourceTask {
                   | - Mode: ${mode}
                   | - Config file: ${configFile}
                   | - Custom rules classpath: ${customRulesClasspath.asPath}
+                  | - Scala version: ${scalacVersion}
                   | - Scalac options: ${scalacOptions}
                   | - Sources: ${sourcePaths}
                   | - Classpath: ${projectClasspath}
@@ -66,14 +68,15 @@ class ScalafixTask extends SourceTask {
 
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
-                .withToolClasspath(toolsClassloader)
-                .withConfig(configFile)
-                .withPaths(sourcePaths)
                 .withMode(mode)
-                .withScalacOptions(scalacOptions)
-                .withSourceroot(project.projectDir.toPath())
-                .withClasspath(projectClasspath)
+                .withConfig(configFile)
                 .withRules(rules.get())
+                .withSourceroot(project.projectDir.toPath())
+                .withPaths(sourcePaths)
+                .withToolClasspath(toolsClassloader)
+                .withClasspath(projectClasspath)
+                .withScalaVersion(getScalaVersion())
+                .withScalacOptions(getScalacOptions())
 
         logger.debug(
                 """Scalafix initialised!:
@@ -82,7 +85,7 @@ class ScalafixTask extends SourceTask {
                   |""".stripMargin())
 
         if (!args.rulesThatWillRun().empty) {
-            logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source files...")
+            logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source files")
             def errors = args.run()
             if (errors.size() > 0) throw new ScalafixFailed(errors.toList())
         } else {
@@ -91,8 +94,17 @@ class ScalafixTask extends SourceTask {
     }
 
     private List<String> getScalacOptions() {
-        def maybeCompileTask = project.tasks.withType(ScalaCompile).stream().findFirst()
-        maybeCompileTask.map { it.scalaCompileOptions.additionalParameters }.orElse([])
+        getCompileTask().scalaCompileOptions.additionalParameters ?: []
+    }
+
+    private String getScalaVersion() {
+        def scalaRuntime = project.extensions.findByType(ScalaRuntime.class)
+        def scalaJar = scalaRuntime.findScalaJar(getCompileTask().classpath, "library")
+        scalaRuntime.getScalaVersion(scalaJar)
+    }
+
+    private ScalaCompile getCompileTask() {
+        project.tasks.withType(ScalaCompile).first()
     }
 
     private List<Path> getProjectClasspath() {
