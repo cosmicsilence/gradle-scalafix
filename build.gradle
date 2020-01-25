@@ -21,3 +21,21 @@ reckon {
     scopeFromProp()
     stageFromProp('beta', 'rc', 'final')
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/cosmicsilence/gradle-scalafix")
+            credentials {
+                username = project.findProperty("github.user") ?: System.getenv("GITHUB_USER")
+                password = project.findProperty("github.key")  ?: System.getenv("GITHUB_KEY")
+            }
+        }
+    }
+    publications {
+        jar(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

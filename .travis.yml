@@ -2,13 +2,17 @@ language: java
 jdk: openjdk8
 
 deploy:
-  provider: releases
-  api_key: $GITHUB_KEY
-  file_glob: true
-  file: build/libs/*.jar
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: releases
+    api_key: $GITHUB_KEY
+    file_glob: true
+    file: build/libs/*.jar
+    skip_cleanup: true
+#    on:
+#      tags: true
+  - provider: script
+    script: ./gradlew publish
+#    on:
+#      tags: true
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
