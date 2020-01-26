@@ -47,7 +47,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
         def checkTask = project.tasks.create(CHECK_TASK)
         checkTask.group = TASK_GROUP
-        checkTask.description = 'Fails if running Scalafix produces a diff or a linter error message'
+        checkTask.description = "Fails if running Scalafix produces a diff or a linter error message. Won't write to files"
         project.tasks.check.dependsOn(checkTask)
 
         project.sourceSets.each { SourceSet sourceSet ->
