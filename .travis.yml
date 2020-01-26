@@ -10,6 +10,7 @@ deploy:
     api_key: $GITHUB_KEY
     file_glob: true
     file: build/libs/*.jar
+    skip_cleanup: true
     on:
       tags: true
 
