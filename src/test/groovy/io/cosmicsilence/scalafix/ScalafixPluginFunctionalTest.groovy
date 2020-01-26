@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix
+package io.github.cosmicsilence.scalafix
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -21,7 +21,7 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildFile.write'''
 plugins {
     id 'scala'
-    id 'io.cosmicsilence.scalafix'
+    id 'io.github.cosmicsilence.scalafix'
 }
 
 repositories {
@@ -42,10 +42,10 @@ repositories {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'checkScalafixMain task runs compileScala when enableSemanticdb is enabled in the scalafix extension'() {
+    def 'checkScalafixMain task runs compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
         given:
         buildFile.append '''
-scalafix { enableSemanticdb = true }'''
+scalafix { autoConfigureSemanticdb = true }'''
 
         when:
         BuildResult buildResult = runGradleTask('scalafix', ['-m'])
@@ -57,10 +57,10 @@ scalafix { enableSemanticdb = true }'''
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'checkScalafixMain task does not run compileScala when enableSemanticdb is disabled in the scalafix extension'() {
+    def 'checkScalafixMain task does not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
         buildFile.append '''
-scalafix { enableSemanticdb = false }'''
+scalafix { autoConfigureSemanticdb = false }'''
 
         when:
         BuildResult buildResult = runGradleTask('scalafix', ['-m'])
