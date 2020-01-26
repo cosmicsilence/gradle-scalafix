@@ -17,7 +17,7 @@ class ScalafixFailed extends RuntimeException {
             case LinterError:
                 return "A linter error was reported"
             case MissingSemanticdbError:
-                return "A semantic rewrite was run on a source file that has no associated *.semanticdb file"
+                return "A semantic rule was run on a source file that has no associated *.semanticdb file"
             case NoFilesError:
                 return "No files were provided to Scalafix"
             case ParseError:

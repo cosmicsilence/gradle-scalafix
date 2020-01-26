@@ -33,7 +33,7 @@ class ScalafixPlugin implements Plugin<Project> {
             configureTasks(project, extension)
 
             project.afterEvaluate {
-                if (extension.enableSemanticdb) {
+                if (extension.autoConfigureSemanticdb) {
                     configureSemanticdbCompilerPlugin(project)
                 }
             }
@@ -77,7 +77,7 @@ class ScalafixPlugin implements Plugin<Project> {
         }))
         mainTask.dependsOn task
         project.afterEvaluate {
-            if (extension.enableSemanticdb) {
+            if (extension.autoConfigureSemanticdb) {
                 task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
             }
         }

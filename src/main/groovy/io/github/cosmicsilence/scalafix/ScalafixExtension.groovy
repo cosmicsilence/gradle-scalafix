@@ -28,10 +28,10 @@ class ScalafixExtension {
     final SetProperty<String> excludes
 
     /**
-     * Auto configures the SemanticDB Scala compiler. This is required to run any
-     * Scalafix semantic rule.
+     * Auto configures the SemanticDB Scala compiler. This is required to run
+     * semantic rules.
      */
-    Boolean enableSemanticdb = true
+    Boolean autoConfigureSemanticdb = true
 
     private final Project project
 
