@@ -1,4 +1,5 @@
 plugins {
+    id 'java-gradle-plugin'
     id 'groovy'
     id 'org.ajoberstar.reckon' version '0.12.0'
     id 'maven-publish'
@@ -6,6 +7,17 @@ plugins {
 }
 
 group 'io.github.cosmicsilence'
+
+gradlePlugin {
+    plugins {
+        scalafix {
+            id = 'io.cosmicsilence.scalafix'
+            implementationClass = 'io.cosmicsilence.scalafix.ScalafixPlugin'
+        }
+    }
+}
+
+version '0.0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -15,7 +27,10 @@ dependencies {
     implementation gradleApi()
     implementation localGroovy()
     compile 'ch.epfl.scala:scalafix-interfaces:0.9.11'
+    testImplementation gradleTestKit()
     testCompile 'junit:junit:4.12'
+    testCompile 'org.spockframework:spock-core:1.3-groovy-2.5'
+
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
