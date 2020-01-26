@@ -4,7 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.SetProperty
 
-class ScalafixPluginExtension {
+class ScalafixExtension {
 
     /**
      * Scalafix configuration file. If not specified, the plugin will try to find
@@ -35,7 +35,7 @@ class ScalafixPluginExtension {
 
     private final Project project
 
-    ScalafixPluginExtension(Project project) {
+    ScalafixExtension(Project project) {
         this.project = project
         configFile = project.objects.fileProperty()
         includes = project.objects.setProperty(String)

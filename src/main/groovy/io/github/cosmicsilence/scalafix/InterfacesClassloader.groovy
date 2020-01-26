@@ -1,4 +1,6 @@
-package io.github.cosmicsilence.scalafix.internal
+package io.github.cosmicsilence.scalafix
+
+import groovy.transform.PackageScope
 
 /**
  * A classloader that shares only scalafix-interfaces classes from the parent classloader.
@@ -7,6 +9,7 @@ package io.github.cosmicsilence.scalafix.internal
  * By using this classloader as a parent, it's possible to cast runtime instances from
  * the scalafix-cli classloader into `scalafix.interfaces.Scalafix` from this classloader.
  */
+@PackageScope
 class InterfacesClassloader extends ClassLoader {
 
     private final ClassLoader _parent

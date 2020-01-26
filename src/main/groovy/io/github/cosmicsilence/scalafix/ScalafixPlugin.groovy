@@ -1,7 +1,5 @@
 package io.github.cosmicsilence.scalafix
 
-import io.github.cosmicsilence.scalafix.internal.BuildInfo
-import io.github.cosmicsilence.scalafix.tasks.ScalafixTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -23,7 +21,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        def extension = project.extensions.create(EXTENSION, ScalafixPluginExtension, project)
+        def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
@@ -39,7 +37,7 @@ class ScalafixPlugin implements Plugin<Project> {
         }
     }
 
-    private void configureTasks(Project project, ScalafixPluginExtension extension) {
+    private void configureTasks(Project project, ScalafixExtension extension) {
         def fixTask = project.tasks.create(FIX_TASK)
         fixTask.group = TASK_GROUP
         fixTask.description = 'Runs Scalafix on Scala sources'
@@ -59,7 +57,7 @@ class ScalafixPlugin implements Plugin<Project> {
                                            boolean checkOnly,
                                            Task mainTask,
                                            Project project,
-                                           ScalafixPluginExtension extension) {
+                                           ScalafixExtension extension) {
         def name = mainTask.name + sourceSet.name.capitalize()
         def task = project.tasks.create(name, ScalafixTask, checkOnly)
         task.description = "${mainTask.description} in '${sourceSet.getName()}'"

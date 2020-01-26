@@ -12,7 +12,7 @@ class ScalafixPluginTest {
     void shouldConfigureProjectWhenPluginIsApplied() {
         Project project = ProjectBuilder.builder().build()
         project.pluginManager.apply 'scala'
-        project.pluginManager.apply 'io.cosmicsilence.scalafix'
+        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
 
         assertNotNull(project.tasks.scalafix)
         assertNotNull(project.tasks.scalafixMain)
@@ -31,7 +31,7 @@ class ScalafixPluginTest {
     @Test
     void shouldNotCreateTasksIfScalaPluginIsNotApplied() {
         Project project = ProjectBuilder.builder().build()
-        project.pluginManager.apply 'io.cosmicsilence.scalafix'
+        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
 
         assertNotNull(project.extensions.scalafix)
         assertNotNull(project.configurations.scalafix)

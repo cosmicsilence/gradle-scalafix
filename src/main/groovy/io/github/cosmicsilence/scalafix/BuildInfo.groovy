@@ -1,4 +1,4 @@
-package io.github.cosmicsilence.scalafix.internal
+package io.github.cosmicsilence.scalafix
 
 abstract class BuildInfo {
 
