@@ -94,8 +94,8 @@ publishing {
             artifact javadocJar
             pom.withXml {
                 def root = asNode()
-                root.appendNode('description', 'Scalafix plugin for Gradle')
-                root.appendNode('name', 'Gradle Scalafix Plugin')
+                root.appendNode('name', 'Gradle Plugin for Scalafix')
+                root.appendNode('description', 'This is a Gradle plugin for Scalafix, a refactoring and linting tool for Scala')
                 root.appendNode('url', 'https://github.com/cosmicsilence/gradle-scalafix')
                 root.children().last() + pomConfig
             }
