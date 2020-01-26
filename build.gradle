@@ -11,8 +11,8 @@ group 'io.github.cosmicsilence'
 gradlePlugin {
     plugins {
         scalafix {
-            id = 'io.cosmicsilence.scalafix'
-            implementationClass = 'io.cosmicsilence.scalafix.ScalafixPlugin'
+            id = 'io.github.cosmicsilence.scalafix'
+            implementationClass = 'io.github.cosmicsilence.scalafix.ScalafixPlugin'
         }
     }
 }
