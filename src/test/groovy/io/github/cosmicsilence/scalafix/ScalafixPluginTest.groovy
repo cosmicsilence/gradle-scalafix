@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Test
@@ -28,13 +29,9 @@ class ScalafixPluginTest {
                 .containsAll([project.tasks.checkScalafixMain, project.tasks.checkScalafixTest]))
     }
 
-    @Test
-    void shouldNotCreateTasksIfScalaPluginIsNotApplied() {
+    @Test(expected = GradleException)
+    void shouldFailIfScalaPluginIsNotApplied() {
         Project project = ProjectBuilder.builder().build()
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
-
-        assertNotNull(project.extensions.scalafix)
-        assertNotNull(project.configurations.scalafix)
-        assertEquals(0, project.tasks.count { it.name.startsWith('scalafix') })
     }
 }
