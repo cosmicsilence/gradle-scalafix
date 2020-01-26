@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix.internal
+package io.github.cosmicsilence.scalafix.internal
 
 import org.gradle.api.logging.Logger
 import scalafix.interfaces.ScalafixDiagnostic

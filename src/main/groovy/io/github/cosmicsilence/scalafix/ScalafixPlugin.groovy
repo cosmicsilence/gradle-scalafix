@@ -1,7 +1,7 @@
-package io.cosmicsilence.scalafix
+package io.github.cosmicsilence.scalafix
 
-import io.cosmicsilence.scalafix.internal.BuildInfo
-import io.cosmicsilence.scalafix.tasks.ScalafixTask
+import io.github.cosmicsilence.scalafix.internal.BuildInfo
+import io.github.cosmicsilence.scalafix.tasks.ScalafixTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task

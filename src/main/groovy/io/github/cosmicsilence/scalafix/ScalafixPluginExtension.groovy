@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix
+package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFileProperty

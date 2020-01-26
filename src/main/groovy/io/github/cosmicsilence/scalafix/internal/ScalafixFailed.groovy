@@ -1,4 +1,4 @@
-package io.cosmicsilence.scalafix.internal
+package io.github.cosmicsilence.scalafix.internal
 
 import scalafix.interfaces.ScalafixError
 

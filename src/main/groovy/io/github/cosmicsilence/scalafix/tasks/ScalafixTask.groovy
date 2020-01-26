@@ -1,9 +1,10 @@
-package io.cosmicsilence.scalafix.tasks
+package io.github.cosmicsilence.scalafix.tasks
 
-import io.cosmicsilence.scalafix.ScalafixPlugin
-import io.cosmicsilence.scalafix.internal.BuildInfo
-import io.cosmicsilence.scalafix.internal.InterfacesClassloader
-import io.cosmicsilence.scalafix.internal.ScalafixFailed
+
+import io.github.cosmicsilence.scalafix.ScalafixPlugin
+import io.github.cosmicsilence.scalafix.internal.BuildInfo
+import io.github.cosmicsilence.scalafix.internal.InterfacesClassloader
+import io.github.cosmicsilence.scalafix.internal.ScalafixFailed
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
