@@ -78,7 +78,7 @@ def pomConfig = {
         }
         developer {
             name 'Felix Sanjuan'
-            email 'fsanjuan@gmail.com'
+            email 'felix.sanjuan@icloud.com'
             organization 'Cosmic Silence'
             organizationUrl 'https://github.com/cosmicsilence'
         }
