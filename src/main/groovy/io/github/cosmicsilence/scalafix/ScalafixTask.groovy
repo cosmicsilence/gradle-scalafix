@@ -122,7 +122,7 @@ class ScalafixTask extends SourceTask {
     private java.util.Optional<Path> resolveConfigFile() {
         def defaultConfig = { Project proj ->
             def file = proj.file(DEFAULT_CONFIG_FILE)
-            if (file.exists()) file.toPath() else null
+            if (file.exists() && file.isFile()) file.toPath() else null
         }
 
         def file = configFile.map { it.asFile.toPath() }.orNull ?: defaultConfig(project) ?: defaultConfig(project.rootProject)
