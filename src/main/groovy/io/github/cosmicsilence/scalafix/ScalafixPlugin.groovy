@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -24,18 +25,19 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        if (!project.plugins.hasPlugin(ScalaPlugin)) {
+            throw new GradleException("'scala' plugin must be applied before 'scalafix'")
+        }
+
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
-        // TODO: fail if scala plugin is not applied
-        project.plugins.withType(ScalaPlugin) {
-            configureTasks(project, extension)
+        configureTasks(project, extension)
 
-            project.afterEvaluate {
-                if (extension.autoConfigureSemanticdb) {
-                    configureSemanticdbCompilerPlugin(project)
-                }
+        project.afterEvaluate {
+            if (extension.autoConfigureSemanticdb) {
+                configureSemanticdbCompilerPlugin(project)
             }
         }
     }
@@ -48,7 +50,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def checkTask = project.tasks.create(CHECK_TASK)
         checkTask.group = TASK_GROUP
         checkTask.description = "Fails if running Scalafix produces a diff or a linter error message. Won't write to files"
-        project.tasks.check.dependsOn(checkTask)
+        project.tasks.check.dependsOn checkTask
 
         project.sourceSets.each { SourceSet sourceSet ->
             configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
