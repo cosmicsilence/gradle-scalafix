@@ -8,17 +8,6 @@ plugins {
 
 group 'io.github.cosmicsilence'
 
-gradlePlugin {
-    plugins {
-        scalafix {
-            id = 'io.github.cosmicsilence.scalafix'
-            implementationClass = 'io.github.cosmicsilence.scalafix.ScalafixPlugin'
-        }
-    }
-}
-
-version '0.0.1-SNAPSHOT'
-
 repositories {
     mavenCentral()
 }
