@@ -119,6 +119,7 @@ class ScalafixTask extends SourceTask {
         new URLClassLoader(jars, parent)
     }
 
+    // FIXME: this needs to be resolved in configuration time
     private java.util.Optional<Path> resolveConfigFile() {
         def defaultConfig = { Project proj ->
             def file = proj.file(DEFAULT_CONFIG_FILE)
