@@ -6,6 +6,8 @@ import org.gradle.api.provider.SetProperty
 
 class ScalafixExtension {
 
+    private static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
+
     /**
      * Scalafix configuration file. If not specified, the plugin will try to find
      * a file named '.scalafix.conf' in the project's directory and then in the
@@ -37,7 +39,10 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        configFile = project.objects.fileProperty()
+        configFile = project.objects.fileProperty().convention(
+                project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE).asFile.exists()?
+                        project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE) :
+                        project.rootProject.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE))
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
     }
