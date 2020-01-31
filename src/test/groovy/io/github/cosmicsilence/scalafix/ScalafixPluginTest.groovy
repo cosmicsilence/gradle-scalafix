@@ -14,7 +14,7 @@ class ScalafixPluginTest extends Specification {
     def setup() {
         project = ProjectBuilder.builder().build()
         scalafixConf = new File(project.projectDir, 'scalafix.conf')
-        scalafixConf.write 'rules = [RemoveUnusedImports, RemoveUnusedTerms]'
+        scalafixConf.write 'rules = [Foo, Bar]'
     }
 
     def 'The plugin adds the scalafix configuration, tasks and extension to the project'() {
@@ -33,10 +33,6 @@ class ScalafixPluginTest extends Specification {
         project.tasks.checkScalafixTest
         project.extensions.scalafix
         project.configurations.scalafix
-
-        project.tasks.check.taskDependencies.getDependencies().contains(project.tasks.checkScalafix)
-        project.tasks.checkScalafix.taskDependencies.getDependencies()
-                .containsAll([project.tasks.checkScalafixMain, project.tasks.checkScalafixTest])
     }
 
     def 'The plugin throws an exception if when applied, the scala plugin has not been applied to the project'() {
@@ -58,7 +54,6 @@ class ScalafixPluginTest extends Specification {
         def compileScalaParameters = project.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters
         compileScalaParameters.contains('-Yrangepos')
         compileScalaParameters.find { it.contains('-P:semanticdb:sourceroot:') }
-        compileScalaParameters.contains('-Yrangepos')
         compileScalaParameters.find {
             it.contains('-Xplugin:') && it.contains('semanticdb-scalac_2.12.10-4.3.0.jar') && it.contains('scala-library-2.12.10.jar')
         }
@@ -66,7 +61,6 @@ class ScalafixPluginTest extends Specification {
         def compileTestScalaParameters = project.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters
         compileTestScalaParameters.contains('-Yrangepos')
         compileTestScalaParameters.find { it.contains('-P:semanticdb:sourceroot:') }
-        compileTestScalaParameters.contains('-Yrangepos')
         compileTestScalaParameters.find {
             it.contains('-Xplugin:') && it.contains('semanticdb-scalac_2.12.10-4.3.0.jar') && it.contains('scala-library-2.12.10.jar')
         }
@@ -86,7 +80,7 @@ class ScalafixPluginTest extends Specification {
 
     def 'checkScalafix task configuration validation'() {
         when:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         then:
@@ -98,7 +92,7 @@ class ScalafixPluginTest extends Specification {
 
     def 'checkScalafixMain task configuration validation'() {
         setup:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
@@ -108,13 +102,13 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = project.tasks.getByName('checkScalafixMain')
         task.dependsOn.isEmpty()
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
         setup:
-        applyScalafixPlugin(project, true, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, true, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
@@ -124,13 +118,13 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = project.tasks.getByName('checkScalafixMain')
         task.dependsOn.find{ it.name == 'compileScala' }
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'checkScalafixTest task configuration validation'() {
         setup:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
@@ -140,13 +134,13 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = project.tasks.getByName('checkScalafixTest')
         task.dependsOn.isEmpty()
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
         setup:
-        applyScalafixPlugin(project, true, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, true, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
@@ -156,25 +150,25 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = project.tasks.getByName('checkScalafixTest')
         task.dependsOn.find{ it.name == 'compileTestScala' }
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'scalafix task configuration validation'() {
         when:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         then:
         Task task = project.tasks.getByName('scalafix')
         task.dependsOn.find { it.name == 'scalafixMain' }
         task.dependsOn.find { it.name == 'scalafixTest' }
-        !project.tasks.getByName('check').dependsOn.find { it.name == 'checkScalaFix' }
+        !project.tasks.getByName('check').dependsOn.find { it.name == 'scalafix' }
     }
 
     def 'scalafixMain task configuration validation'() {
         setup:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
@@ -184,57 +178,56 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = project.tasks.getByName('scalafixMain')
         task.dependsOn.isEmpty()
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
         setup:
-        applyScalafixPlugin(project, true, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, true, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = project.tasks.getByName('scalafixMain')
         task.dependsOn.find { it.name == 'compileScala' }
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'scalafixTest task configuration validation'() {
         setup:
-        applyScalafixPlugin(project, false, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, false, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = project.tasks.getByName('scalafixTest')
         task.dependsOn.isEmpty()
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
-
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
     def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
         setup:
-        applyScalafixPlugin(project, true, 'ExplicitResultTypes,DisableSyntax',
+        applyScalafixPlugin(project, true, 'Foo,Bar',
                 project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = project.tasks.getByName('scalafixTest')
         task.dependsOn.find { it.name == 'compileTestScala' }
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('ExplicitResultTypes')
-        task.rules.get().contains('DisableSyntax')
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
     }
 
 //    def 'scalafix uses the .scalafix config file from the subproject by default'() {
