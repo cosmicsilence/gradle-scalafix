@@ -10,14 +10,11 @@ import org.gradle.api.tasks.scala.ScalaCompile
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 
-import javax.inject.Inject
 import java.nio.file.Path
 
 class ScalafixTask extends SourceTask {
 
     private static final Logger logger = Logging.getLogger(ScalafixTask)
-
-    private final ScalafixMainMode mode
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
@@ -28,10 +25,8 @@ class ScalafixTask extends SourceTask {
     @Optional
     final ListProperty<String> rules = project.objects.listProperty(String)
 
-    @Inject
-    ScalafixTask(ScalafixMainMode mode) {
-        this.mode = mode
-    }
+    @Input
+    ScalafixMainMode mode
 
     @TaskAction
     void run() {

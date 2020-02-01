@@ -4,6 +4,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.testfixtures.ProjectBuilder
+import scalafix.interfaces.ScalafixMainMode
 import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
@@ -124,6 +125,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -139,6 +141,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixTest task configuration validation'() {
@@ -154,6 +157,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -169,6 +173,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'scalafix task configuration validation'() {
@@ -198,6 +203,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -213,6 +219,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixTest task configuration validation'() {
@@ -228,6 +235,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -243,6 +251,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
