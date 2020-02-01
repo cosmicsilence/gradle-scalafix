@@ -51,8 +51,6 @@ plugins {
 }
 ```
 
->**NOTE:** this plugin requires the `scala` plugin to be explicitly applied prior to it, otherwise it will complain.
-
 
 &nbsp;
 ## Selecting Rules

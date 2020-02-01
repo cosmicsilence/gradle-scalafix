@@ -25,17 +25,18 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        if (!project.plugins.hasPlugin(ScalaPlugin)) {
-            throw new GradleException("'scala' plugin must be applied before 'scalafix'")
-        }
 
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
-        configureTasks(project, extension)
-
         project.afterEvaluate {
+            if (!project.plugins.hasPlugin(ScalaPlugin)) {
+                throw new GradleException("The 'scala' plugin must be applied")
+            }
+
+            configureTasks(project, extension)
+
             if (extension.autoConfigureSemanticdb) {
                 configureSemanticdbCompilerPlugin(project)
             }
