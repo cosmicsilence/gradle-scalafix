@@ -8,11 +8,15 @@ import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    Project project
-    File scalafixConf
+    private Project project
+    private File scalafixConf
 
     def setup() {
         project = ProjectBuilder.builder().build()
+        project.repositories {
+            mavenCentral()
+        }
+
         scalafixConf = new File(project.projectDir, 'scalafix.conf')
         scalafixConf.write 'rules = [Foo, Bar]'
     }
@@ -35,7 +39,7 @@ class ScalafixPluginTest extends Specification {
         project.configurations.scalafix
     }
 
-    def 'The plugin throws an exception if when applied, the scala plugin has not been applied to the project'() {
+    def 'The plugin throws an exception if the scala plugin has not been applied to the project'() {
         given:
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
 
@@ -44,6 +48,18 @@ class ScalafixPluginTest extends Specification {
 
         then:
         thrown GradleException
+    }
+
+    def 'The plugin should not throw any exception if the scala plugin is applied after it'() {
+        given:
+        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
+        project.pluginManager.apply 'scala'
+
+        when:
+        project.evaluate()
+
+        then:
+        project.tasks.scalafix
     }
 
     def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
@@ -344,10 +360,6 @@ class ScalafixPluginTest extends Specification {
         project.with {
             apply plugin: 'scala'
             apply plugin: 'io.github.cosmicsilence.scalafix'
-
-            repositories {
-                mavenCentral()
-            }
             scalafix.autoConfigureSemanticdb = autoConfigureSemanticDb
             scalafix.configFile = configFile
             ext.'scalafix.rules' = rules

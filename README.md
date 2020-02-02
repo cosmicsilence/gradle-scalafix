@@ -37,7 +37,7 @@ To use the Scalafix plugin, please include the following snippet in your build s
 buildscript {
     repositories {
         maven {
-            url  "https://dl.bintray.com/cosmicsilence/maven" // soon in Maven Central :)
+            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on the Gradle Plugin Portal :)
         }
     }
     dependencies {
