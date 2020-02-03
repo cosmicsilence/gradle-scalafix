@@ -25,17 +25,18 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        if (!project.plugins.hasPlugin(ScalaPlugin)) {
-            throw new GradleException("'scala' plugin must be applied before 'scalafix'")
-        }
 
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
 
-        configureTasks(project, extension)
-
         project.afterEvaluate {
+            if (!project.plugins.hasPlugin(ScalaPlugin)) {
+                throw new GradleException("The 'scala' plugin must be applied")
+            }
+
+            configureTasks(project, extension)
+
             if (extension.autoConfigureSemanticdb) {
                 configureSemanticdbCompilerPlugin(project)
             }
@@ -68,7 +69,6 @@ class ScalafixPlugin implements Plugin<Project> {
         task.description = "${mainTask.description} in '${sourceSet.getName()}'"
         task.group = mainTask.group
         task.source = sourceSet.allScala.matching {
-            // This is applied after evaluating the project
             include(extension.includes.get())
             exclude(extension.excludes.get())
         }
@@ -78,10 +78,9 @@ class ScalafixPlugin implements Plugin<Project> {
             prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
         }))
         mainTask.dependsOn task
-        project.afterEvaluate {
-            if (extension.autoConfigureSemanticdb) {
-                task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
-            }
+
+        if (extension.autoConfigureSemanticdb) {
+            task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
         }
     }
 

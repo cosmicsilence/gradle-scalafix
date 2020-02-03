@@ -8,21 +8,25 @@ import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    Project project
-    File scalafixConf
+    private Project project
+    private File scalafixConf
 
     def setup() {
         project = ProjectBuilder.builder().build()
+        project.repositories {
+            mavenCentral()
+        }
+
         scalafixConf = new File(project.projectDir, 'scalafix.conf')
         scalafixConf.write 'rules = [Foo, Bar]'
     }
 
     def 'The plugin adds the scalafix configuration, tasks and extension to the project'() {
         given:
-        project.pluginManager.apply 'scala'
+        applyScalafixPlugin(project)
 
         when:
-        project.pluginManager.apply ScalafixPlugin
+        project.evaluate()
 
         then:
         project.tasks.scalafix
@@ -35,16 +39,31 @@ class ScalafixPluginTest extends Specification {
         project.configurations.scalafix
     }
 
-    def 'The plugin throws an exception if when applied, the scala plugin has not been applied to the project'() {
-        when:
+    def 'The plugin throws an exception if the scala plugin has not been applied to the project'() {
+        given:
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
+
+        when:
+        project.evaluate()
 
         then:
         thrown GradleException
     }
 
+    def 'The plugin should not throw any exception if the scala plugin is applied after it'() {
+        given:
+        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
+        project.pluginManager.apply 'scala'
+
+        when:
+        project.evaluate()
+
+        then:
+        project.tasks.scalafix
+    }
+
     def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
-        setup:
+        given:
         applyScalafixPlugin(project, true)
 
         when:
@@ -67,7 +86,7 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'Semanticdb configuration is not added if autoConfigureSemanticdb is set to false'() {
-        setup:
+        given:
         applyScalafixPlugin(project, false)
 
         when:
@@ -79,9 +98,11 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'checkScalafix task configuration validation'() {
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+
         when:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        project.evaluate()
 
         then:
         Task task = project.tasks.getByName('checkScalafix')
@@ -91,9 +112,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'checkScalafixMain task configuration validation'() {
-        setup:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -107,9 +127,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
-        setup:
-        applyScalafixPlugin(project, true, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -123,9 +142,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'checkScalafixTest task configuration validation'() {
-        setup:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -139,9 +157,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
-        setup:
-        applyScalafixPlugin(project, true, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -155,9 +172,11 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'scalafix task configuration validation'() {
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+
         when:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        project.evaluate()
 
         then:
         Task task = project.tasks.getByName('scalafix')
@@ -167,9 +186,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'scalafixMain task configuration validation'() {
-        setup:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -183,9 +201,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
-        setup:
-        applyScalafixPlugin(project, true, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -199,9 +216,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'scalafixTest task configuration validation'() {
-        setup:
-        applyScalafixPlugin(project, false, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -215,9 +231,8 @@ class ScalafixPluginTest extends Specification {
     }
 
     def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
-        setup:
-        applyScalafixPlugin(project, true, 'Foo,Bar',
-                project.file('.scalafix.conf'))
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
 
         when:
         project.evaluate()
@@ -228,6 +243,90 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+    }
+
+    def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        project.with {
+            sourceSets {
+                foo { }
+            }
+        }
+
+        when:
+        project.evaluate()
+
+        then:
+        ScalafixTask task = project.tasks.getByName('scalafixFoo')
+        task.dependsOn.isEmpty()
+        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
+        project.tasks.getByName('scalafix').dependsOn(task)
+    }
+
+    def 'scalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        project.with {
+            sourceSets {
+                bar { }
+            }
+        }
+
+        when:
+        project.evaluate()
+
+        then:
+        ScalafixTask task = project.tasks.getByName('scalafixBar')
+        task.dependsOn.find { it.name == 'compileBarScala' }
+        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
+        project.tasks.getByName('scalafix').dependsOn(task)
+    }
+
+    def 'checkScalafix<SourceSet> task configuration validation when additional source set is present'() {
+        given:
+        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        project.with {
+            sourceSets {
+                foo { }
+            }
+        }
+
+        when:
+        project.evaluate()
+
+        then:
+        ScalafixTask task = project.tasks.getByName('checkScalafixFoo')
+        task.dependsOn.isEmpty()
+        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
+        project.tasks.getByName('checkScalafix').dependsOn(task)
+    }
+
+    def 'checkScalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
+        given:
+        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        project.with {
+            sourceSets {
+                bar { }
+            }
+        }
+
+        when:
+        project.evaluate()
+
+        then:
+        ScalafixTask task = project.tasks.getByName('checkScalafixBar')
+        task.dependsOn.find { it.name == 'compileBarScala' }
+        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
+        task.rules.get().contains('Foo')
+        task.rules.get().contains('Bar')
+        project.tasks.getByName('checkScalafix').dependsOn(task)
     }
 
 //    def 'scalafix uses the .scalafix config file from the subproject by default'() {
@@ -256,15 +355,11 @@ class ScalafixPluginTest extends Specification {
 //        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
 //    }
 
-    private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = true,
+    private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = false,
                                 String rules = '', File configFile = project.file('.scalafix.conf')) {
         project.with {
             apply plugin: 'scala'
-            apply plugin: ScalafixPlugin
-
-            repositories {
-                mavenCentral()
-            }
+            apply plugin: 'io.github.cosmicsilence.scalafix'
             scalafix.autoConfigureSemanticdb = autoConfigureSemanticDb
             scalafix.configFile = configFile
             ext.'scalafix.rules' = rules

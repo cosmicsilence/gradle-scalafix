@@ -10,13 +10,13 @@ import spock.lang.Specification
 class ScalafixPluginFunctionalTest extends Specification {
 
     @Rule
-    public final TemporaryFolder testProjectDir = new TemporaryFolder();
-    private File settingsFile;
-    private File buildFile;
+    public final TemporaryFolder testProjectDir = new TemporaryFolder()
+    private File settingsFile
+    private File buildFile
 
     def setup() {
-        settingsFile = testProjectDir.newFile("settings.gradle");
-        buildFile = testProjectDir.newFile("build.gradle");
+        settingsFile = testProjectDir.newFile("settings.gradle")
+        buildFile = testProjectDir.newFile("build.gradle")
 
         buildFile.write'''
 plugins {
@@ -70,6 +70,44 @@ scalafix { autoConfigureSemanticdb = false }'''
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
+    }
+
+    def 'scalafix<SourceSet> task is created and runs compile<SourceSet>Scala by default when additional source set exists in the build script'() {
+        given:
+        buildFile.append '''
+sourceSets {
+    integTest { }
+}'''
+
+        when:
+        BuildResult buildResult = runGradleTask('scalafix', ['-m'])
+
+        then:
+        buildResult.output.contains(':compileScala SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':compileIntegTestScala SKIPPED')
+        buildResult.output.contains(':scalafixMain SKIPPED')
+        buildResult.output.contains(':scalafixTest SKIPPED')
+        buildResult.output.contains(':scalafixIntegTest SKIPPED')
+    }
+
+    def 'checkScalafix<SourceSet> task is created and runs compile<SourceSet>Scala by default when additional source set exists in the build script'() {
+        given:
+        buildFile.append '''
+sourceSets {
+    integTest { }
+}'''
+
+        when:
+        BuildResult buildResult = runGradleTask('checkScalafix', ['-m'])
+
+        then:
+        buildResult.output.contains(':compileScala SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':compileIntegTestScala SKIPPED')
+        buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':checkScalafixTest SKIPPED')
+        buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
 
     BuildResult runGradleTask(String task, List<String> arguments) {
