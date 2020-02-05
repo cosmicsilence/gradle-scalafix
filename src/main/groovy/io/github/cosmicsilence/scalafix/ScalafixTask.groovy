@@ -36,6 +36,7 @@ class ScalafixTask extends SourceTask {
 
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
+        def config = java.util.Optional.ofNullable(configFile.get()).map { it.asFile.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
@@ -61,7 +62,7 @@ class ScalafixTask extends SourceTask {
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
                 .withMode(mode)
-                .withConfig(configFile)
+                .withConfig(config)
                 .withRules(rules.get())
                 .withSourceroot(project.projectDir.toPath())
                 .withPaths(sourcePaths)

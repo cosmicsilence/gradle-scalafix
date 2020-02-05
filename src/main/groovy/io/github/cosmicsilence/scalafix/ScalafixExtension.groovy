@@ -39,10 +39,17 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        configFile = project.objects.fileProperty().convention(
-                project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE).asFile.exists()?
-                        project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE) :
-                        project.rootProject.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE))
+        configFile = project.objects.fileProperty()
+
+        def projectConfigFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+        def rootProjectConfigFile = project.rootProject.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+
+        if (projectConfigFile.asFile.exists()) {
+            configFile = project.objects.fileProperty().convention(projectConfigFile)
+        } else if (rootProjectConfigFile.asFile.exists()) {
+            configFile = project.objects.fileProperty().convention(rootProjectConfigFile)
+        }
+
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
     }

@@ -387,7 +387,7 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-        task.configFile.get().asFile.path == "${subproject.rootProject.projectDir}/.scalafix.conf"
+        !task.configFile.isPresent()
     }
 
     private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = false,
