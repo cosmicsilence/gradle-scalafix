@@ -84,7 +84,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             mode = taskMode
-            classpath = compileTask.classpath
+            classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath)
             scalaVersion = scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
             compileOptions = compileTask.scalaCompileOptions.additionalParameters ?: []
         }

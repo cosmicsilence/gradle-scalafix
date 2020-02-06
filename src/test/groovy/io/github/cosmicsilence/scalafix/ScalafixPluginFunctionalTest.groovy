@@ -110,6 +110,30 @@ sourceSets {
         buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
 
+    def 'all tasks should be grouped'() {
+        given:
+        buildFile.append '''
+sourceSets {
+    foo { }
+}'''
+
+        when:
+        BuildResult buildResult = runGradleTask('tasks', [])
+
+        then:
+        buildResult.output.contains(
+                """Scalafix tasks
+                  |--------------
+                  |checkScalafix - Fails if running Scalafix produces a diff or a linter error message. Won't write to files
+                  |checkScalafixFoo - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'foo'
+                  |checkScalafixMain - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'main'
+                  |checkScalafixTest - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'test'
+                  |scalafix - Runs Scalafix on Scala sources
+                  |scalafixFoo - Runs Scalafix on Scala sources in 'foo'
+                  |scalafixMain - Runs Scalafix on Scala sources in 'main'
+                  |scalafixTest - Runs Scalafix on Scala sources in 'test'""".stripMargin())
+    }
+
     BuildResult runGradleTask(String task, List<String> arguments) {
         arguments.add(task)
         return GradleRunner.create()
