@@ -1,10 +1,13 @@
 package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.Project
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.SetProperty
 
 class ScalafixExtension {
+
+    private static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
 
     /**
      * Scalafix configuration file. If not specified, the plugin will try to find
@@ -38,8 +41,16 @@ class ScalafixExtension {
     ScalafixExtension(Project project) {
         this.project = project
         configFile = project.objects.fileProperty()
+
+        configFile = project.objects.fileProperty().convention(
+                locateConfigFile(project) ?: locateConfigFile(project.rootProject))
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
+    }
+
+    private RegularFile locateConfigFile(Project project) {
+        def configFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+        return (configFile.asFile.exists() && configFile.asFile.isFile()) ? configFile : null
     }
 
     /**

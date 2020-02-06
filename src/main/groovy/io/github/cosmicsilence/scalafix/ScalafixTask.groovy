@@ -1,6 +1,5 @@
 package io.github.cosmicsilence.scalafix
 
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
@@ -11,15 +10,11 @@ import org.gradle.api.tasks.scala.ScalaCompile
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 
-import javax.inject.Inject
 import java.nio.file.Path
 
 class ScalafixTask extends SourceTask {
 
     private static final Logger logger = Logging.getLogger(ScalafixTask)
-    private static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
-
-    private final ScalafixMainMode mode
 
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
@@ -30,10 +25,8 @@ class ScalafixTask extends SourceTask {
     @Optional
     final ListProperty<String> rules = project.objects.listProperty(String)
 
-    @Inject
-    ScalafixTask(ScalafixMainMode mode) {
-        this.mode = mode
-    }
+    @Input
+    ScalafixMainMode mode
 
     @TaskAction
     void run() {
@@ -43,7 +36,7 @@ class ScalafixTask extends SourceTask {
 
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
-        def configFile = resolveConfigFile()
+        def config = java.util.Optional.ofNullable(configFile.get()).map { it.asFile.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
@@ -69,7 +62,7 @@ class ScalafixTask extends SourceTask {
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
                 .withMode(mode)
-                .withConfig(configFile)
+                .withConfig(config)
                 .withRules(rules.get())
                 .withSourceroot(project.projectDir.toPath())
                 .withPaths(sourcePaths)
@@ -117,16 +110,5 @@ class ScalafixTask extends SourceTask {
     private static URLClassLoader classloaderFrom(Configuration configuration, ClassLoader parent) {
         def jars = configuration.collect { it.toURI().toURL() }.toArray(new URL[0])
         new URLClassLoader(jars, parent)
-    }
-
-    // FIXME: this needs to be resolved in configuration time
-    private java.util.Optional<Path> resolveConfigFile() {
-        def defaultConfig = { Project proj ->
-            def file = proj.file(DEFAULT_CONFIG_FILE)
-            if (file.exists() && file.isFile()) file.toPath() else null
-        }
-
-        def file = configFile.map { it.asFile.toPath() }.orNull ?: defaultConfig(project) ?: defaultConfig(project.rootProject)
-        java.util.Optional.ofNullable(file)
     }
 }

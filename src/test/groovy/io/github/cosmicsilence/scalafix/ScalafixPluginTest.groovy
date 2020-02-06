@@ -4,6 +4,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.testfixtures.ProjectBuilder
+import scalafix.interfaces.ScalafixMainMode
 import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
@@ -124,6 +125,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -139,6 +141,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixTest task configuration validation'() {
@@ -154,6 +157,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -169,6 +173,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.CHECK
     }
 
     def 'scalafix task configuration validation'() {
@@ -198,6 +203,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -213,6 +219,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixTest task configuration validation'() {
@@ -228,6 +235,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
@@ -243,6 +251,7 @@ class ScalafixPluginTest extends Specification {
         task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
         task.rules.get().contains('Foo')
         task.rules.get().contains('Bar')
+        task.mode == ScalafixMainMode.IN_PLACE
     }
 
     def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
@@ -329,31 +338,69 @@ class ScalafixPluginTest extends Specification {
         project.tasks.getByName('checkScalafix').dependsOn(task)
     }
 
-//    def 'scalafix uses the .scalafix config file from the subproject by default'() {
-//        setup:
-//        Project subproject = ProjectBuilder.builder().withName('the-subproject')
-//                .withParent(project).build()
-//
-//        when:
-//        applyScalafixPlugin(subproject)
-//
-//        then:
-//        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-//        task.configFile.get().asFile.path == "${subproject.projectDir}/.scalafix.conf"
-//    }
-//
-//    def 'scalafix uses the .scalafix config file from the root project as the file is not present in the subproject'() {
-//        setup:
-//        Project subproject = ProjectBuilder.builder().withName('the-subproject')
-//                .withParent(project).build()
-//
-//        when:
-//        applyScalafixPlugin(subproject)
-//
-//        then:
-//        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-//        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-//    }
+    def 'scalafix uses the .scalafix config file provided via extension'() {
+        given:
+        Project subproject = ProjectBuilder.builder().withName('the-subproject')
+                .withParent(project).build()
+        subproject.projectDir.mkdir()
+        File subprojectScalafixConf = new File(subproject.projectDir, '.scalafix.conf')
+        subprojectScalafixConf.write 'rules = [Foo, Bar]'
+        File extensionScalafixConf = new File(subproject.projectDir, '.test-scalafix.conf')
+        extensionScalafixConf.write 'rules = [Foo, Bar]'
+        applyScalafixPlugin(subproject, false, '', extensionScalafixConf)
+
+        when:
+        subproject.evaluate()
+
+        then:
+        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        task.configFile.get().asFile.path == "${subproject.projectDir}/.test-scalafix.conf"
+    }
+
+    def 'scalafix uses the .scalafix config file from the subproject if it has not been provided via extension'() {
+        given:
+        Project subproject = ProjectBuilder.builder().withName('the-subproject')
+                .withParent(project).build()
+        subproject.projectDir.mkdir()
+        File subprojectScalafixConf = new File(subproject.projectDir, '.scalafix.conf')
+        subprojectScalafixConf.write 'rules = [Foo, Bar]'
+        applyScalafixPlugin(subproject, false, '', null)
+
+        when:
+        subproject.evaluate()
+
+        then:
+        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        task.configFile.get().asFile.path == "${subproject.projectDir}/.scalafix.conf"
+    }
+
+    def 'scalafix uses the .scalafix config file from the root project as the file is not present in the subproject and\
+ it is not specified in the extension'() {
+        given:
+        Project subproject = ProjectBuilder.builder().withParent(project).withName('the-subproject').build()
+        scalafixConf.delete()
+        applyScalafixPlugin(subproject, false, '', null)
+
+        when:
+        subproject.evaluate()
+
+        then:
+        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+    }
+
+    def 'scalafix does not use any scalafix.conf file as it is not provided'() {
+        given:
+        Project subproject = ProjectBuilder.builder().withParent(project).withName('the-subproject').build()
+        scalafixConf.delete()
+        applyScalafixPlugin(subproject, false, '', null)
+
+        when:
+        subproject.evaluate()
+
+        then:
+        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        !task.configFile.get()
+    }
 
     private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = false,
                                 String rules = '', File configFile = project.file('.scalafix.conf')) {
