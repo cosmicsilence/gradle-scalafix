@@ -69,7 +69,6 @@ class ScalafixPlugin implements Plugin<Project> {
             description = "${mainTask.description} in '${sourceSet.getName()}'"
             group = mainTask.group
             source = sourceSet.allScala.matching {
-                // This is applied after evaluating the project
                 include(extension.includes.get())
                 exclude(extension.excludes.get())
             }

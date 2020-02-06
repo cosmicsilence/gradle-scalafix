@@ -387,7 +387,20 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-        !task.configFile.isPresent()
+    }
+
+    def 'scalafix does not use any scalafix.conf file as it is not provided'() {
+        given:
+        Project subproject = ProjectBuilder.builder().withParent(project).withName('the-subproject').build()
+        scalafixConf.delete()
+        applyScalafixPlugin(subproject, false, '', null)
+
+        when:
+        subproject.evaluate()
+
+        then:
+        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        !task.configFile.get()
     }
 
     private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = false,

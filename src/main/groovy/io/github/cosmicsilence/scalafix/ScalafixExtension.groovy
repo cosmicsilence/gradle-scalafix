@@ -1,6 +1,7 @@
 package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.Project
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.SetProperty
 
@@ -41,17 +42,15 @@ class ScalafixExtension {
         this.project = project
         configFile = project.objects.fileProperty()
 
-        def projectConfigFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
-        def rootProjectConfigFile = project.rootProject.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
-
-        if (projectConfigFile.asFile.exists()) {
-            configFile = project.objects.fileProperty().convention(projectConfigFile)
-        } else if (rootProjectConfigFile.asFile.exists()) {
-            configFile = project.objects.fileProperty().convention(rootProjectConfigFile)
-        }
-
+        configFile = project.objects.fileProperty().convention(
+                locateConfigFile(project) ?: locateConfigFile(project.rootProject))
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
+    }
+
+    private RegularFile locateConfigFile(Project project) {
+        def configFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+        return (configFile.asFile.exists() && configFile.asFile.isFile()) ? configFile : null
     }
 
     /**
