@@ -353,7 +353,6 @@ class ScalafixPluginTest extends Specification {
         subproject.evaluate()
 
         then:
-        println subproject.tasks
         ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
         task.configFile.get().asFile.path == "${subproject.projectDir}/.test-scalafix.conf"
     }
