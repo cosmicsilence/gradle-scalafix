@@ -31,7 +31,7 @@ repositories {
         settingsFile.write "rootProject.name = 'hello-world'"
     }
 
-    def 'checkScalafixMain task runs compileScala by default'() {
+    def 'scalafixMain task runs compileScala by default'() {
         when:
         BuildResult buildResult = runGradleTask('scalafix', ['-m'])
 
@@ -42,7 +42,7 @@ repositories {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'checkScalafixMain task runs compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
+    def 'scalafixMain task runs compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
         given:
         buildFile.append '''
 scalafix { autoConfigureSemanticdb = true }'''
@@ -57,7 +57,7 @@ scalafix { autoConfigureSemanticdb = true }'''
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'checkScalafixMain task does not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+    def 'scalafixMain task does not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
         buildFile.append '''
 scalafix { autoConfigureSemanticdb = false }'''
@@ -70,6 +70,47 @@ scalafix { autoConfigureSemanticdb = false }'''
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
+    }
+
+    def 'checkScalafix task runs compileScala by default'() {
+        when:
+        BuildResult buildResult = runGradleTask('checkScalafix', ['-m'])
+
+        then:
+        buildResult.output.contains(':compileScala SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':checkScalafixTest SKIPPED')
+    }
+
+    def 'checkScalafix task runs compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
+        given:
+        buildFile.append '''
+scalafix { autoConfigureSemanticdb = true }'''
+
+        when:
+        BuildResult buildResult = runGradleTask('checkScalafix', ['-m'])
+
+        then:
+        buildResult.output.contains(':compileScala SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':checkScalafixTest SKIPPED')
+    }
+
+    def 'checkScalafix task does not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+        given:
+        buildFile.append '''
+scalafix { autoConfigureSemanticdb = false }'''
+
+        when:
+        BuildResult buildResult = runGradleTask('checkScalafix', ['-m'])
+
+        then:
+        !buildResult.output.contains(':compileScala SKIPPED')
+        !buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':checkScalafixTest SKIPPED')
     }
 
     def 'scalafix<SourceSet> task is created and runs compile<SourceSet>Scala by default when additional source set exists in the build script'() {
