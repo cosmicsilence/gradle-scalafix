@@ -7,7 +7,7 @@ import org.gradle.api.provider.SetProperty
 
 class ScalafixExtension {
 
-    private static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
+    protected static final String DEFAULT_CONFIG_FILE = ".scalafix.conf"
 
     /**
      * Scalafix configuration file. If not specified, the plugin will try to find
