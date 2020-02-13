@@ -58,7 +58,7 @@ object HelloWorld extends App {
     }
 
 
-    def 'checkScalafixMain task runs compileScala by default'() {
+    def 'scalafix semantic rule RemoveUnused works'() {
         when:
         BuildResult buildResult = runGradleTask('scalafix', [ "-Pscalafix.rules=RemoveUnused", "--stacktrace" ])
 
