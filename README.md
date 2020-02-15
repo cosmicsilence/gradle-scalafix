@@ -11,7 +11,7 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 ## Project Status
 This project is currently under active development. Even though we feel it is already feature complete (provides more or 
 less the same level of functionality as the official [plugin for sbt](https://github.com/scalacenter/sbt-scalafix)), we
-haven't released a stable version yet. That doesn't mean you cannot use it yet. If you would like to be an earlier
+haven't released a stable version yet. That doesn't mean you cannot use it yet. If you would like to be an early
 adopter, please try out the latest beta version published to Bintray (see instructions below). Here is a summary of all
 supported features and outstanding items:
 
@@ -22,7 +22,7 @@ supported features and outstanding items:
 - [x] Support for Ant-like patterns to include/exclude source files
 - [x] Support for running a single or subset of available rules
 - [ ] Unit/functional tests (in progress...)
-- [ ] Test plugin in large real world code bases
+- [ ] Test plugin in large real world code bases (in progress...)
 - [x] Documentation
 
 Please try it out and give us feedback. If you hit any bug, please file an issue. Contributions are very welcome :).
@@ -37,7 +37,7 @@ To use the Scalafix plugin, please include the following snippet in your build s
 buildscript {
     repositories {
         maven {
-            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on the Gradle Plugin Portal :)
+            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on Gradle Plugin Portal :)
         }
     }
     dependencies {
