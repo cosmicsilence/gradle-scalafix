@@ -1,7 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -35,7 +34,7 @@ class ScalafixTask extends SourceTask {
 
     @Input
     @Optional
-    FileCollection classpath
+    List<File> classpath
 
     @Input
     File sourceRoot
@@ -49,7 +48,7 @@ class ScalafixTask extends SourceTask {
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
         def configPath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
-        def projectClasspath = classpath.collect { it.toPath() }
+        def projectClasspath = (classpath ?: []).collect { it.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)

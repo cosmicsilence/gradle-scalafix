@@ -132,11 +132,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -160,11 +160,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.contains("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -189,11 +189,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -217,11 +217,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -260,11 +260,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -288,11 +288,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -317,11 +317,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -345,11 +345,11 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -376,13 +376,13 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/foo")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/foo")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/foo"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/foo"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -408,13 +408,13 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/bar")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/bar")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/bar"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/bar"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -441,13 +441,13 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/foo")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/foo")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/foo"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/foo"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -473,13 +473,13 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
         ].toSet()
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/bar")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/scala/test")
-        task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/bar")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/main")
-        !task.classpath.asPath.contains("${scalaProject.projectDir}/build/classes/java/test")
-        task.classpath.asPath.contains("scala-library-${SCALA_VERSION}.jar")
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/bar"))
+        task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/bar"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/main"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/scala/test"))
+        !task.classpath.contains(new File(scalaProject.projectDir, "/build/classes/java/test"))
+        task.classpath.find { it.path.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
