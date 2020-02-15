@@ -9,6 +9,8 @@ import org.gradle.api.tasks.*
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 
+import java.nio.file.Paths
+
 class ScalafixTask extends SourceTask {
 
     private static final Logger logger = Logging.getLogger(ScalafixTask)
@@ -34,10 +36,10 @@ class ScalafixTask extends SourceTask {
 
     @Input
     @Optional
-    List<File> classpath
+    List<String> classpath
 
     @Input
-    File sourceRoot
+    String sourceRoot
 
     @TaskAction
     void run() {
@@ -47,8 +49,7 @@ class ScalafixTask extends SourceTask {
 
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
-        def configPath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
-        def projectClasspath = (classpath ?: []).collect { it.toPath() }
+        def configFilePath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
         def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
         def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
         def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
@@ -56,13 +57,13 @@ class ScalafixTask extends SourceTask {
         logger.debug(
                 """Running Scalafix with the following arguments:
                   | - Mode: ${mode}
-                  | - Config file: ${configFile}
+                  | - Config file: ${configFilePath}
                   | - Custom rules classpath: ${customRulesClasspath.asPath}
                   | - Scala version: ${scalaVersion}
                   | - Scalac options: ${compileOptions}
                   | - Source root: ${sourceRoot}
                   | - Sources: ${sourcePaths}
-                  | - Classpath: ${projectClasspath}
+                  | - Classpath: ${classpath}
                   |""".stripMargin())
 
         def interfacesClassloader = new InterfacesClassloader(getClass().classLoader)
@@ -72,12 +73,12 @@ class ScalafixTask extends SourceTask {
         def args = Scalafix.classloadInstance(cliClassloader)
                 .newArguments()
                 .withMode(mode)
-                .withConfig(configPath)
+                .withConfig(configFilePath)
                 .withRules(rules.get())
-                .withSourceroot(sourceRoot.toPath())
+                .withSourceroot(Paths.get(sourceRoot))
                 .withPaths(sourcePaths)
                 .withToolClasspath(customRulesClassloader)
-                .withClasspath(projectClasspath)
+                .withClasspath((classpath ?: []).collect { Paths.get(it)} )
                 .withScalaVersion(scalaVersion)
                 .withScalacOptions(compileOptions)
 

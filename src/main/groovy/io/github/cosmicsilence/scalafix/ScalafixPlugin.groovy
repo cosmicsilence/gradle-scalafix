@@ -73,7 +73,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def task = project.tasks.create(name, ScalafixTask) {
             description = "${mainTask.description} in '${sourceSet.getName()}'"
             group = mainTask.group
-            sourceRoot = project.projectDir
+            sourceRoot = project.projectDir.path
             source = sourceSet.allScala.matching {
                 include(extension.includes.get())
                 exclude(extension.excludes.get())
@@ -84,7 +84,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             mode = taskMode
-            classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).files.toList()
+            classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList().collect { it.path }
             scalaVersion = scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
             compileOptions = compileTask.scalaCompileOptions.additionalParameters ?: []
         }
