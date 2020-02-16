@@ -55,8 +55,10 @@ class ScalafixPlugin implements Plugin<Project> {
         project.tasks.check.dependsOn checkTask
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
-            configureTaskForSourceSet(sourceSet, CHECK, checkTask, project, extension)
+            if (!extension.ignoreSourceSets.get().contains(sourceSet.name)) {
+                configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
+                configureTaskForSourceSet(sourceSet, CHECK, checkTask, project, extension)
+            }
         }
     }
 

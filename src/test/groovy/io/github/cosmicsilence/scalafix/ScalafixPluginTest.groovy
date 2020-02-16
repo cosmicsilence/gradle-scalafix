@@ -603,6 +603,24 @@ class ScalafixPluginTest extends Specification {
         task.source.asPath == "${scalaProject.projectDir}/src/main/scala/Duck.scala"
     }
 
+    def 'tasks should not be configured for ignored source sets'() {
+        given:
+        def scalaProject = buildScalaProject(null, ["bar"])
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.ignoreSourceSets = [ "main", "bar" ]
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        !scalaProject.tasks.findByName('scalafixMain')
+        !scalaProject.tasks.findByName('checkScalafixMain')
+        !scalaProject.tasks.findByName('scalafixBar')
+        !scalaProject.tasks.findByName('checkScalafixBar')
+        scalaProject.tasks.findByName('scalafixTest')
+        scalaProject.tasks.findByName('checkScalafixTest')
+    }
+
     private applyScalafixPlugin(Project project,
                                 Boolean autoConfigureSemanticDb = false,
                                 String rules = '',

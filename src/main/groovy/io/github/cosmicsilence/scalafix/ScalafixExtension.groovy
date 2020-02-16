@@ -31,6 +31,11 @@ class ScalafixExtension {
     final SetProperty<String> excludes
 
     /**
+     * Name of source sets to which the Scalafix plugin should not be applied.
+     */
+    final SetProperty<String> ignoreSourceSets
+
+    /**
      * Auto configures the SemanticDB Scala compiler. This is required to run
      * semantic rules.
      */
@@ -46,6 +51,7 @@ class ScalafixExtension {
                 locateConfigFile(project) ?: locateConfigFile(project.rootProject))
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
+        ignoreSourceSets = project.objects.setProperty(String)
     }
 
     private RegularFile locateConfigFile(Project project) {
