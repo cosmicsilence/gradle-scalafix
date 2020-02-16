@@ -113,14 +113,12 @@ tasks.withType(ScalaCompile) {
 
 The following Gradle tasks are created when the Scalafix plugin is applied to a project:
 
-* *`scalafix`* - runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter
-rules will print diagnostics to Gradle's output. 
-* *`scalafix<SourceSet>`* - same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*, *`scalafixFoo`*).
-* *`checkScalafix`* - checks that source files of all source sets are compliant to rewrite and linter rules. Any violation
-is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically
-triggered by the `check` task.
-* *`checkScalafix<SourceSet>`* - same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*, *`checkScalafixBar`*).
-
+| Name                       | Description          |
+|:---------------------------|----------------------|
+|*`scalafix`*                |Runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter rules will print diagnostics to Gradle's output.|
+|*`scalafix<SourceSet>`*     |Same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*, *`scalafixFoo`*).|
+|*`checkScalafix`*           |Checks that source files of all source sets are compliant to rewrite and linter rules. Any violation is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically triggered by the `check` task.|
+|*`checkScalafix<SourceSet>`*|Same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*, *`checkScalafixBar`*).|
 
 >**NOTE:** If the **SemanticDB** Scala compiler plugin is enabled (see the [extension](#extension) section for more details),
 any of these tasks will trigger partial or complete compilation of Scala source files.
