@@ -50,7 +50,7 @@ bintray {
             name = project.version
         }
     }
-    publications = ['jar']
+    publications = ['pluginMaven']
 }
 
 def pomConfig = {
@@ -94,8 +94,7 @@ publishing {
         }
     }
     publications {
-        jar(MavenPublication) {
-            from components.java
+        pluginMaven(MavenPublication) {
             artifact sourcesJar
             artifact javadocJar
             pom.withXml {
