@@ -20,6 +20,10 @@ dependencies {
     testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
 }
 
+validateTaskProperties {
+    failOnWarning = true
+}
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
     from sourceSets.main.allSource
@@ -46,7 +50,7 @@ bintray {
             name = project.version
         }
     }
-    publications = ['jar']
+    publications = ['pluginMaven']
 }
 
 def pomConfig = {
@@ -90,8 +94,7 @@ publishing {
         }
     }
     publications {
-        jar(MavenPublication) {
-            from components.java
+        pluginMaven(MavenPublication) {
             artifact sourcesJar
             artifact javadocJar
             pom.withXml {

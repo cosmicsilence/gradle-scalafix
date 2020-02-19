@@ -11,7 +11,7 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 ## Project Status
 This project is currently under active development. Even though we feel it is already feature complete (provides more or 
 less the same level of functionality as the official [plugin for sbt](https://github.com/scalacenter/sbt-scalafix)), we
-haven't released a stable version yet. That doesn't mean you cannot use it yet. If you would like to be an earlier
+haven't released a stable version yet. That doesn't mean you cannot use it yet. If you would like to be an early
 adopter, please try out the latest beta version published to Bintray (see instructions below). Here is a summary of all
 supported features and outstanding items:
 
@@ -22,7 +22,7 @@ supported features and outstanding items:
 - [x] Support for Ant-like patterns to include/exclude source files
 - [x] Support for running a single or subset of available rules
 - [ ] Unit/functional tests (in progress...)
-- [ ] Test plugin in large real world code bases
+- [ ] Test plugin in large real world code bases (in progress...)
 - [x] Documentation
 
 Please try it out and give us feedback. If you hit any bug, please file an issue. Contributions are very welcome :).
@@ -37,7 +37,7 @@ To use the Scalafix plugin, please include the following snippet in your build s
 buildscript {
     repositories {
         maven {
-            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on the Gradle Plugin Portal :)
+            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on Gradle Plugin Portal :)
         }
     }
     dependencies {
@@ -113,14 +113,12 @@ tasks.withType(ScalaCompile) {
 
 The following Gradle tasks are created when the Scalafix plugin is applied to a project:
 
-* *`scalafix`* - runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter
-rules will print diagnostics to Gradle's output. 
-* *`scalafix<SourceSet>`* - same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*).
-* *`checkScalafix`* - check that source files of all source sets are compliant to rewrite and linter rules. Any violation
-is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically
-triggered by the `check` task.
-* *`checkScalafix<SourceSet>`* - same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*).
-
+| Name                       | Description          |
+|:---------------------------|----------------------|
+|*`scalafix`*                |Runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter rules will print diagnostics to Gradle's output.|
+|*`scalafix<SourceSet>`*     |Same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*, *`scalafixFoo`*).|
+|*`checkScalafix`*           |Checks that source files of all source sets are compliant to rewrite and linter rules. Any violation is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically triggered by the `check` task.|
+|*`checkScalafix<SourceSet>`*|Same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*, *`checkScalafixBar`*).|
 
 >**NOTE:** If the **SemanticDB** Scala compiler plugin is enabled (see the [extension](#extension) section for more details),
 any of these tasks will trigger partial or complete compilation of Scala source files.
@@ -137,6 +135,7 @@ The plugin defines an extension with the namespace `scalafix`. The following pro
 |`configFile`              |`String`              |\<empty\>      |Same as above. |
 |`includes`                |`SetProperty<String>` |\<empty\>      |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. By default all files are included. |
 |`excludes`                |`SetProperty<String>` |\<empty\>      |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. By default no files are excluded. |
+|`ignoreSourceSets`        |`SetProperty<String>` |\<empty\>      |Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice).|
 |`autoConfigureSemanticdb` |`Boolean`             |`true`         |Used to indicate whether the Scalafix plugin should auto-configure the SemanticDB compiler plugin. This is mandatory to be able to run Scalafix's semantic rules. If set to `true` (default), the Scalafix Gradle tasks will cause the Scala compiler to kick in whenever they are run. If your project only uses syntactic rules, then it's highly recommended that this property is set to `false` as the SemanticDB compiler plugin may cause a substantial slow down in your build. The Scalafix plugin auto-configures only the necessary parameters for SemanticDB (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult [this section](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) on the Scalafix website as well as the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB settings can be informed through the Gradle's `ScalaCompile` task as shown earlier. |
 
 
@@ -146,6 +145,7 @@ scalafix {
     configFile = file("config/myscalafix.conf")
     includes = ["**/com/**/*.scala"]
     excludes = ["**/generated/**"]
+    ignoreSourceSets = ["scoverage"]
     autoConfigureSemanticdb = false
 }
 ```

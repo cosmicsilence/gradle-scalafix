@@ -3,45 +3,43 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
 import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    private Project project
-    private File scalafixConf
+    private static final String SCALA_VERSION = "2.12.8"
+    private static final List<String> DEFAULT_COMPILER_OPTS = ["-Ywarn-unused" ]
+
+    private Project scalaProject
 
     def setup() {
-        project = ProjectBuilder.builder().build()
-        project.repositories {
-            mavenCentral()
-        }
-
-        scalafixConf = new File(project.projectDir, 'scalafix.conf')
-        scalafixConf.write 'rules = [Foo, Bar]'
+        scalaProject = buildScalaProject()
     }
 
     def 'The plugin adds the scalafix configuration, tasks and extension to the project'() {
         given:
-        applyScalafixPlugin(project)
+        applyScalafixPlugin(scalaProject)
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        project.tasks.scalafix
-        project.tasks.scalafixMain
-        project.tasks.scalafixTest
-        project.tasks.checkScalafix
-        project.tasks.checkScalafixMain
-        project.tasks.checkScalafixTest
-        project.extensions.scalafix
-        project.configurations.scalafix
+        scalaProject.tasks.scalafix
+        scalaProject.tasks.scalafixMain
+        scalaProject.tasks.scalafixTest
+        scalaProject.tasks.checkScalafix
+        scalaProject.tasks.checkScalafixMain
+        scalaProject.tasks.checkScalafixTest
+        scalaProject.extensions.scalafix
+        scalaProject.configurations.scalafix
     }
 
     def 'The plugin throws an exception if the scala plugin has not been applied to the project'() {
         given:
+        def project = ProjectBuilder.builder().build()
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
 
         when:
@@ -53,8 +51,10 @@ class ScalafixPluginTest extends Specification {
 
     def 'The plugin should not throw any exception if the scala plugin is applied after it'() {
         given:
+        def project = ProjectBuilder.builder().build()
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
         project.pluginManager.apply 'scala'
+        project.scalafix.autoConfigureSemanticdb = false
 
         when:
         project.evaluate()
@@ -65,351 +65,615 @@ class ScalafixPluginTest extends Specification {
 
     def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
         given:
-        applyScalafixPlugin(project, true)
+        applyScalafixPlugin(scalaProject, true)
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        def compileScalaParameters = project.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters
-        compileScalaParameters.contains('-Yrangepos')
-        compileScalaParameters.find { it.contains('-P:semanticdb:sourceroot:') }
+        def compileScalaParameters = scalaProject.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters
+        compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileScalaParameters.find {
-            it.contains('-Xplugin:') && it.contains('semanticdb-scalac_2.12.10-4.3.0.jar') && it.contains('scala-library-2.12.10.jar')
+            it.startsWith('-Xplugin:') &&
+                    it.contains("semanticdb-scalac_${BuildInfo.scala212Version}-${BuildInfo.scalametaVersion}.jar") &&
+                    it.contains("scala-library-${BuildInfo.scala212Version}.jar")
         }
 
-        def compileTestScalaParameters = project.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters
-        compileTestScalaParameters.contains('-Yrangepos')
-        compileTestScalaParameters.find { it.contains('-P:semanticdb:sourceroot:') }
+        def compileTestScalaParameters = scalaProject.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters
+        compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileTestScalaParameters.find {
-            it.contains('-Xplugin:') && it.contains('semanticdb-scalac_2.12.10-4.3.0.jar') && it.contains('scala-library-2.12.10.jar')
+            it.startsWith('-Xplugin:') &&
+                    it.contains("semanticdb-scalac_${BuildInfo.scala212Version}-${BuildInfo.scalametaVersion}.jar") &&
+                    it.contains("scala-library-${BuildInfo.scala212Version}.jar")
         }
     }
 
     def 'Semanticdb configuration is not added if autoConfigureSemanticdb is set to false'() {
         given:
-        applyScalafixPlugin(project, false)
+        applyScalafixPlugin(scalaProject, false)
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        !project.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters
-        !project.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters
+        scalaProject.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
     def 'checkScalafix task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject)
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        Task task = project.tasks.getByName('checkScalafix')
+        Task task = scalaProject.tasks.getByName('checkScalafix')
         task.dependsOn.find { it.name == 'checkScalafixMain' }
         task.dependsOn.find { it.name == 'checkScalafixTest' }
-        project.tasks.getByName('check').dependsOn.find { it.name == 'checkScalafix' }
+        scalaProject.tasks.getByName('check').dependsOn.find { it.name == 'checkScalafix' }
     }
 
     def 'checkScalafixMain task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixMain')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixMain')
         task.dependsOn.find{ it.name == 'compileScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'checkScalafixTest task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixTest')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixTest')
         task.dependsOn.find{ it.name == 'compileTestScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafix task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject)
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        Task task = project.tasks.getByName('scalafix')
+        Task task = scalaProject.tasks.getByName('scalafix')
         task.dependsOn.find { it.name == 'scalafixMain' }
         task.dependsOn.find { it.name == 'scalafixTest' }
-        !project.tasks.getByName('check').dependsOn.find { it.name == 'scalafix' }
+        !scalaProject.tasks.getByName('check').dependsOn.find { it.name == 'scalafix' }
     }
 
     def 'scalafixMain task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
         task.dependsOn.find { it.name == 'compileScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafixTest task configuration validation'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixTest')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixTest')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixTest')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixTest')
         task.dependsOn.find { it.name == 'compileTestScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
         task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
-        project.with {
-            sourceSets {
-                foo { }
-            }
-        }
+        def scalaProject = buildScalaProject(null, ["foo"])
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixFoo')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixFoo')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
-        project.tasks.getByName('scalafix').dependsOn(task)
+        scalaProject.tasks.getByName('scalafix').dependsOn(task)
+        task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/foo/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'scalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
-        project.with {
-            sourceSets {
-                bar { }
-            }
-        }
+        def scalaProject = buildScalaProject(null, ["bar"])
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('scalafixBar')
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixBar')
         task.dependsOn.find { it.name == 'compileBarScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
-        project.tasks.getByName('scalafix').dependsOn(task)
+        scalaProject.tasks.getByName('scalafix').dependsOn(task)
+        task.mode == ScalafixMainMode.IN_PLACE
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/bar/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'checkScalafix<SourceSet> task configuration validation when additional source set is present'() {
         given:
-        applyScalafixPlugin(project, false, 'Foo,Bar', project.file('.scalafix.conf'))
-        project.with {
-            sourceSets {
-                foo { }
-            }
-        }
+        def scalaProject = buildScalaProject(null, ["foo"])
+        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixFoo')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixFoo')
         task.dependsOn.isEmpty()
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
-        project.tasks.getByName('checkScalafix').dependsOn(task)
+        scalaProject.tasks.getByName('checkScalafix').dependsOn(task)
+        task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/foo/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions == DEFAULT_COMPILER_OPTS
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
     def 'checkScalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
         given:
-        applyScalafixPlugin(project, true, 'Foo,Bar', project.file('.scalafix.conf'))
-        project.with {
-            sourceSets {
-                bar { }
-            }
-        }
+        def scalaProject = buildScalaProject(null, ["bar"])
+        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
         when:
-        project.evaluate()
+        scalaProject.evaluate()
 
         then:
-        ScalafixTask task = project.tasks.getByName('checkScalafixBar')
+        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixBar')
         task.dependsOn.find { it.name == 'compileBarScala' }
-        task.configFile.get().asFile.path == "${project.projectDir}/.scalafix.conf"
-        task.rules.get().contains('Foo')
-        task.rules.get().contains('Bar')
-        project.tasks.getByName('checkScalafix').dependsOn(task)
+        scalaProject.tasks.getByName('checkScalafix').dependsOn(task)
+        task.mode == ScalafixMainMode.CHECK
+        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
+        task.sourceRoot == scalaProject.projectDir.path
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/bar/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
+                new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
+        ].toSet()
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
+        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        !task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
+        task.compileOptions.find { it.startsWith("-Xplugin:") }
+        task.scalaVersion == SCALA_VERSION
+        task.rules.get().containsAll(['Foo', 'Bar'])
     }
 
-    def 'scalafix uses the .scalafix config file provided via extension'() {
+    def 'scalafix uses the config file provided via extension'() {
         given:
-        Project subproject = ProjectBuilder.builder().withName('the-subproject')
-                .withParent(project).build()
-        subproject.projectDir.mkdir()
-        File subprojectScalafixConf = new File(subproject.projectDir, '.scalafix.conf')
-        subprojectScalafixConf.write 'rules = [Foo, Bar]'
-        File extensionScalafixConf = new File(subproject.projectDir, '.test-scalafix.conf')
-        extensionScalafixConf.write 'rules = [Foo, Bar]'
-        applyScalafixPlugin(subproject, false, '', extensionScalafixConf)
+        Project rootProject = ProjectBuilder.builder().withName("root").build()
+        File rootProjectConfig = new File(rootProject.projectDir, '.scalafix.conf')
+        rootProjectConfig.write 'rules = [Foo, Bar]'
+
+        Project subProject = buildScalaProject(rootProject)
+        File subProjectConfig = new File(subProject.projectDir, '.scalafix.conf')
+        subProjectConfig.write 'rules = [Foo, Bar]'
+
+        File extensionConfig = new File(subProject.projectDir, '.custom.conf')
+        extensionConfig.write 'rules = [Foo, Bar]'
+
+        applyScalafixPlugin(subProject, false, '', extensionConfig)
 
         when:
-        subproject.evaluate()
+        subProject.evaluate()
 
         then:
-        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-        task.configFile.get().asFile.path == "${subproject.projectDir}/.test-scalafix.conf"
+        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        task.configFile.get().asFile.path == extensionConfig.path
     }
 
-    def 'scalafix uses the .scalafix config file from the subproject if it has not been provided via extension'() {
+    def 'scalafix uses the config file from the subproject if it has not been provided via extension'() {
         given:
-        Project subproject = ProjectBuilder.builder().withName('the-subproject')
-                .withParent(project).build()
-        subproject.projectDir.mkdir()
-        File subprojectScalafixConf = new File(subproject.projectDir, '.scalafix.conf')
-        subprojectScalafixConf.write 'rules = [Foo, Bar]'
-        applyScalafixPlugin(subproject, false, '', null)
+        Project rootProject = ProjectBuilder.builder().withName("root").build()
+        File rootProjectConfig = new File(rootProject.projectDir, '.scalafix.conf')
+        rootProjectConfig.write 'rules = [Foo, Bar]'
+
+        Project subProject = buildScalaProject(rootProject)
+        File subProjectConfig = new File(subProject.projectDir, '.scalafix.conf')
+        subProjectConfig.write 'rules = [Foo, Bar]'
+
+        applyScalafixPlugin(subProject)
 
         when:
-        subproject.evaluate()
+        subProject.evaluate()
 
         then:
-        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
-        task.configFile.get().asFile.path == "${subproject.projectDir}/.scalafix.conf"
+        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        task.configFile.get().asFile.path == subProjectConfig.path
     }
 
-    def 'scalafix uses the .scalafix config file from the root project as the file is not present in the subproject and\
- it is not specified in the extension'() {
+    def 'scalafix uses the config file from the root project as the file is not present in the subproject and it is not specified in the extension'() {
         given:
-        Project subproject = ProjectBuilder.builder().withParent(project).withName('the-subproject').build()
-        scalafixConf.delete()
-        applyScalafixPlugin(subproject, false, '', null)
+        Project rootProject = ProjectBuilder.builder().withName("root").build()
+        File rootProjectConfig = new File(rootProject.projectDir, '.scalafix.conf')
+        rootProjectConfig.write 'rules = [Foo, Bar]'
+
+        Project subProject = buildScalaProject(rootProject)
+        applyScalafixPlugin(subProject)
 
         when:
-        subproject.evaluate()
+        subProject.evaluate()
 
         then:
-        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        task.configFile.get().asFile.path == rootProjectConfig.path
     }
 
-    def 'scalafix does not use any scalafix.conf file as it is not provided'() {
+    def 'scalafix does not use any config file as it is not provided'() {
         given:
-        Project subproject = ProjectBuilder.builder().withParent(project).withName('the-subproject').build()
-        scalafixConf.delete()
-        applyScalafixPlugin(subproject, false, '', null)
+        Project rootProject = ProjectBuilder.builder().withName("root").build()
+        Project subProject = buildScalaProject(rootProject)
+        applyScalafixPlugin(subProject)
 
         when:
-        subproject.evaluate()
+        subProject.evaluate()
 
         then:
-        ScalafixTask task = subproject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
         !task.configFile.get()
     }
 
-    private applyScalafixPlugin(Project project, Boolean autoConfigureSemanticDb = false,
-                                String rules = '', File configFile = project.file('.scalafix.conf')) {
+    def 'scalafix should only select sources matching include filter'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.includes = [ "**/Cat.scala", "**/Duck.scala" ]
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        task.source.files == [
+                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
+                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
+        ].toSet()
+    }
+
+    def 'scalafix should not select sources matching exclude filter'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.excludes = [ "**/Cat.scala", "**/Duck.scala" ]
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        task.source.asPath == "${scalaProject.projectDir}/src/main/scala/Dog.scala"
+    }
+
+    def 'scalafix should select sources matching include filter and not matching exclude filter'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.includes = [ "**/D*.scala" ]
+        scalaProject.scalafix.excludes = [ "**/*g.scala" ]
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        task.source.asPath == "${scalaProject.projectDir}/src/main/scala/Duck.scala"
+    }
+
+    def 'tasks should not be configured for ignored source sets'() {
+        given:
+        def scalaProject = buildScalaProject(null, ["bar"])
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.ignoreSourceSets = [ "main", "bar" ]
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        !scalaProject.tasks.findByName('scalafixMain')
+        !scalaProject.tasks.findByName('checkScalafixMain')
+        !scalaProject.tasks.findByName('scalafixBar')
+        !scalaProject.tasks.findByName('checkScalafixBar')
+        scalaProject.tasks.findByName('scalafixTest')
+        scalaProject.tasks.findByName('checkScalafixTest')
+    }
+
+    private applyScalafixPlugin(Project project,
+                                Boolean autoConfigureSemanticDb = false,
+                                String rules = '',
+                                File configFile = null) {
         project.with {
-            apply plugin: 'scala'
             apply plugin: 'io.github.cosmicsilence.scalafix'
+
             scalafix.autoConfigureSemanticdb = autoConfigureSemanticDb
             scalafix.configFile = configFile
             ext.'scalafix.rules' = rules
         }
+    }
+
+    private Project buildScalaProject(Project parent = null, List<String> extraSourceSets = []) {
+        def project = ProjectBuilder.builder().withParent(parent).build()
+        def standardSourceSets = ["main", "test"]
+
+        (standardSourceSets + extraSourceSets).forEach {
+            def folder = new File(project.projectDir, "/src/$it/scala/")
+            folder.mkdirs()
+            ["Dog", "Cat", "Duck"].forEach {
+                def sourceFile = new File(folder, "${it}.scala")
+                sourceFile.write "class $it"
+            }
+        }
+
+        project.with {
+            apply plugin: 'scala'
+
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                compile "org.scala-lang:scala-library:$SCALA_VERSION"
+            }
+
+            sourceSets {
+                extraSourceSets.collect {
+                    "${it}" {
+                        scala {
+                            srcDir "src/$it/scala"
+                        }
+                        compileClasspath += main.compileClasspath
+                    }
+                }
+            }
+
+            tasks.withType(ScalaCompile) {
+                scalaCompileOptions.additionalParameters = DEFAULT_COMPILER_OPTS
+            }
+        }
+
+        return project
     }
 }

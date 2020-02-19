@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.scala.ScalaPlugin
+import org.gradle.api.tasks.ScalaRuntime
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.scala.ScalaCompile
 import scalafix.interfaces.ScalafixMainMode
@@ -35,11 +36,11 @@ class ScalafixPlugin implements Plugin<Project> {
                 throw new GradleException("The 'scala' plugin must be applied")
             }
 
-            configureTasks(project, extension)
-
             if (extension.autoConfigureSemanticdb) {
                 configureSemanticdbCompilerPlugin(project)
             }
+
+            configureTasks(project, extension)
         }
     }
 
@@ -54,8 +55,10 @@ class ScalafixPlugin implements Plugin<Project> {
         project.tasks.check.dependsOn checkTask
 
         project.sourceSets.each { SourceSet sourceSet ->
-            configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
-            configureTaskForSourceSet(sourceSet, CHECK, checkTask, project, extension)
+            if (!extension.ignoreSourceSets.get().contains(sourceSet.name)) {
+                configureTaskForSourceSet(sourceSet, IN_PLACE, fixTask, project, extension)
+                configureTaskForSourceSet(sourceSet, CHECK, checkTask, project, extension)
+            }
         }
     }
 
@@ -64,26 +67,33 @@ class ScalafixPlugin implements Plugin<Project> {
                                            Task mainTask,
                                            Project project,
                                            ScalafixExtension extension) {
+        ScalaCompile compileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
+        def scalaRuntime = project.extensions.findByType(ScalaRuntime)
+        def scalaJar = scalaRuntime.findScalaJar(compileTask.classpath, 'library')
+
         def name = mainTask.name + sourceSet.name.capitalize()
         def task = project.tasks.create(name, ScalafixTask) {
             description = "${mainTask.description} in '${sourceSet.getName()}'"
             group = mainTask.group
+            sourceRoot = project.projectDir.path
             source = sourceSet.allScala.matching {
                 include(extension.includes.get())
                 exclude(extension.excludes.get())
             }
             configFile = extension.configFile
             rules.set(project.provider({
-                String prop = project.findProperty(RULES_PROPERTY) ?: ""
+                String prop = project.findProperty(RULES_PROPERTY) ?: ''
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             mode = taskMode
+            classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList().collect { it.path }
+            scalaVersion = scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
+            compileOptions = compileTask.scalaCompileOptions.additionalParameters ?: []
         }
-
         mainTask.dependsOn task
 
         if (extension.autoConfigureSemanticdb) {
-            task.dependsOn project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
+            task.dependsOn compileTask
         }
     }
 
@@ -91,9 +101,9 @@ class ScalafixPlugin implements Plugin<Project> {
         def dependency = project.dependencies.create(BuildInfo.semanticdbArtifact)
         def configuration = project.configurations.detachedConfiguration(dependency)
         def compilerParameters = [
-                "-Xplugin:" + configuration.asPath,
-                "-P:semanticdb:sourceroot:" + project.projectDir,
-                "-Yrangepos"
+                '-Xplugin:' + configuration.asPath,
+                '-P:semanticdb:sourceroot:' + project.projectDir,
+                '-Yrangepos'
         ]
 
         project.tasks.withType(ScalaCompile) { ScalaCompile task ->
