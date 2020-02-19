@@ -152,7 +152,7 @@ sourceSets {
         buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
 
-    def 'scalafix semantic rule RemoveUnused works'() {
+    def 'scalafix semantic rule RemoveUnused fixes scala code'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
 
@@ -163,7 +163,37 @@ sourceSets {
         scalaSrcFile.getText() == ScalafixTestConstants.FIXED_SCALA_CODE
     }
 
-    def 'scalafix syntactic rule DisableSyntax.noVars works'() {
+    def 'checkScalafix semantic rule RemoveUnused fails a build'() {
+        given:
+        scalafixConfFile.write "rules = [ RemoveUnused ]"
+
+        when:
+        runGradleTask('checkScalafix', [ ])
+
+        then:
+        // code is not changed on disk
+        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        final UnexpectedBuildFailure err = thrown()
+        err.message.contains("A file on disk does not match the file contents if it was fixed with Scalafix")
+    }
+
+
+    def 'scalafix semantic rule RemoveUnused skips excluded scala files'() {
+        given:
+        scalafixConfFile.write "rules = [ RemoveUnused ]"
+        buildFile.append '''
+scalafix {
+  excludes = ["**/scalafix/**"]
+}
+'''
+        when:
+        runGradleTask('scalafix', [ ])
+
+        then:
+        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+    }
+
+    def 'scalafix syntactic rule DisableSyntax.noVars fails a build'() {
         given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
@@ -171,12 +201,28 @@ DisableSyntax.noVars = true
 '''
 
         when:
-        BuildResult buildResult = runGradleTask('scalafix', [ ])
+        runGradleTask('scalafix', [ ])
 
         then:
-        thrown(UnexpectedBuildFailure)
-        // TODO should we check exception message?
-        // buildResult.output.contains("error: [DisableSyntax.var] mutable state should be avoided")
+        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        final UnexpectedBuildFailure err = thrown()
+        err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
+    }
+
+    def 'checkScalafix syntactic rule DisableSyntax.noVars fails a build'() {
+        given:
+        scalafixConfFile.write '''
+rules = [ DisableSyntax ]
+DisableSyntax.noVars = true
+'''
+
+        when:
+        runGradleTask('checkScalafix', [ ])
+
+        then:
+        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        final UnexpectedBuildFailure err = thrown()
+        err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
     }
 
 
