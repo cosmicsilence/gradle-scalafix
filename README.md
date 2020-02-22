@@ -31,6 +31,8 @@ Please try it out and give us feedback. If you hit any bug, please file an issue
 &nbsp;
 ## Usage
 
+*Make sure you are using Gradle version 5.1 or later.*
+
 To use the Scalafix plugin, please include the following snippet in your build script:
 
 ```groovy
