@@ -152,7 +152,7 @@ sourceSets {
         buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
 
-    def 'scalafix semantic rule RemoveUnused fixes scala code'() {
+    def 'scalafix should run semantic rewrite rule and fix input source files'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
 
@@ -163,7 +163,7 @@ sourceSets {
         scalaSrcFile.getText() == ScalafixTestConstants.FIXED_SCALA_CODE
     }
 
-    def 'checkScalafix semantic rule RemoveUnused fails a build'() {
+    def 'checkScalafix should run semantic rewrite rule and fail the build without fixing input source files'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
 
@@ -178,7 +178,7 @@ sourceSets {
     }
 
 
-    def 'scalafix semantic rule RemoveUnused skips excluded scala files'() {
+    def 'scalafix should skip excluded source files'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
         buildFile.append '''
@@ -193,11 +193,36 @@ scalafix {
         scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
     }
 
-    def 'scalafix syntactic rule DisableSyntax.noVars fails a build'() {
+
+    def 'checkScalafix should skip excluded source files'() {
+        scalafixConfFile.write '''
+rules = [ DisableSyntax ]
+DisableSyntax.noVars = true
+'''
+        buildFile.append '''
+scalafix {
+  excludes = ["**/scalafix/**"]
+  autoConfigureSemanticdb = false
+}
+'''
+        when:
+        final BuildResult buildResult = runGradleTask('checkScalafix', [ ])
+
+        then:
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+    }
+
+    def 'scalafix should run syntactic linter rule and fails the build if any violation is reported'() {
         given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
+'''
+        buildFile.append '''
+scalafix {
+  autoConfigureSemanticdb = false
+}
 '''
 
         when:
@@ -206,14 +231,21 @@ DisableSyntax.noVars = true
         then:
         scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
         final UnexpectedBuildFailure err = thrown()
+        err.message.contains("A linter error was reported")
         err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
     }
 
-    def 'checkScalafix syntactic rule DisableSyntax.noVars fails a build'() {
+
+    def 'checkScalafix should run syntactic linter rule and fails the build if any violation is reported'() {
         given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
+'''
+        buildFile.append '''
+scalafix {
+  autoConfigureSemanticdb = false
+}
 '''
 
         when:
@@ -222,6 +254,7 @@ DisableSyntax.noVars = true
         then:
         scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
         final UnexpectedBuildFailure err = thrown()
+        err.message.contains("A linter error was reported")
         err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
     }
 
