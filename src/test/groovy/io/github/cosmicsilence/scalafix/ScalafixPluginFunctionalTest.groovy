@@ -262,7 +262,7 @@ object HelloWorld
 '''
     }
 
-    def 'scalafix should run syntactic linter rule and fails the build if any violation is reported'() {
+    def 'scalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
