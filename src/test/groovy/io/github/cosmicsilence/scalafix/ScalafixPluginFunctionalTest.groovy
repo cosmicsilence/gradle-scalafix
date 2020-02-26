@@ -246,9 +246,9 @@ scalafix {
 }
 '''
         final File src = createSourceFile '''
-import scala.util.Random
-
-object HelloWorld
+object HelloWorld {
+  var i: Int = 5
+}
 '''
         when:
         final BuildResult buildResult = runGradleTask('checkScalafix', [ ])
@@ -256,9 +256,9 @@ object HelloWorld
         then:
         buildResult.output.contains("BUILD SUCCESSFUL")
         src.getText() == '''
-import scala.util.Random
-
-object HelloWorld
+object HelloWorld {
+  var i: Int = 5
+}
 '''
     }
 
@@ -423,7 +423,6 @@ sourceSets {
      * @return Written file containing the provided source code content.
      */
     private File createSourceFile(String content) {
-        // write a minimal scala source file with an unused import
         final File scalaSrcDir = testProjectDir.newFolder("src", "main", "scala", "io", "github", "cosmicsilence", "scalafix")
         final File scalaSrcFile = new File(scalaSrcDir.absolutePath +  "/package.scala")
         scalaSrcFile.write content
