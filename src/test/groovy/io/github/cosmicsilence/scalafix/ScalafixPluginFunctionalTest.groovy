@@ -23,8 +23,8 @@ abstract class ScalafixPluginFunctionalTest extends Specification {
         buildFile = testProjectDir.newFile("build.gradle")
         buildFile.write '''
 plugins {
-    id 'scala\'
-    id 'io.github.cosmicsilence.scalafix\'
+    id 'scala'
+    id 'io.github.cosmicsilence.scalafix'
 }
 
 repositories {
@@ -417,9 +417,10 @@ sourceSets {
 
 
     /**
-     * Writes the given content to
-     * @param content
-     * @return
+     * Writes the given scala code to a file in a standard directory layout.
+     *
+     * @param content scala code.
+     * @return Written file containing the provided source code content.
      */
     private File createSourceFile(String content) {
         // write a minimal scala source file with an unused import
