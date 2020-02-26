@@ -14,20 +14,32 @@ abstract class ScalafixPluginFunctionalTest extends Specification {
     public final TemporaryFolder testProjectDir = new TemporaryFolder()
     private File settingsFile
     private File buildFile
-    private File scalaSrcFile
     private File scalafixConfFile
 
     def setup() {
         settingsFile = testProjectDir.newFile("settings.gradle")
-        buildFile = testProjectDir.newFile("build.gradle")
-
-        buildFile.write ScalafixTestConstants.BUILD_SCRIPT
         settingsFile.write "rootProject.name = 'hello-world'"
 
-        // write a minimal scala source file with an unused import
-        final File scalaSrcDir = testProjectDir.newFolder("src", "main", "scala", "io", "github", "cosmicsilence", "scalafix")
-        scalaSrcFile = new File(scalaSrcDir.absolutePath +  "/HelloWorld.scala")
-        scalaSrcFile.write ScalafixTestConstants.FLAWED_SCALA_CODE
+        buildFile = testProjectDir.newFile("build.gradle")
+        buildFile.write '''
+plugins {
+    id 'scala\'
+    id 'io.github.cosmicsilence.scalafix\'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.scala-lang:scala-library:2.12.10"
+}
+
+tasks.withType(ScalaCompile) {
+    // needed for RemoveUnused rule
+    scalaCompileOptions.additionalParameters = [ "-Ywarn-unused" ]
+}
+'''
 
         scalafixConfFile = testProjectDir.newFile(ScalafixExtension.DEFAULT_CONFIG_FILE)
     }
@@ -155,24 +167,41 @@ sourceSets {
     def 'scalafix should run semantic rewrite rule and fix input source files'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
+        final File src = createSourceFile '''
+import scala.util.Random
+
+object HelloWorld
+'''
 
         when:
         runGradleTask('scalafix', [ ])
 
         then:
-        scalaSrcFile.getText() == ScalafixTestConstants.FIXED_SCALA_CODE
+        src.getText() == '''
+
+object HelloWorld
+'''
     }
 
     def 'checkScalafix should run semantic rewrite rule and fail the build without fixing input source files'() {
         given:
         scalafixConfFile.write "rules = [ RemoveUnused ]"
+        final File src = createSourceFile '''
+import scala.util.Random
+
+object HelloWorld
+'''
 
         when:
         runGradleTask('checkScalafix', [ ])
 
         then:
         // code is not changed on disk
-        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        src.getText() == '''
+import scala.util.Random
+
+object HelloWorld
+'''
         final UnexpectedBuildFailure err = thrown()
         err.message.contains("A file on disk does not match the file contents if it was fixed with Scalafix")
     }
@@ -186,15 +215,26 @@ scalafix {
   excludes = ["**/scalafix/**"]
 }
 '''
+        final File src = createSourceFile '''
+import scala.util.Random
+
+object HelloWorld
+'''
+
         when:
         runGradleTask('scalafix', [ ])
 
         then:
-        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        src.getText() == '''
+import scala.util.Random
+
+object HelloWorld
+'''
     }
 
 
     def 'checkScalafix should skip excluded source files'() {
+        given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -205,12 +245,21 @@ scalafix {
   autoConfigureSemanticdb = false
 }
 '''
+        final File src = createSourceFile '''
+import scala.util.Random
+
+object HelloWorld
+'''
         when:
         final BuildResult buildResult = runGradleTask('checkScalafix', [ ])
 
         then:
         buildResult.output.contains("BUILD SUCCESSFUL")
-        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        src.getText() == '''
+import scala.util.Random
+
+object HelloWorld
+'''
     }
 
     def 'scalafix should run syntactic linter rule and fails the build if any violation is reported'() {
@@ -224,19 +273,28 @@ scalafix {
   autoConfigureSemanticdb = false
 }
 '''
+        final File src = createSourceFile '''
+object HelloWorld {
+  var msg: String = "hello, world!"
+}
+'''
 
         when:
         runGradleTask('scalafix', [ ])
 
         then:
-        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        src.getText() == '''
+object HelloWorld {
+  var msg: String = "hello, world!"
+}
+'''
         final UnexpectedBuildFailure err = thrown()
         err.message.contains("A linter error was reported")
         err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
     }
 
 
-    def 'checkScalafix should run syntactic linter rule and fails the build if any violation is reported'() {
+    def 'checkScalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
         scalafixConfFile.write '''
 rules = [ DisableSyntax ]
@@ -247,15 +305,79 @@ scalafix {
   autoConfigureSemanticdb = false
 }
 '''
+        final File src = createSourceFile '''
+object HelloWorld {
+  var msg: String = "hello, world!"
+}
+'''
 
         when:
         runGradleTask('checkScalafix', [ ])
 
         then:
-        scalaSrcFile.getText() == ScalafixTestConstants.FLAWED_SCALA_CODE
+        src.getText() == '''
+object HelloWorld {
+  var msg: String = "hello, world!"
+}
+'''
         final UnexpectedBuildFailure err = thrown()
         err.message.contains("A linter error was reported")
         err.message.contains("error: [DisableSyntax.var] mutable state should be avoided")
+    }
+
+
+
+    def 'scalafix should run semantic rewrite rule and leave wart-free code unchanged'() {
+        given:
+        scalafixConfFile.write "rules = [ RemoveUnused ]"
+        final File src = createSourceFile '''
+import scala.util.Random
+
+object HelloWorld {
+  val i: Int = Random.nextInt()
+}
+'''
+        when:
+        final BuildResult buildResult = runGradleTask('scalafix', [ ])
+
+        then:
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        src.getText() == '''
+import scala.util.Random
+
+object HelloWorld {
+  val i: Int = Random.nextInt()
+}
+'''
+    }
+
+
+    def 'checkScalafix should run syntactic linter rule and succeed if there are no violations'() {
+        given:
+        scalafixConfFile.write '''
+rules = [ DisableSyntax ]
+DisableSyntax.noVars = true
+'''
+        buildFile.append '''
+scalafix {
+  autoConfigureSemanticdb = false
+}
+'''
+        final File src = createSourceFile '''
+object HelloWorld {
+  val i: Int = 3
+}
+'''
+        when:
+        final BuildResult buildResult = runGradleTask('checkScalafix', [ ])
+
+        then:
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        src.getText() == '''
+object HelloWorld {
+  val i: Int = 3
+}
+'''
     }
 
 
@@ -291,6 +413,20 @@ sourceSets {
                 .withGradleVersion(getGradleVersion())
                 .withPluginClasspath()
                 .build()
+    }
+
+
+    /**
+     * Writes the given content to
+     * @param content
+     * @return
+     */
+    private File createSourceFile(String content) {
+        // write a minimal scala source file with an unused import
+        final File scalaSrcDir = testProjectDir.newFolder("src", "main", "scala", "io", "github", "cosmicsilence", "scalafix")
+        final File scalaSrcFile = new File(scalaSrcDir.absolutePath +  "/package.scala")
+        scalaSrcFile.write content
+        scalaSrcFile
     }
 
     abstract String getGradleVersion();
