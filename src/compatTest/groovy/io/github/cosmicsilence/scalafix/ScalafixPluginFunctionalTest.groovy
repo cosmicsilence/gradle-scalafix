@@ -7,7 +7,7 @@ import org.junit.rules.TemporaryFolder
 
 import spock.lang.Specification
 
-abstract class ScalafixPluginFunctionalTest extends Specification {
+class ScalafixPluginFunctionalTest extends Specification {
 
     @Rule
     public final TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -180,24 +180,8 @@ sourceSets {
         return GradleRunner.create()
                 .withProjectDir(testProjectDir.getRoot())
                 .withArguments(arguments)
-                .withGradleVersion(getGradleVersion())
+                .withGradleVersion(System.getProperty("compat.gradle.version"))
                 .withPluginClasspath()
                 .build()
-    }
-
-    abstract String getGradleVersion();
-}
-
-class ScalafixPluginFunctionalTestGradle6 extends ScalafixPluginFunctionalTest {
-    @Override
-    String getGradleVersion() {
-        return '6.0'
-    }
-}
-
-class ScalafixPluginFunctionalTestGradle5 extends ScalafixPluginFunctionalTest {
-    @Override
-    String getGradleVersion() {
-        return '5.1'
     }
 }
