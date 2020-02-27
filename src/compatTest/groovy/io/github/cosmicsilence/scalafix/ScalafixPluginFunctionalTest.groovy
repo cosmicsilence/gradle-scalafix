@@ -3,50 +3,18 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.gradle.testkit.runner.internal.DefaultGradleRunner
-import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ScalafixPluginFunctionalTest extends Specification {
 
-    @Rule
-    public final TemporaryFolder testProjectDir = new TemporaryFolder()
-    private File settingsFile
-    private File buildFile
-    private File scalafixConfFile
-
-    def setup() {
-        settingsFile = testProjectDir.newFile('settings.gradle')
-        settingsFile.write "rootProject.name = 'hello-world'"
-
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile.write '''
-plugins {
-    id 'scala'
-    id 'io.github.cosmicsilence.scalafix'
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation "org.scala-lang:scala-library:2.12.10"
-}
-
-tasks.withType(ScalaCompile) {
-    // needed for RemoveUnused rule
-    scalaCompileOptions.additionalParameters = [ "-Ywarn-unused" ]
-}
-'''
-
-        scalafixConfFile = testProjectDir.newFile('.scalafix.conf')
-    }
-
     def 'scalafixMain task should run compileScala by default'() {
+        given:
+        def projectDir = createScalaProject()
+
         when:
-        BuildResult buildResult = runGradle('scalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -57,11 +25,10 @@ tasks.withType(ScalaCompile) {
 
     def 'scalafixMain task should run compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
         given:
-        buildFile.append '''
-scalafix { autoConfigureSemanticdb = true }'''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }')
 
         when:
-        BuildResult buildResult = runGradle('scalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -72,11 +39,10 @@ scalafix { autoConfigureSemanticdb = true }'''
 
     def 'scalafixMain task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
-        buildFile.append '''
-scalafix { autoConfigureSemanticdb = false }'''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
         when:
-        BuildResult buildResult = runGradle('scalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
         !buildResult.output.contains(':compileScala SKIPPED')
@@ -86,8 +52,11 @@ scalafix { autoConfigureSemanticdb = false }'''
     }
 
     def 'checkScalafix task should run compileScala by default'() {
+        given:
+        def projectDir = createScalaProject()
+
         when:
-        BuildResult buildResult = runGradle('checkScalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -98,11 +67,10 @@ scalafix { autoConfigureSemanticdb = false }'''
 
     def 'checkScalafix task should run compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
         given:
-        buildFile.append '''
-scalafix { autoConfigureSemanticdb = true }'''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }')
 
         when:
-        BuildResult buildResult = runGradle('checkScalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -113,11 +81,10 @@ scalafix { autoConfigureSemanticdb = true }'''
 
     def 'checkScalafix task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
-        buildFile.append '''
-scalafix { autoConfigureSemanticdb = false }'''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
         when:
-        BuildResult buildResult = runGradle('checkScalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
         !buildResult.output.contains(':compileScala SKIPPED')
@@ -128,13 +95,10 @@ scalafix { autoConfigureSemanticdb = false }'''
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        buildFile.append '''
-sourceSets {
-    integTest { }
-}'''
+        def projectDir = createScalaProject('sourceSets { integTest { } }')
 
         when:
-        BuildResult buildResult = runGradle('scalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -147,13 +111,10 @@ sourceSets {
 
     def 'checkScalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        buildFile.append '''
-sourceSets {
-    integTest { }
-}'''
+        def projectDir = createScalaProject('sourceSets { integTest { } }')
 
         when:
-        BuildResult buildResult = runGradle('checkScalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
         buildResult.output.contains(':compileScala SKIPPED')
@@ -165,8 +126,11 @@ sourceSets {
     }
 
     def 'check task should run checkScalafix tasks but not scalafix'() {
+        given:
+        def projectDir = createScalaProject()
+
         when:
-        BuildResult buildResult = runGradle('check', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'check', '-m')
 
         then:
         buildResult.output.contains(':checkScalafixMain SKIPPED')
@@ -180,13 +144,10 @@ sourceSets {
 
     def 'all scalafix tasks should be grouped'() {
         given:
-        buildFile.append '''
-sourceSets {
-    foo { }
-}'''
+        def projectDir = createScalaProject('sourceSets { foo { } }')
 
         when:
-        BuildResult buildResult = runGradle('tasks')
+        BuildResult buildResult = runGradle(projectDir, 'tasks')
 
         then:
         buildResult.output.contains(
@@ -204,12 +165,13 @@ sourceSets {
 
     def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
         given:
-        File mainSrc = createSourceFile('object Foo', 'main')
-        File testSrc = createSourceFile('object FooTest', 'test')
-        File buildDir = new File(testProjectDir.root, 'build')
+        def projectDir = createScalaProject()
+        File mainSrc = createSourceFile(projectDir, 'object Foo', 'main')
+        File testSrc = createSourceFile(projectDir, 'object FooTest', 'test')
+        File buildDir = new File(projectDir.root, 'build')
 
         when:
-        runGradle('scalafix')
+        runGradle(projectDir, 'scalafix')
 
         then:
         new File(buildDir, "classes/scala/main/META-INF/semanticdb/src/main/scala/dummy/${mainSrc.name}.semanticdb").exists()
@@ -218,26 +180,27 @@ sourceSets {
 
     def '*.semanticdb files should not be created during compilation when autoConfigureSemanticdb is false and scalafix task is run'() {
         given:
-        buildFile.append '''
-scalafix { autoConfigureSemanticdb = false }'''
-        createSourceFile('object Foo', 'main')
-        createSourceFile('object FooTest', 'test')
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        createSourceFile(projectDir, 'object Foo', 'main')
+        createSourceFile(projectDir, 'object FooTest', 'test')
+        File buildDir = new File(projectDir.root, 'build')
 
         when:
-        runGradle('scalafix')
+        runGradle(projectDir, 'scalafix')
 
         then:
-        !new File(testProjectDir.root, 'build').exists()
+        !buildDir.exists()
     }
 
     def '*.semanticdb files should not be created during compilation when scalafix task is not run'() {
         given:
-        createSourceFile('object Foo', 'main')
-        createSourceFile('object FooTest', 'test')
-        File buildDir = new File(testProjectDir.root, 'build')
+        def projectDir = createScalaProject()
+        createSourceFile(projectDir, 'object Foo', 'main')
+        createSourceFile(projectDir, 'object FooTest', 'test')
+        File buildDir = new File(projectDir.root, 'build')
 
         when:
-        runGradle('compileScala', 'compileTestScala')
+        runGradle(projectDir, 'compileScala', 'compileTestScala')
 
         then:
         buildDir.eachFileRecurse {
@@ -247,10 +210,11 @@ scalafix { autoConfigureSemanticdb = false }'''
 
     def 'scalafix task should not fail when no rules are informed'() {
         given:
-        createSourceFile('object Foo')
+        def projectDir = createScalaProject()
+        createSourceFile(projectDir, 'object Foo')
 
         when:
-        BuildResult buildResult = runGradle('scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
         buildResult.output.contains '''
@@ -261,10 +225,11 @@ No Scalafix rules to run'''
 
     def 'checkScalafix task should not fail when no rules are informed'() {
         given:
-        createSourceFile('object Foo')
+        def projectDir = createScalaProject()
+        createSourceFile(projectDir, 'object Foo')
 
         when:
-        BuildResult buildResult = runGradle('checkScalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
 
         then:
         buildResult.output.contains '''
@@ -275,10 +240,11 @@ No Scalafix rules to run'''
 
     def 'scalafix task should not fail when there is no source file to be processed'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
 
         when:
-        BuildResult buildResult = runGradle('scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
         buildResult.output.contains ':scalafixMain NO-SOURCE'
@@ -289,10 +255,11 @@ No Scalafix rules to run'''
 
     def 'checkScalafix task should not fail when there is no source file to be processed'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
 
         when:
-        BuildResult buildResult = runGradle('checkScalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
 
         then:
         buildResult.output.contains ':checkScalafixMain NO-SOURCE'
@@ -303,224 +270,188 @@ No Scalafix rules to run'''
 
     def 'scalafix should run semantic rewrite rule and fix input source files'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
-        File src = createSourceFile '''
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        File src = createSourceFile(projectDir, '''
 import scala.util.Random
-
 object HelloWorld
-'''
+''')
 
         when:
-        runGradle('scalafix')
+        runGradle(projectDir, 'scalafix')
 
         then:
         src.getText() == '''
-
 object HelloWorld
 '''
     }
 
     def 'checkScalafix should run semantic rewrite rule and fail the build without fixing input source files'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
-        File src = createSourceFile '''
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        def originalSrcContent = '''
 import scala.util.Random
-
 object HelloWorld
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
 
         when:
-        runGradle('checkScalafix')
+        runGradle(projectDir, 'checkScalafix')
 
         then:
-        // code is not changed on disk
-        src.getText() == '''
-import scala.util.Random
-
-object HelloWorld
-'''
         UnexpectedBuildFailure err = thrown()
         err.message.contains('A file on disk does not match the file contents if it was fixed with Scalafix')
+        srcFile.getText() == originalSrcContent
     }
 
     def 'scalafix should skip excluded source files'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
-        buildFile.append '''
-scalafix {
-  excludes = ["**/dummy/**"]
-}
-'''
-        File src = createSourceFile '''
+        def projectDir = createScalaProject('scalafix { excludes = ["**/dummy/**"] }')
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        def originalSrcContent = '''
 import scala.util.Random
-
 object HelloWorld
 '''
+        def srcFile = createSourceFile(projectDir, originalSrcContent)
 
         when:
-        runGradle('scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
-        src.getText() == '''
-import scala.util.Random
-
-object HelloWorld
-'''
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        srcFile.getText() == originalSrcContent
     }
 
     def 'checkScalafix should skip excluded source files'() {
         given:
-        scalafixConfFile.write '''
-rules = [ DisableSyntax ]
-DisableSyntax.noVars = true
-'''
-        buildFile.append '''
+        def projectDir = createScalaProject('''
 scalafix {
   excludes = ["**/dummy/**"]
   autoConfigureSemanticdb = false
 }
-'''
-        File src = createSourceFile '''
+''')
+        createScalafixConfig(projectDir, '''
+rules = [ DisableSyntax ]
+DisableSyntax.noVars = true
+''')
+        def originalSrcContent = '''
 object HelloWorld {
   var i: Int = 5
 }
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
+
         when:
-        BuildResult buildResult = runGradle('checkScalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
 
         then:
-        buildResult.output.contains 'BUILD SUCCESSFUL'
-        src.getText() == '''
-object HelloWorld {
-  var i: Int = 5
-}
-'''
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        srcFile.getText() == originalSrcContent
     }
 
     def 'scalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        scalafixConfFile.write '''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
-'''
-        buildFile.append '''
-scalafix {
-  autoConfigureSemanticdb = false
-}
-'''
-        File src = createSourceFile '''
+''')
+        def originalSrcContent = '''
 object HelloWorld {
   var msg: String = "hello, world!"
 }
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
 
         when:
-        runGradle('scalafix')
+        runGradle(projectDir, 'scalafix')
 
         then:
-        src.getText() == '''
-object HelloWorld {
-  var msg: String = "hello, world!"
-}
-'''
         UnexpectedBuildFailure err = thrown()
         err.message.contains('A linter error was reported')
         err.message.contains('error: [DisableSyntax.var] mutable state should be avoided')
+        srcFile.getText() == originalSrcContent
     }
 
     def 'checkScalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        scalafixConfFile.write '''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
-'''
-        buildFile.append '''
-scalafix {
-  autoConfigureSemanticdb = false
-}
-'''
-        File src = createSourceFile '''
+''')
+        def originalSrcContent = '''
 object HelloWorld {
   var msg: String = "hello, world!"
 }
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
 
         when:
-        runGradle('checkScalafix')
+        runGradle(projectDir, 'checkScalafix')
 
         then:
-        src.getText() == '''
-object HelloWorld {
-  var msg: String = "hello, world!"
-}
-'''
         UnexpectedBuildFailure err = thrown()
         err.message.contains('A linter error was reported')
         err.message.contains('error: [DisableSyntax.var] mutable state should be avoided')
+        srcFile.getText() == originalSrcContent
     }
 
     def 'scalafix should run semantic rewrite rule and leave wart-free code unchanged'() {
         given:
-        scalafixConfFile.write 'rules = [ RemoveUnused ]'
-        File src = createSourceFile '''
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        def originalSrcContent = '''
 import scala.util.Random
-
 object HelloWorld {
   val i: Int = Random.nextInt()
 }
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
+
         when:
-        BuildResult buildResult = runGradle('scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
-        buildResult.output.contains 'BUILD SUCCESSFUL'
-        src.getText() == '''
-import scala.util.Random
-
-object HelloWorld {
-  val i: Int = Random.nextInt()
-}
-'''
+        buildResult.output.contains("BUILD SUCCESSFUL")
+        srcFile.getText() == originalSrcContent
     }
 
     def 'checkScalafix should run syntactic linter rule and succeed if there are no violations'() {
         given:
-        scalafixConfFile.write '''
+        def projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
-'''
-        buildFile.append '''
-scalafix {
-  autoConfigureSemanticdb = false
-}
-'''
-        File src = createSourceFile '''
+''')
+        def originalSrcContent = '''
 object HelloWorld {
   val i: Int = 3
 }
 '''
+        File srcFile = createSourceFile(projectDir, originalSrcContent)
+
         when:
-        BuildResult buildResult = runGradle('checkScalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
-        src.getText() == '''
-object HelloWorld {
-  val i: Int = 3
-}
-'''
+        srcFile.getText() == originalSrcContent
     }
 
     def 'scalafix should run single rule informed via command line even when it is not defined in the config file'() {
         given:
-        File src = createSourceFile '''
+        def projectDir = createScalaProject()
+        File src = createSourceFile(projectDir, '''
 import scala.util.Random
 object Foo {
   def proc { }
 }
-'''
+''')
+
         when:
-        BuildResult buildResult = runGradle('scalafix', '-Pscalafix.rules=ProcedureSyntax')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-Pscalafix.rules=ProcedureSyntax')
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
@@ -534,14 +465,16 @@ object Foo {
 
     def 'scalafix should run multiple rules informed via command line even when it is not defined in the config file'() {
         given:
-        File src = createSourceFile '''
+        def projectDir = createScalaProject()
+        File src = createSourceFile(projectDir, '''
 import scala.util.Random
 object Foo {
   def proc { }
 }
-'''
+''')
+
         when:
-        BuildResult buildResult = runGradle('scalafix', '-Pscalafix.rules=ProcedureSyntax,RemoveUnused')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-Pscalafix.rules=ProcedureSyntax,RemoveUnused')
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
@@ -554,7 +487,8 @@ object Foo {
 
     def 'scalafix should only run rule informed via command line when there are other rules defined in the config file'() {
         given:
-        scalafixConfFile.write '''
+        def projectDir = createScalaProject()
+        createScalafixConfig(projectDir, '''
 rules = [
   DisableSyntax
   RemoveUnused
@@ -562,16 +496,16 @@ rules = [
 ]
 
 DisableSyntax.noVars = true
-'''
-        File src = createSourceFile '''
+''')
+        File src = createSourceFile(projectDir, '''
 import scala.util.Random
 object Foo {
   var foo = "foo"
   def proc { }
 }
-'''
+''')
         when:
-        BuildResult buildResult = runGradle('scalafix', '-Pscalafix.rules=ProcedureSyntax')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-Pscalafix.rules=ProcedureSyntax')
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
@@ -584,19 +518,96 @@ object Foo {
 '''
     }
 
-    private BuildResult runGradle(String... arguments) {
+    @Unroll
+    def 'it should run semantic and syntactic rules in projects using Scala #scalaVersion'() {
+        given:
+        def projectDir = createScalaProject("", scalaVersion)
+        createScalafixConfig(projectDir, '''
+rules = [ 
+  RemoveUnused
+  NoAutoTupling
+  DisableSyntax
+  LeakingImplicitClassVal
+  NoValInForComprehension
+  ProcedureSyntax 
+ ]
+
+DisableSyntax.noVars = true
+''')
+        createSourceFile(projectDir, 'trait Animal')
+        createSourceFile(projectDir, 'object Dog extends Animal')
+        createSourceFile(projectDir, 'object Cat extends Animal')
+        createSourceFile(projectDir, 'class Bird extends Animal')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '--stacktrace')
+
+        then:
+        buildResult.output.contains('BUILD SUCCESSFUL')
+
+        where:
+        scalaVersion || _
+        '2.11.8'     || _
+        '2.11.9'     || _
+        '2.11.10'    || _
+        '2.11.11'    || _
+        '2.11.12'    || _
+        '2.12.4'     || _
+        '2.12.5'     || _
+        '2.12.6'     || _
+        '2.12.7'     || _
+        '2.12.8'     || _
+        '2.12.9'     || _
+        '2.12.10'    || _
+        '2.13.0'     || _
+        '2.13.1'     || _
+    }
+
+    private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
         return new DefaultGradleRunner()
                 .withJvmArguments('-XX:MaxMetaspaceSize=500m')
-                .withProjectDir(testProjectDir.getRoot())
-                .withArguments(arguments.toList())
-                .withGradleVersion(System.getProperty('compat.gradle.version'))
+                .withProjectDir(projectDir.getRoot())
+                .withArguments(arguments)
+                .withGradleVersion(System.getProperty("compat.gradle.version"))
                 .withPluginClasspath()
                 .forwardOutput()
                 .build()
     }
 
-    private File createSourceFile(String content, String sourceSet = 'main') {
-        def pkgFolder = new File(testProjectDir.root, "src/$sourceSet/scala/dummy")
+    private TemporaryFolder createScalaProject(String additionalBuildInstructions = "", String scalaVersion = "2.12.10") {
+        def projectDir = new TemporaryFolder()
+        projectDir.create()
+        projectDir.newFile("build.gradle").write """
+plugins {
+    id 'scala'
+    id 'io.github.cosmicsilence.scalafix'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.scala-lang:scala-library:${scalaVersion}"
+}
+
+tasks.withType(ScalaCompile) {
+    // needed for RemoveUnused rule
+    scalaCompileOptions.additionalParameters = [ "-Ywarn-unused" ]
+}
+
+$additionalBuildInstructions
+"""
+        projectDir.newFile("settings.gradle").write "rootProject.name = 'hello-world'"
+        projectDir
+    }
+
+    private File createScalafixConfig(TemporaryFolder projectDir, String content) {
+        projectDir.newFile(".scalafix.conf").write content
+    }
+
+    private File createSourceFile(TemporaryFolder projectDir, String content, String sourceSet = 'main') {
+        def pkgFolder = new File(projectDir.root, "src/$sourceSet/scala/dummy")
 
         if (!pkgFolder.exists()) pkgFolder.mkdirs()
 
