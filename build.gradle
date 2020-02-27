@@ -1,9 +1,10 @@
 plugins {
-    id 'java-gradle-plugin'
-    id 'groovy'
+    id 'org.ajoberstar.stutter' version '0.5.1'
     id 'org.ajoberstar.reckon' version '0.12.0'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'groovy'
+    id 'java-gradle-plugin'
 }
 
 group 'io.github.cosmicsilence'
@@ -15,9 +16,20 @@ repositories {
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
-    compile 'ch.epfl.scala:scalafix-interfaces:0.9.11'
-    testImplementation gradleTestKit()
+    implementation 'ch.epfl.scala:scalafix-interfaces:0.9.11'
+    compatTestImplementation gradleTestKit()
+    compatTestImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
     testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
+}
+
+stutter {
+    sparse = true
+    java(8) {
+        compatibleRange '5.1'
+    }
+    java(11) {
+        compatibleRange '5.1'
+    }
 }
 
 validateTaskProperties {
