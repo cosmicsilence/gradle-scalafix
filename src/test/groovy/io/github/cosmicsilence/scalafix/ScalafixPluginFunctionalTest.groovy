@@ -41,7 +41,7 @@ tasks.withType(ScalaCompile) {
 }
 '''
 
-        scalafixConfFile = testProjectDir.newFile(ScalafixExtension.DEFAULT_CONFIG_FILE)
+        scalafixConfFile = testProjectDir.newFile(".scalafix.conf")
     }
 
     def 'scalafixMain task runs compileScala by default'() {
