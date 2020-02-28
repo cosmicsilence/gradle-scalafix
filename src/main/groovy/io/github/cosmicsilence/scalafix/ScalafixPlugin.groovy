@@ -4,6 +4,8 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.ScalaRuntime
 import org.gradle.api.tasks.SourceSet
@@ -16,6 +18,8 @@ import static scalafix.interfaces.ScalafixMainMode.*
  * Gradle plugin for running Scalafix.
  */
 class ScalafixPlugin implements Plugin<Project> {
+
+    private static final Logger logger = Logging.getLogger(ScalafixPlugin)
 
     private static final String EXTENSION = "scalafix"
     private static final String CUSTOM_RULES_CONFIGURATION = "scalafix"
@@ -68,7 +72,7 @@ class ScalafixPlugin implements Plugin<Project> {
             ScalaCompile scalaCompileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
 
             if (extension.autoConfigureSemanticdb) {
-                configureSemanticdbCompilerPlugin(project, scalaCompileTask)
+                configureSemanticdbCompilerPlugin(project, scalaCompileTask, sourceSet)
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.getName()}'"
@@ -102,18 +106,26 @@ class ScalafixPlugin implements Plugin<Project> {
         scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
     }
 
-    private void configureSemanticdbCompilerPlugin(Project project, ScalaCompile scalaCompileTask) {
-        def dependency = project.dependencies.create(BuildInfo.semanticdbArtifact)
-        def configuration = project.configurations.detachedConfiguration(dependency)
-        def compilerParameters = [
-                '-Xplugin:' + configuration.asPath,
-                '-P:semanticdb:sourceroot:' + project.projectDir,
-                '-Yrangepos'
-        ]
+    private void configureSemanticdbCompilerPlugin(Project project, ScalaCompile scalaCompileTask, SourceSet sourceSet) {
+        def scalaVersion = getScalaVersion(project, scalaCompileTask)
+        def coordinates = SemanticDB.getMavenCoordinates(scalaVersion)
 
-        // intentionally mutating the Scala compile task here to avoid that the SemanticDB compiler plugin
-        // gets configured and always runs even when the Scalafix task is not run (which can be costly).
-        scalaCompileTask.scalaCompileOptions.additionalParameters =
-                    (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
+        if (coordinates.isPresent()) {
+            def dependency = project.dependencies.create(coordinates.get())
+            def configuration = project.configurations.detachedConfiguration(dependency).setTransitive(false)
+            def compilerParameters = [
+                    '-Xplugin:' + configuration.asPath,
+                    '-P:semanticdb:sourceroot:' + project.projectDir,
+                    '-Yrangepos'
+            ]
+
+            // intentionally mutating the Scala compile task here to avoid that the SemanticDB compiler plugin
+            // always gets configured and runs even when the Scalafix task is not run (which can be costly).
+            scalaCompileTask.scalaCompileOptions.additionalParameters =
+                        (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
+        } else {
+            logger.warn("WARNING: The SemanticDB compiler plugin could not be auto-configured because the version of Scala " +
+                    "in source set '${sourceSet.name}' is unsupported or could not be determined (value=$scalaVersion)")
+        }
     }
 }

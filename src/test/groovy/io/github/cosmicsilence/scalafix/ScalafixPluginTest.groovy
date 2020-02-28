@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    private static final String SCALA_VERSION = "2.12.8"
+    private static final String SCALA_VERSION = "2.12.11"
     private static final List<String> DEFAULT_COMPILER_OPTS = ["-Ywarn-unused" ]
 
     private Project scalaProject
@@ -76,8 +76,8 @@ class ScalafixPluginTest extends Specification {
         compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.contains("semanticdb-scalac_${BuildInfo.scala212Version}-${BuildInfo.scalametaVersion}.jar") &&
-                    it.contains("scala-library-${BuildInfo.scala212Version}.jar")
+                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    !it.contains("scala-library")
         }
 
         scalaProject.tasks.scalafixTest // force plugin configuration
@@ -85,8 +85,8 @@ class ScalafixPluginTest extends Specification {
         compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileTestScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.contains("semanticdb-scalac_${BuildInfo.scala212Version}-${BuildInfo.scalametaVersion}.jar") &&
-                    it.contains("scala-library-${BuildInfo.scala212Version}.jar")
+                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    !it.contains("scala-library")
         }
     }
 
