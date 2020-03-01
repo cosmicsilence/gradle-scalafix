@@ -26,7 +26,6 @@ class ScalafixPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
         def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
         customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
@@ -34,10 +33,6 @@ class ScalafixPlugin implements Plugin<Project> {
         project.afterEvaluate {
             if (!project.plugins.hasPlugin(ScalaPlugin)) {
                 throw new GradleException("The 'scala' plugin must be applied")
-            }
-
-            if (extension.autoConfigureSemanticdb) {
-                configureSemanticdbCompilerPlugin(project)
             }
 
             configureTasks(project, extension)
@@ -52,7 +47,8 @@ class ScalafixPlugin implements Plugin<Project> {
         def checkTask = project.tasks.create(CHECK_TASK)
         checkTask.group = TASK_GROUP
         checkTask.description = "Fails if running Scalafix produces a diff or a linter error message. Won't write to files"
-        project.tasks.check.dependsOn checkTask
+
+        project.tasks.named('check').configure { it.dependsOn checkTask }
 
         project.sourceSets.each { SourceSet sourceSet ->
             if (!extension.ignoreSourceSets.get().contains(sourceSet.name)) {
@@ -67,37 +63,46 @@ class ScalafixPlugin implements Plugin<Project> {
                                            Task mainTask,
                                            Project project,
                                            ScalafixExtension extension) {
-        ScalaCompile compileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
-        def scalaRuntime = project.extensions.findByType(ScalaRuntime)
-        def scalaJar = scalaRuntime.findScalaJar(compileTask.classpath, 'library')
+        def taskName = mainTask.name + sourceSet.name.capitalize()
+        def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
+            ScalaCompile scalaCompileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
 
-        def name = mainTask.name + sourceSet.name.capitalize()
-        def task = project.tasks.create(name, ScalafixTask) {
-            description = "${mainTask.description} in '${sourceSet.getName()}'"
-            group = mainTask.group
-            sourceRoot = project.projectDir.path
-            source = sourceSet.allScala.matching {
+            if (extension.autoConfigureSemanticdb) {
+                configureSemanticdbCompilerPlugin(project, scalaCompileTask)
+            }
+
+            scalafixTask.description = "${mainTask.description} in '${sourceSet.getName()}'"
+            scalafixTask.group = mainTask.group
+            scalafixTask.sourceRoot = project.projectDir.path
+            scalafixTask.source = sourceSet.allScala.matching {
                 include(extension.includes.get())
                 exclude(extension.excludes.get())
             }
-            configFile = extension.configFile
-            rules.set(project.provider({
+            scalafixTask.configFile = extension.configFile
+            scalafixTask.rules.set(project.provider({
                 String prop = project.findProperty(RULES_PROPERTY) ?: ''
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
-            mode = taskMode
-            classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList().collect { it.path }
-            scalaVersion = scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
-            compileOptions = compileTask.scalaCompileOptions.additionalParameters ?: []
-        }
-        mainTask.dependsOn task
+            scalafixTask.mode = taskMode
+            scalafixTask.scalaVersion = getScalaVersion(project, scalaCompileTask)
+            scalafixTask.classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList().collect { it.path }
+            scalafixTask.compileOptions = scalaCompileTask.scalaCompileOptions.additionalParameters ?: []
 
-        if (extension.autoConfigureSemanticdb) {
-            task.dependsOn compileTask
-        }
+            if (extension.autoConfigureSemanticdb) {
+                scalafixTask.dependsOn scalaCompileTask
+            }
+        })
+
+        mainTask.dependsOn taskProvider
     }
 
-    private void configureSemanticdbCompilerPlugin(Project project) {
+    private String getScalaVersion(Project project, ScalaCompile scalaCompileTask) {
+        def scalaRuntime = project.extensions.findByType(ScalaRuntime)
+        def scalaJar = scalaRuntime.findScalaJar(scalaCompileTask.classpath, 'library')
+        scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
+    }
+
+    private void configureSemanticdbCompilerPlugin(Project project, ScalaCompile scalaCompileTask) {
         def dependency = project.dependencies.create(BuildInfo.semanticdbArtifact)
         def configuration = project.configurations.detachedConfiguration(dependency)
         def compilerParameters = [
@@ -106,9 +111,9 @@ class ScalafixPlugin implements Plugin<Project> {
                 '-Yrangepos'
         ]
 
-        project.tasks.withType(ScalaCompile) { ScalaCompile task ->
-            task.scalaCompileOptions.additionalParameters =
-                    (task.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
-        }
+        // intentionally mutating the Scala compile task here to avoid that the SemanticDB compiler plugin
+        // gets configured and always runs even when the Scalafix task is not run (which can be costly).
+        scalaCompileTask.scalaCompileOptions.additionalParameters =
+                    (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
     }
 }
