@@ -124,7 +124,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        def task = scalaProject.tasks.checkScalafix
+        Task task = scalaProject.tasks.checkScalafix
         task.dependsOn.find { it.name == 'checkScalafixMain' }
         task.dependsOn.find { it.name == 'checkScalafixTest' }
         scalaProject.tasks.check.dependsOn.find { it.name == 'checkScalafix' }
