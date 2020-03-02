@@ -71,7 +71,8 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        def compileScalaParameters = scalaProject.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters
+        scalaProject.tasks.scalafixMain // force plugin configuration
+        def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
         compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileScalaParameters.find {
             it.startsWith('-Xplugin:') &&
@@ -79,7 +80,8 @@ class ScalafixPluginTest extends Specification {
                     it.contains("scala-library-${BuildInfo.scala212Version}.jar")
         }
 
-        def compileTestScalaParameters = scalaProject.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters
+        scalaProject.tasks.scalafixTest // force plugin configuration
+        def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
         compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileTestScalaParameters.find {
             it.startsWith('-Xplugin:') &&
@@ -88,7 +90,7 @@ class ScalafixPluginTest extends Specification {
         }
     }
 
-    def 'Semanticdb configuration is not added if autoConfigureSemanticdb is set to false'() {
+    def 'SemanticDB configuration is not added if autoConfigureSemanticdb is set to false'() {
         given:
         applyScalafixPlugin(scalaProject, false)
 
@@ -96,8 +98,22 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.getByName('compileScala').scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.getByName('compileTestScala').scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+    }
+
+    def 'SemanticDB configuration is not added if the scalafix task creation is deferred'() {
+        given:
+        applyScalafixPlugin(scalaProject, true)
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
     def 'checkScalafix task configuration validation'() {
@@ -108,10 +124,10 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        Task task = scalaProject.tasks.getByName('checkScalafix')
+        Task task = scalaProject.tasks.checkScalafix
         task.dependsOn.find { it.name == 'checkScalafixMain' }
         task.dependsOn.find { it.name == 'checkScalafixTest' }
-        scalaProject.tasks.getByName('check').dependsOn.find { it.name == 'checkScalafix' }
+        scalaProject.tasks.check.dependsOn.find { it.name == 'checkScalafix' }
     }
 
     def 'checkScalafixMain task configuration validation'() {
@@ -122,7 +138,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = scalaProject.tasks.checkScalafixMain
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -150,7 +166,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = scalaProject.tasks.checkScalafixMain
         task.dependsOn.find{ it.name == 'compileScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -179,7 +195,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = scalaProject.tasks.checkScalafixTest
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -207,7 +223,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixTest')
+        ScalafixTask task = scalaProject.tasks.checkScalafixTest
         task.dependsOn.find{ it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -236,10 +252,10 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        Task task = scalaProject.tasks.getByName('scalafix')
+        Task task = scalaProject.tasks.scalafix
         task.dependsOn.find { it.name == 'scalafixMain' }
         task.dependsOn.find { it.name == 'scalafixTest' }
-        !scalaProject.tasks.getByName('check').dependsOn.find { it.name == 'scalafix' }
+        !scalaProject.tasks.check.dependsOn.find { it.name == 'scalafix' }
     }
 
     def 'scalafixMain task configuration validation'() {
@@ -250,7 +266,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.scalafixMain
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -278,7 +294,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.scalafixMain
         task.dependsOn.find { it.name == 'compileScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -307,7 +323,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixTest')
+        ScalafixTask task = scalaProject.tasks.scalafixTest
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -335,7 +351,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixTest')
+        ScalafixTask task = scalaProject.tasks.scalafixTest
         task.dependsOn.find { it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
@@ -365,9 +381,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixFoo')
+        ScalafixTask task = scalaProject.tasks.scalafixFoo
         task.dependsOn.isEmpty()
-        scalaProject.tasks.getByName('scalafix').dependsOn(task)
+        scalaProject.tasks.scalafix.dependsOn(task)
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -397,9 +413,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixBar')
+        ScalafixTask task = scalaProject.tasks.scalafixBar
         task.dependsOn.find { it.name == 'compileBarScala' }
-        scalaProject.tasks.getByName('scalafix').dependsOn(task)
+        scalaProject.tasks.scalafix.dependsOn(task)
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -430,9 +446,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixFoo')
+        ScalafixTask task = scalaProject.tasks.checkScalafixFoo
         task.dependsOn.isEmpty()
-        scalaProject.tasks.getByName('checkScalafix').dependsOn(task)
+        scalaProject.tasks.checkScalafix.dependsOn(task)
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -462,9 +478,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('checkScalafixBar')
+        ScalafixTask task = scalaProject.tasks.checkScalafixBar
         task.dependsOn.find { it.name == 'compileBarScala' }
-        scalaProject.tasks.getByName('checkScalafix').dependsOn(task)
+        scalaProject.tasks.checkScalafix.dependsOn(task)
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -505,7 +521,7 @@ class ScalafixPluginTest extends Specification {
         subProject.evaluate()
 
         then:
-        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.checkScalafixMain
         task.configFile.get().asFile.path == extensionConfig.path
     }
 
@@ -525,7 +541,7 @@ class ScalafixPluginTest extends Specification {
         subProject.evaluate()
 
         then:
-        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.checkScalafixMain
         task.configFile.get().asFile.path == subProjectConfig.path
     }
 
@@ -542,7 +558,7 @@ class ScalafixPluginTest extends Specification {
         subProject.evaluate()
 
         then:
-        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.checkScalafixMain
         task.configFile.get().asFile.path == rootProjectConfig.path
     }
 
@@ -556,7 +572,7 @@ class ScalafixPluginTest extends Specification {
         subProject.evaluate()
 
         then:
-        ScalafixTask task = subProject.tasks.getByName('checkScalafixMain')
+        ScalafixTask task = subProject.tasks.checkScalafixMain
         !task.configFile.get()
     }
 
@@ -569,7 +585,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.scalafixMain
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
@@ -585,7 +601,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.scalafixMain
         task.source.asPath == "${scalaProject.projectDir}/src/main/scala/Dog.scala"
     }
 
@@ -599,7 +615,7 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.getByName('scalafixMain')
+        ScalafixTask task = scalaProject.tasks.scalafixMain
         task.source.asPath == "${scalaProject.projectDir}/src/main/scala/Duck.scala"
     }
 

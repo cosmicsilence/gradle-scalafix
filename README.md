@@ -145,7 +145,7 @@ Example:
 ```
 scalafix {
     configFile = file("config/myscalafix.conf")
-    includes = ["**/com/**/*.scala"]
+    includes = ["/com/**/*.scala"]
     excludes = ["**/generated/**"]
     ignoreSourceSets = ["scoverage"]
     autoConfigureSemanticdb = false
