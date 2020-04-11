@@ -32,10 +32,10 @@ class SemanticDBTest extends Specification {
     @Unroll
     def 'it should return the Maven coordinates of SemanticDB for Scala #scalaVersion'() {
         when:
-        def artifact = SemanticDB.getMavenCoordinates(scalaVersion)
+        def coordinates = SemanticDB.getMavenCoordinates(scalaVersion)
 
         then:
-        artifact.get() == "org.scalameta:semanticdb-scalac_${expectedScalaVersion}:${SemanticDB.scalametaVersion}"
+        coordinates.get() == "org.scalameta:semanticdb-scalac_${expectedScalaVersion}:${SemanticDB.scalametaVersion}"
 
         where:
         scalaVersion || expectedScalaVersion
@@ -58,21 +58,23 @@ class SemanticDBTest extends Specification {
 
     def 'it should not return the Maven coordinates of SemanticDB if informed Scala version is blank'() {
         when:
-        def artifact1 = SemanticDB.getMavenCoordinates(null)
-        def artifact2 = SemanticDB.getMavenCoordinates('')
-        def artifact3 = SemanticDB.getMavenCoordinates('    ')
+        def coordinates1 = SemanticDB.getMavenCoordinates(null)
+        def coordinates2 = SemanticDB.getMavenCoordinates('')
+        def coordinates3 = SemanticDB.getMavenCoordinates('    ')
 
         then:
-        !artifact1.isPresent()
-        !artifact2.isPresent()
-        !artifact3.isPresent()
+        !coordinates1.isPresent()
+        !coordinates2.isPresent()
+        !coordinates3.isPresent()
     }
 
     def 'it should not return the Maven coordinates of SemanticDB if informed Scala version is not supported'() {
         when:
-        def artifact = SemanticDB.getMavenCoordinates('3.0.0')
+        def coordinates1 = SemanticDB.getMavenCoordinates('2.10.7')
+        def coordinates2 = SemanticDB.getMavenCoordinates('3.0.0')
 
         then:
-        !artifact.isPresent()
+        !coordinates1.isPresent()
+        !coordinates2.isPresent()
     }
 }
