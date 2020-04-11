@@ -89,7 +89,7 @@ class ScalafixPlugin implements Plugin<Project> {
             }))
             scalafixTask.mode = taskMode
             scalafixTask.scalaVersion = getScalaVersion(project, scalaCompileTask)
-            scalafixTask.classpath = (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList().collect { it.path }
+            scalafixTask.classpath = sourceSet.output.classesDirs.toList().collect { it.path }
             scalafixTask.compileOptions = scalaCompileTask.scalaCompileOptions.additionalParameters ?: []
 
             if (extension.autoConfigureSemanticdb) {
