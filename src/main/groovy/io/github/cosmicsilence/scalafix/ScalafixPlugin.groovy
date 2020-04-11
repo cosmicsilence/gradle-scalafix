@@ -124,8 +124,8 @@ class ScalafixPlugin implements Plugin<Project> {
             scalaCompileTask.scalaCompileOptions.additionalParameters =
                         (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
         } else {
-            logger.warn("WARNING: The SemanticDB compiler plugin could not be auto-configured because the version of Scala " +
-                    "in source set '${sourceSet.name}' is unsupported or could not be determined (value=$scalaVersion)")
+            logger.warn("WARNING: The SemanticDB compiler plugin could not be auto-configured because the Scala version " +
+                    "used in source set '${sourceSet.name}' is unsupported or could not be determined (value=$scalaVersion)")
         }
     }
 }

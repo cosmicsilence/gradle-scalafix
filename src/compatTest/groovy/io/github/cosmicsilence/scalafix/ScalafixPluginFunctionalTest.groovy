@@ -164,6 +164,20 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 '''
     }
 
+    def 'A warning message should inform when the SemanticDB compiler plugin is not auto-configured because the Scala version is not supported'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }', '2.10.7')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
+
+        then:
+        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
+                "Scala version used in source set 'main' is unsupported or could not be determined (value=2.10.7)"
+        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
+                "Scala version used in source set 'test' is unsupported or could not be determined (value=2.10.7)"
+    }
+
     def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
@@ -306,7 +320,7 @@ object HelloWorld
         srcFile.getText() == originalSrcContent
     }
 
-    def 'scalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() { // FIXME
+    def 'scalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
@@ -320,7 +334,7 @@ object HelloWorld
         err.message.contains 'A semantic rule was run on a source file that has no associated *.semanticdb file'
     }
 
-    def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() { // FIXME
+    def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')

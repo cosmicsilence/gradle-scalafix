@@ -104,6 +104,21 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
+    def 'SemanticDB configuration is not added if the version of Scala is not supported'() {
+        given:
+        def scalaProject = buildScalaProject(null, [], "2.10.7")
+        applyScalafixPlugin(scalaProject, true)
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+    }
+
     def 'SemanticDB configuration is not added if the scalafix task creation is deferred'() {
         given:
         applyScalafixPlugin(scalaProject, true)
@@ -606,7 +621,7 @@ class ScalafixPluginTest extends Specification {
         }
     }
 
-    private Project buildScalaProject(Project parent = null, List<String> extraSourceSets = []) {
+    private Project buildScalaProject(Project parent = null, List<String> extraSourceSets = [], String scalaVersion = SCALA_VERSION) {
         def project = ProjectBuilder.builder().withParent(parent).build()
         def standardSourceSets = ["main", "test"]
 
@@ -627,7 +642,7 @@ class ScalafixPluginTest extends Specification {
             }
 
             dependencies {
-                compile "org.scala-lang:scala-library:$SCALA_VERSION"
+                compile "org.scala-lang:scala-library:$scalaVersion"
             }
 
             sourceSets {
