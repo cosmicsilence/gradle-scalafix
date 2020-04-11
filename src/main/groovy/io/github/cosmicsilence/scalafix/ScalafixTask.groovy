@@ -50,15 +50,13 @@ class ScalafixTask extends SourceTask {
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
         def configFilePath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
-        def cliDependency = project.dependencies.create(BuildInfo.scalafixCliArtifact)
-        def cliClasspath = project.configurations.detachedConfiguration(cliDependency)
-        def customRulesClasspath = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
+        def customRulesConfiguration = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
 
         logger.debug(
                 """Running Scalafix with the following arguments:
                   | - Mode: ${mode}
                   | - Config file: ${configFilePath}
-                  | - Custom rules classpath: ${customRulesClasspath.asPath}
+                  | - Custom rules classpath: ${customRulesConfiguration.asPath}
                   | - Scala version: ${scalaVersion}
                   | - Scalac options: ${compileOptions}
                   | - Source root: ${sourceRoot}
@@ -66,11 +64,10 @@ class ScalafixTask extends SourceTask {
                   | - Classpath: ${classpath}
                   |""".stripMargin())
 
-        def interfacesClassloader = new InterfacesClassloader(getClass().classLoader)
-        def cliClassloader = classloaderFrom(cliClasspath, interfacesClassloader)
-        def customRulesClassloader = classloaderFrom(customRulesClasspath, cliClassloader)
+        def classloader = this.class.classLoader
+        def customRulesClassloader = classloaderFrom(customRulesConfiguration, classloader)
 
-        def args = Scalafix.classloadInstance(cliClassloader)
+        def args = Scalafix.classloadInstance(classloader)
                 .newArguments()
                 .withMode(mode)
                 .withConfig(configFilePath)
@@ -89,7 +86,7 @@ class ScalafixTask extends SourceTask {
                   |""".stripMargin())
 
         if (!args.rulesThatWillRun().empty) {
-            logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source files")
+            logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source file(s)")
             def errors = args.run()
             if (errors.size() > 0) throw new ScalafixFailed(errors)
         } else {
