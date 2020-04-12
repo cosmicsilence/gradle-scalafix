@@ -15,11 +15,6 @@ To use the Scalafix plugin, please include the following snippet in your build s
 
 ```groovy
 buildscript {
-    repositories {
-        maven {
-            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on Gradle Plugin Portal :)
-        }
-    }
     dependencies {
         classpath 'io.github.cosmicsilence:gradle-scalafix:+'
     }
