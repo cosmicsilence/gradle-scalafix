@@ -6,28 +6,6 @@
 This plugin allows you to run [Scalafix](https://scalacenter.github.io/scalafix/) (a refactoring and linting tool for Scala)
 on Gradle projects. It supports both syntactic and semantic rules and lets you load your own custom rules via Gradle dependencies.
 
-
-&nbsp;
-## Project Status
-This project is currently under active development. Even though we feel it is already feature complete (provides more or 
-less the same level of functionality as the official [plugin for sbt](https://github.com/scalacenter/sbt-scalafix)), we
-haven't released a stable version yet. That doesn't mean you cannot use it yet. If you would like to be an early
-adopter, please try out the latest beta version published to Bintray (see instructions below). Here is a summary of all
-supported features and outstanding items:
-
-- [x] Support for syntactic rules 
-- [x] Support for semantic rules 
-- [x] Support for loading external custom rules
-- [x] Gradle tasks for running rewrites as well as checking compliance to rules
-- [x] Support for Ant-like patterns to include/exclude source files
-- [x] Support for running a single or subset of available rules
-- [ ] Unit/functional tests (in progress...)
-- [ ] Test plugin in large real world code bases (in progress...)
-- [x] Documentation
-
-Please try it out and give us feedback. If you hit any bug, please file an issue. Contributions are very welcome :).
-
-
 &nbsp;
 ## Usage
 
@@ -138,7 +116,7 @@ The plugin defines an extension with the namespace `scalafix`. The following pro
 |`includes`                |`SetProperty<String>` |\<empty\>      |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. Filter is applied to package portion of the source file path. By default all files are included. |
 |`excludes`                |`SetProperty<String>` |\<empty\>      |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded. |
 |`ignoreSourceSets`        |`SetProperty<String>` |\<empty\>      |Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first.|
-|`autoConfigureSemanticdb` |`Boolean`             |`true`         |Used to indicate whether the Scalafix plugin should auto-configure the SemanticDB compiler plugin. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin configures only the necessary parameters for SemanticDB (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult [this section](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) on the Scalafix website as well as the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB options can be informed through Gradle's `ScalaCompile` task as shown earlier. If your project only uses syntactic rules, then it's recommended that this property is set to `false` to shorten the running time. |
+|`autoConfigureSemanticdb` |`Boolean`             |`true`         |Used to indicate whether the Scalafix plugin should auto-configure the SemanticDB compiler plugin. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin provides only the minimum required configuration to get SemanticDB set up (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult the [Scalafix docs](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) or the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB options can be informed through Gradle's `ScalaCompile` task as shown earlier. If your project only uses syntactic rules, then it's recommended that this property is set to `false` to shorten the running time. |
 
 
 Example:
