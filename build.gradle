@@ -3,7 +3,7 @@ plugins {
     id 'org.ajoberstar.reckon' version '0.12.0'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
-    id 'com.gradle.plugin-publish' version '0.10.1'
+    id 'com.gradle.plugin-publish' version '0.11.0'
     id 'groovy'
     id 'java-gradle-plugin'
 }
@@ -55,18 +55,13 @@ reckon {
 pluginBundle {
     description = 'Gradle plugin for Scalafix'
     website = 'https://github.com/cosmicsilence/gradle-scalafix'
-    vcsUrl = 'git@github.com:cosmicsilence/gradle-scalafix.git'
+    vcsUrl = 'https://github.com/cosmicsilence/gradle-scalafix.git'
     plugins {
         scalafixPlugin {
             id = 'io.github.cosmicsilence.scalafix'
             displayName = 'Scalafix Plugin'
             tags = ['scalafix']
         }
-    }
-    mavenCoordinates {
-        groupId = project.group
-        artifactId = project.name
-        version = project.version
     }
 }
 
