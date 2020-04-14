@@ -14,20 +14,9 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 To use the Scalafix plugin, please include the following snippet in your build script:
 
 ```groovy
-buildscript {
-    repositories {
-        maven {
-            url  "https://dl.bintray.com/cosmicsilence/maven" // soon on Gradle Plugin Portal :)
-        }
-    }
-    dependencies {
-        classpath 'io.github.cosmicsilence:gradle-scalafix:+'
-    }
-}
-
 plugins {
     id 'scala' // <-- required
-    id 'io.github.cosmicsilence.scalafix'
+    id 'io.github.cosmicsilence.scalafix' version '0.1.0'
 }
 ```
 
