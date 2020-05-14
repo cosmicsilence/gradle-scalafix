@@ -45,8 +45,6 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        configFile = project.objects.fileProperty()
-
         configFile = project.objects.fileProperty().convention(
                 locateConfigFile(project) ?: locateConfigFile(project.rootProject))
         includes = project.objects.setProperty(String)

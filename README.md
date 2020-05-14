@@ -16,7 +16,7 @@ To use the Scalafix plugin, please include the following snippet in your build s
 ```groovy
 plugins {
     id 'scala' // <-- required
-    id 'io.github.cosmicsilence.scalafix' version '0.1.0'
+    id 'io.github.cosmicsilence.scalafix' version '0.1.1'
 }
 ```
 
