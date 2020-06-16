@@ -731,6 +731,7 @@ DisableSyntax.noVars = true
         '2.12.11'    || _
         '2.13.0'     || _
         '2.13.1'     || _
+        '2.13.2'     || _
     }
 
     @Unroll
@@ -772,7 +773,7 @@ final case class Cat(breed: String) extends Animal
         scalaVersion || _
         '2.11.12'    || _
         '2.12.11'    || _
-        '2.13.1'     || _
+        '2.13.2'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
