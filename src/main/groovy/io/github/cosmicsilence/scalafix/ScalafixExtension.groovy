@@ -45,15 +45,24 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        configFile = project.objects.fileProperty().convention(
-                locateConfigFile(project) ?: locateConfigFile(project.rootProject))
+        final boolean isGradle4 = project.gradle.gradleVersion.startsWith("4")
+        configFile = isGradle4? project.layout.fileProperty(): project.objects.fileProperty()
+
+        RegularFile defaultRegularFile = locateConfigFile(project)?: locateConfigFile(project.rootProject)
+        if (defaultRegularFile) {
+            if (isGradle4) {
+                configFile.set(defaultRegularFile)
+            } else {
+                configFile.convention(defaultRegularFile)
+            }
+        }
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
     }
 
     private RegularFile locateConfigFile(Project project) {
-        def configFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+        RegularFile configFile = project.layout.projectDirectory.file(DEFAULT_CONFIG_FILE)
         return (configFile.asFile.exists() && configFile.asFile.isFile()) ? configFile : null
     }
 

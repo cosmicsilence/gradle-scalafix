@@ -17,7 +17,8 @@ class ScalafixTask extends SourceTask {
 
     @InputFile
     @Optional
-    final RegularFileProperty configFile = project.objects.fileProperty()
+    final RegularFileProperty configFile = project.gradle.gradleVersion.startsWith("4")?
+            project.layout.fileProperty(): project.objects.fileProperty()
 
     @Input
     @Optional
