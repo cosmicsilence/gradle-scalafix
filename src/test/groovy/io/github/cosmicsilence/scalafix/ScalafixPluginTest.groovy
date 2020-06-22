@@ -544,8 +544,7 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = subProject.tasks.checkScalafixMain
-        task.configFile.isPresent()
-        !task.configFile.get()
+        !task.configFile.isPresent()
     }
 
     def 'scalafix should only select sources matching include filter'() {
