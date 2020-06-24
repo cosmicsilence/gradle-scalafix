@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import io.github.cosmicsilence.utils.Gradle
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
@@ -17,7 +18,7 @@ class ScalafixTask extends SourceTask {
 
     @InputFile
     @Optional
-    final RegularFileProperty configFile = project.gradle.gradleVersion.startsWith("4")?
+    final RegularFileProperty configFile = Gradle.isVersion4(project)?
             project.layout.fileProperty(): project.objects.fileProperty()
 
     @Input

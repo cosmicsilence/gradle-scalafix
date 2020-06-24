@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import io.github.cosmicsilence.utils.Gradle
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
@@ -45,7 +46,7 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        final boolean isGradle4 = project.gradle.gradleVersion.startsWith("4")
+        final boolean isGradle4 = Gradle.isVersion4(project)
         configFile = isGradle4? project.layout.fileProperty(): project.objects.fileProperty()
 
         RegularFile defaultRegularFile = locateConfigFile(project)?: locateConfigFile(project.rootProject)
