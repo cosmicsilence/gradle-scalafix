@@ -6,25 +6,25 @@ jobs:
     - stage: test
       name: "Unit tests"
       script:
-      - "./gradlew test --scan -s"
-    - stage: compat-test-gradle-4
+      - "./gradlew test"
+    - stage: compat-test
       name: "Stutter compat test for gradle 4 versions"
       script:
-      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      - "./gradlew compatTest$GRADLE_VERSION"
       env:
       - GRADLE_VERSION=4.9
       - GRADLE_VERSION=4.10.3
     - stage: compat-test-gradle-5
       name: "Stutter compat test for gradle 5 versions"
       script:
-      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      - "./gradlew compatTest$GRADLE_VERSION"
       env:
       - GRADLE_VERSION=5.1.1
       - GRADLE_VERSION=5.6.4
     - stage: compat-test-gradle-6
       name: "Stutter compat test for gradle 6 versions"
       script:
-      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      - "./gradlew compatTest$GRADLE_VERSION"
       env:
       - GRADLE_VERSION=6.0.1
       - GRADLE_VERSION=6.5
