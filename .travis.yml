@@ -1,6 +1,34 @@
 language: java
 jdk: openjdk8
 
+jobs:
+  include:
+    - stage: test
+      name: "Unit tests"
+      script:
+      - "./gradlew test --scan -s"
+    - stage: compat-test-gradle-4
+      name: "Stutter compat test for gradle 4 versions"
+      script:
+      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      env:
+      - GRADLE_VERSION=4.9
+      - GRADLE_VERSION=4.10.3
+    - stage: compat-test-gradle-5
+      name: "Stutter compat test for gradle 5 versions"
+      script:
+      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      env:
+      - GRADLE_VERSION=5.1.1
+      - GRADLE_VERSION=5.6.4
+    - stage: compat-test-gradle-6
+      name: "Stutter compat test for gradle 6 versions"
+      script:
+      - "./gradlew compatTest$GRADLE_VERSION --scan -s"
+      env:
+      - GRADLE_VERSION=6.0.1
+      - GRADLE_VERSION=6.5
+
 deploy:
   - provider: script
     script: ./gradlew publish bintrayUpload publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET
