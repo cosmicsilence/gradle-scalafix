@@ -729,9 +729,11 @@ DisableSyntax.noVars = true
         '2.12.9'     || _
         '2.12.10'    || _
         '2.12.11'    || _
+        '2.12.12'    || _
         '2.13.0'     || _
         '2.13.1'     || _
         '2.13.2'     || _
+        '2.13.3'     || _
     }
 
     @Unroll
@@ -772,8 +774,8 @@ final case class Cat(breed: String) extends Animal
         where:
         scalaVersion || _
         '2.11.12'    || _
-        '2.12.11'    || _
-        '2.13.2'     || _
+        '2.12.12'    || _
+        '2.13.3'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
@@ -786,7 +788,7 @@ final case class Cat(breed: String) extends Animal
                 .build()
     }
 
-    private TemporaryFolder createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.12.11') {
+    private TemporaryFolder createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.12.12') {
         TemporaryFolder projectDir = new TemporaryFolder()
         projectDir.create()
         projectDir.newFile("build.gradle").write """

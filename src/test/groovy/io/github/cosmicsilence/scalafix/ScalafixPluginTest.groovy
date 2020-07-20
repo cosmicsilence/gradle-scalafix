@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    private static final String SCALA_VERSION = '2.12.11'
+    private static final String SCALA_VERSION = '2.12.12'
     private static final List<String> DEFAULT_COMPILER_OPTS = ['-Ywarn-unused']
 
     private Project scalaProject
