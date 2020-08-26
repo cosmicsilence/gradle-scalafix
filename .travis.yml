@@ -12,7 +12,7 @@ jobs:
       script: "./gradlew compatTest4.9"
 
     - script: "./gradlew compatTest4.10.3"
-      name: "Stutter compat test for gradle 4.9 version"
+      name: "Stutter compat test for gradle 4.10.3 version"
     - stage: compat-test-gradle-5
       name: "Stutter compat test for gradle 5.1.1 version"
       script: "./gradlew compatTest5.1.1"
