@@ -3,7 +3,7 @@ package io.github.cosmicsilence.utils
 import org.gradle.api.Project
 import spock.lang.Specification
 
-class GradleTest extends Specification {
+class GradleCompatTest extends Specification {
 
     Project mockProject
     def gradle
@@ -19,18 +19,18 @@ class GradleTest extends Specification {
         gradle.gradleVersion >> '4.9'
 
         when:
-        boolean isVersion4 = Gradle.isVersion4(mockProject)
+        boolean isVersion4 = GradleCompat.isVersion4(mockProject)
 
         then:
         isVersion4 == true
     }
 
-    def 'isVersion4 should return true if the gradle version is 5.x'() {
+    def 'isVersion4 should return false if the gradle version is 5.x'() {
         given:
         gradle.gradleVersion >> '5.5'
 
         when:
-        boolean isVersion4 = Gradle.isVersion4(mockProject)
+        boolean isVersion4 = GradleCompat.isVersion4(mockProject)
 
         then:
         isVersion4 == false
