@@ -7,22 +7,22 @@ jobs:
       name: "Unit tests"
       script:
       - "./gradlew test"
+
     - stage: compat-test-gradle-4
       name: "Stutter compat test for gradle 4.9 version"
       script: "./gradlew compatTest4.9"
-
     - script: "./gradlew compatTest4.10.3"
       name: "Stutter compat test for gradle 4.10.3 version"
+
     - stage: compat-test-gradle-5
       name: "Stutter compat test for gradle 5.1.1 version"
       script: "./gradlew compatTest5.1.1"
-
     - script: "./gradlew compatTest5.6.4"
       name: "Stutter compat test for gradle 5.6.4 version"
+
     - stage: compat-test-gradle-6
       name: "Stutter compat test for gradle 6.0.1 version"
       script: "./gradlew compatTest6.0.1"
-
     - script: "./gradlew compatTest6.5"
       name: "Stutter compat test for gradle 6.5 version"
 
