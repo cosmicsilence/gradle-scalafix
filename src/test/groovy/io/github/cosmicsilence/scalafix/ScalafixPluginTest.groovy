@@ -544,7 +544,7 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = subProject.tasks.checkScalafixMain
-        !task.configFile.get()
+        !task.configFile.isPresent()
     }
 
     def 'scalafix should only select sources matching include filter'() {
@@ -616,7 +616,7 @@ class ScalafixPluginTest extends Specification {
             apply plugin: 'io.github.cosmicsilence.scalafix'
 
             scalafix.autoConfigureSemanticdb = autoConfigureSemanticDb
-            scalafix.configFile = configFile
+            if (configFile) scalafix.configFile = configFile
             ext.'scalafix.rules' = rules
         }
     }

@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import io.github.cosmicsilence.utils.GradleCompat
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
@@ -45,15 +46,16 @@ class ScalafixExtension {
 
     ScalafixExtension(Project project) {
         this.project = project
-        configFile = project.objects.fileProperty().convention(
-                locateConfigFile(project) ?: locateConfigFile(project.rootProject))
+
+        RegularFile defaultRegularFile = locateConfigFile(project)?: locateConfigFile(project.rootProject)
+        configFile = GradleCompat.fileProperty(project, defaultRegularFile)
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
     }
 
     private RegularFile locateConfigFile(Project project) {
-        def configFile = project.getLayout().getProjectDirectory().file(DEFAULT_CONFIG_FILE)
+        RegularFile configFile = project.layout.projectDirectory.file(DEFAULT_CONFIG_FILE)
         return (configFile.asFile.exists() && configFile.asFile.isFile()) ? configFile : null
     }
 
