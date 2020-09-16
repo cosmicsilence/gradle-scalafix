@@ -8,19 +8,15 @@ jobs:
       name: Unit Tests
       script: "./gradlew test"
 
-    - stage: compat-test-gradle-4
+    - stage: compat-tests
     - script: "./gradlew compatTest4.9"
       name: "Compat tests for Gradle 4.9"
     - script: "./gradlew compatTest4.10.3"
       name: "Compat tests for Gradle 4.10.3 "
-
-    - stage: compat-test-gradle-5
     - script: "./gradlew compatTest5.1.1"
       name: "Compat tests for Gradle 5.1.1"
     - script: "./gradlew compatTest5.6.4"
       name: "Compat tests for Gradle 5.6.4"
-
-    - stage: compat-test-gradle-6
     - script: "./gradlew compatTest6.0.1"
       name: "Compat tests for Gradle 6.0.1"
     - script: "./gradlew compatTest6.5"
