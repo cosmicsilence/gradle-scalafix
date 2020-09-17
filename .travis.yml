@@ -9,7 +9,7 @@ jobs:
       script: "./gradlew test"
 
     - stage: compat-tests
-    - script: "./gradlew compatTest4.9"
+      script: "./gradlew compatTest4.9"
       name: "Compat tests for Gradle 4.9"
     - script: "./gradlew compatTest4.10.3"
       name: "Compat tests for Gradle 4.10.3 "
