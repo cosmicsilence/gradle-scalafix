@@ -10,7 +10,7 @@ class SemanticDBTest extends Specification {
         def version = SemanticDB.scalametaVersion
 
         then:
-        version == "4.3.20"
+        version == "4.3.24"
     }
 
     def 'it should return supported Scala 2.11.x version'() {
