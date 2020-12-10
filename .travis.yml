@@ -1,43 +1,40 @@
+os: linux
 language: java
 jdk: openjdk8
 
 jobs:
   include:
-    - stage: test
-      name: "Unit tests"
-      script:
-      - "./gradlew test"
+    - stage: unit-test
+      name: Unit Tests
+      script: "./gradlew test"
 
-    - stage: compat-test-gradle-4
-      name: "Stutter compat test for gradle 4.9 version"
+    - stage: compat-tests
       script: "./gradlew compatTest4.9"
+      name: "Compat tests for Gradle 4.9"
     - script: "./gradlew compatTest4.10.3"
-      name: "Stutter compat test for gradle 4.10.3 version"
-
-    - stage: compat-test-gradle-5
-      name: "Stutter compat test for gradle 5.1.1 version"
-      script: "./gradlew compatTest5.1.1"
+      name: "Compat tests for Gradle 4.10.3 "
+    - script: "./gradlew compatTest5.1.1"
+      name: "Compat tests for Gradle 5.1.1"
     - script: "./gradlew compatTest5.6.4"
-      name: "Stutter compat test for gradle 5.6.4 version"
-
-    - stage: compat-test-gradle-6
-      name: "Stutter compat test for gradle 6.0.1 version"
-      script: "./gradlew compatTest6.0.1"
+      name: "Compat tests for Gradle 5.6.4"
+    - script: "./gradlew compatTest6.0.1"
+      name: "Compat tests for Gradle 6.0.1"
     - script: "./gradlew compatTest6.5"
-      name: "Stutter compat test for gradle 6.5 version"
+      name: "Compat tests for Gradle 6.5"
 
-deploy:
-  - provider: script
-    script: ./gradlew publish bintrayUpload publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET
-    on:
-      tags: true
-  - provider: releases
-    api_key: $GITHUB_KEY
-    file_glob: true
-    file: build/libs/*.jar
-    skip_cleanup: true
-    on:
-      tags: true
+    - stage: release
+      script: skip
+      deploy:
+        - provider: script
+          script: ./gradlew publish bintrayUpload publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET
+          on:
+            tags: true
+        - provider: releases
+          token: $GITHUB_KEY
+          file_glob: true
+          file: build/libs/*.jar
+          on:
+            tags: true
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
