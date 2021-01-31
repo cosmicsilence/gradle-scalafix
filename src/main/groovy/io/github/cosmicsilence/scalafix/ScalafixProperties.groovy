@@ -1,17 +1,23 @@
 package io.github.cosmicsilence.scalafix
 
-abstract class SemanticDB {
+import org.gradle.api.GradleException
+
+abstract class ScalafixProperties {
 
     private static final String SCALAFIX_PROPS_PATH = "scalafix-interfaces.properties"
     private static final Properties SCALAFIX_PROPS = new Properties()
 
     static {
-        def file = SemanticDB.classLoader.getResourceAsStream(SCALAFIX_PROPS_PATH)
+        def file = ScalafixProperties.classLoader.getResourceAsStream(SCALAFIX_PROPS_PATH)
         assert file != null, "File ${SCALAFIX_PROPS_PATH} not found in the classpath"
         SCALAFIX_PROPS.load(file)
     }
 
-    private SemanticDB() {}
+    private ScalafixProperties() {}
+
+    static String getScalafixVersion() {
+        SCALAFIX_PROPS.getProperty("scalafixVersion")
+    }
 
     static String getScalametaVersion() {
         SCALAFIX_PROPS.getProperty("scalametaVersion")
@@ -25,7 +31,11 @@ abstract class SemanticDB {
         SCALAFIX_PROPS.getProperty("scala212")
     }
 
-    static Optional<String> getMavenCoordinates(String scalaVersion) {
+    static String getSupportedScala213Version() {
+        SCALAFIX_PROPS.getProperty("scala213")
+    }
+
+    static String supportedScalaVersion(String scalaVersion) {
         String supportedScalaVersion
 
         switch (scalaVersion) {
@@ -36,17 +46,12 @@ abstract class SemanticDB {
                 supportedScalaVersion = supportedScala212Version
                 break
             case ~/^2\.13\..+$/:
-                // Using the project's Scala version as:
-                // - semanticdb_2.13.0 is incompatible with Scala 2.13.1
-                // - semanticdb_2.13.1 is incompatible with Scala 2.13.0
-                supportedScalaVersion = scalaVersion
+                supportedScalaVersion = supportedScala213Version
                 break
             default:
-                supportedScalaVersion = null
+                throw new GradleException("Unsupported Scala version. Scalafix supports only 2.11, 2.12 and 2.13")
         }
-
-        Optional.ofNullable(supportedScalaVersion).map {
-            "org.scalameta:semanticdb-scalac_$it:$scalametaVersion"
-        }
+        supportedScalaVersion
     }
+
 }

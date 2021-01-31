@@ -71,8 +71,12 @@ class ScalafixPlugin implements Plugin<Project> {
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
             ScalaCompile scalaCompileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
 
+            def scalaVersion = getScalaVersion(project, scalaCompileTask)
+
+            addScalafixDependency(project, scalaVersion)
+
             if (extension.autoConfigureSemanticdb) {
-                configureSemanticdbCompilerPlugin(project, scalaCompileTask, sourceSet)
+                configureSemanticdbCompilerPlugin(project, scalaCompileTask)
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.getName()}'"
@@ -88,7 +92,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             scalafixTask.mode = taskMode
-            scalafixTask.scalaVersion = getScalaVersion(project, scalaCompileTask)
+            scalafixTask.scalaVersion = scalaVersion
             scalafixTask.classpath = sourceSet.output.classesDirs.toList().collect { it.path }
             scalafixTask.compileOptions = scalaCompileTask.scalaCompileOptions.additionalParameters ?: []
 
@@ -106,26 +110,33 @@ class ScalafixPlugin implements Plugin<Project> {
         scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : ''
     }
 
-    private void configureSemanticdbCompilerPlugin(Project project, ScalaCompile scalaCompileTask, SourceSet sourceSet) {
+    private void addScalafixDependency(Project project, String scalaVersion) {
+        def customRulesConfiguration = project.configurations.getByName(CUSTOM_RULES_CONFIGURATION)
+
+        def supportedScalaVersion = ScalafixProperties.supportedScalaVersion(scalaVersion)
+        def scalafixVersion = ScalafixProperties.getScalafixVersion()
+
+        def scalafixCoordinates = "ch.epfl.scala:scalafix-cli_$supportedScalaVersion:$scalafixVersion"
+        customRulesConfiguration.dependencies.add(
+                project.dependencies.create(scalafixCoordinates))
+    }
+
+    private void configureSemanticdbCompilerPlugin(Project project, ScalaCompile scalaCompileTask) {
         def scalaVersion = getScalaVersion(project, scalaCompileTask)
-        def coordinates = SemanticDB.getMavenCoordinates(scalaVersion)
+        def coordinates = "org.scalameta:semanticdb-scalac_${scalaVersion}:${ScalafixProperties.scalametaVersion}"
 
-        if (coordinates.isPresent()) {
-            def dependency = project.dependencies.create(coordinates.get())
-            def configuration = project.configurations.detachedConfiguration(dependency).setTransitive(false)
-            def compilerParameters = [
-                    '-Xplugin:' + configuration.asPath,
-                    '-P:semanticdb:sourceroot:' + project.projectDir,
-                    '-Yrangepos'
-            ]
+        def dependency = project.dependencies.create(coordinates)
+        def configuration = project.configurations.detachedConfiguration(dependency).setTransitive(false)
 
-            // intentionally mutating the Scala compile task here to avoid that the SemanticDB compiler plugin
-            // always gets configured and runs even when the Scalafix task is not run (which can be costly).
-            scalaCompileTask.scalaCompileOptions.additionalParameters =
-                        (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
-        } else {
-            logger.warn("WARNING: The SemanticDB compiler plugin could not be auto-configured because the Scala version " +
-                    "used in source set '${sourceSet.name}' is unsupported or could not be determined (value=$scalaVersion)")
-        }
+        def compilerParameters = [
+                '-Xplugin:' + configuration.asPath,
+                '-P:semanticdb:sourceroot:' + project.projectDir,
+                '-Yrangepos'
+        ]
+
+        // intentionally mutating the Scala compile task here to avoid that the SemanticDB compiler plugin
+        // always gets configured and runs even when the Scalafix task is not run (which can be costly).
+        scalaCompileTask.scalaCompileOptions.additionalParameters =
+                    (scalaCompileTask.scalaCompileOptions.additionalParameters ?: []) + compilerParameters
     }
 }

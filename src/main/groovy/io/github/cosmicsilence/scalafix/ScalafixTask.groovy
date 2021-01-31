@@ -68,7 +68,7 @@ class ScalafixTask extends SourceTask {
         def classloader = this.class.classLoader
         def customRulesClassloader = classloaderFrom(customRulesConfiguration, classloader)
 
-        def args = Scalafix.classloadInstance(classloader)
+        def args = Scalafix.classloadInstance(customRulesClassloader)
                 .newArguments()
                 .withMode(mode)
                 .withConfig(configFilePath)
