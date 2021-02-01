@@ -72,6 +72,10 @@ class ScalafixPlugin implements Plugin<Project> {
             ScalaCompile scalaCompileTask = project.tasks.getByName(sourceSet.getCompileTaskName('scala'))
 
             def scalaVersion = getScalaVersion(project, scalaCompileTask)
+            if (scalaVersion == '') {
+                logger.warn("WARNING: Could not detect Scala version for source set '${sourceSet.name}'. Skipping scalafix task configuration")
+                return
+            }
 
             addScalafixDependency(project, scalaVersion)
 

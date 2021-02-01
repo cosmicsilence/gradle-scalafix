@@ -95,7 +95,12 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { integTest { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets { integTest { } }
+configurations {
+    integTestImplementation.extendsFrom implementation
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -111,7 +116,12 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'checkScalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { integTest { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets { integTest { } }
+configurations {
+    integTestImplementation.extendsFrom implementation
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
@@ -144,7 +154,12 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'all scalafix tasks should be grouped'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { foo { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets { foo { } }
+configurations {
+    fooImplementation.extendsFrom implementation
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'tasks')
@@ -164,7 +179,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 '''
     }
 
-    def 'A warning message should inform when the SemanticDB compiler plugin is not auto-configured because the Scala version is not supported'() {
+    def 'Scalafix task creation should fail because the Scala version is not supported'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }', '2.10.7')
 
@@ -172,10 +187,8 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
-        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
-                "Scala version used in source set 'main' is unsupported or could not be determined (value=2.10.7)"
-        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
-                "Scala version used in source set 'test' is unsupported or could not be determined (value=2.10.7)"
+        UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Scala version \'2.10.7\' is not supported.'
     }
 
     def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
@@ -392,35 +405,35 @@ Running Scalafix on 1 Scala source file(s)
         appleTestSrcFile.getText() == appleTestSrcContent
     }
 
-    def 'checkScalafix should skip non-included source files'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { includes = ["**/fruits/**"] }')
-        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
-        createSourceFile(projectDir, '''
-import scala.util.Random
-object Dog
-''', 'main', 'animals')
-        createSourceFile(projectDir, '''
-import scala.util.Random
-object DogTest
-''', 'test', 'animals')
-        createSourceFile(projectDir, 'object Apple', 'main', 'fruits')
-        createSourceFile(projectDir, 'object AppleTest', 'test', 'fruits')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
-
-        then:
-        buildResult.output.contains 'BUILD SUCCESSFUL' // offending files in 'animals' are skipped
-        buildResult.output.contains '''
-> Task :checkScalafixMain
-Running Scalafix on 1 Scala source file(s)
-'''
-        buildResult.output.contains '''
-> Task :checkScalafixTest
-Running Scalafix on 1 Scala source file(s)
-'''
-    }
+//    def 'checkScalafix should skip non-included source files'() {
+//        given:
+//        TemporaryFolder projectDir = createScalaProject('scalafix { includes = ["**/fruits/**"] }')
+//        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+//        createSourceFile(projectDir, '''
+//import scala.util.Random
+//object Dog
+//''', 'main', 'animals')
+//        createSourceFile(projectDir, '''
+//import scala.util.Random
+//object DogTest
+//''', 'test', 'animals')
+//        createSourceFile(projectDir, 'object Apple', 'main', 'fruits')
+//        createSourceFile(projectDir, 'object AppleTest', 'test', 'fruits')
+//
+//        when:
+//        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '--stacktrace')
+//
+//        then:
+//        buildResult.output.contains 'BUILD SUCCESSFUL' // offending files in 'animals' are skipped
+//        buildResult.output.contains '''
+//> Task :checkScalafixMain
+//Running Scalafix on 1 Scala source file(s)
+//'''
+//        buildResult.output.contains '''
+//> Task :checkScalafixTest
+//Running Scalafix on 1 Scala source file(s)
+//'''
+//    }
 
     def 'scalafix should skip excluded source files'() {
         given:
@@ -438,6 +451,36 @@ object HelloWorld
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
         srcFile.getText() == originalSrcContent
+    }
+
+    def 'checkScalafix should skip non-included source files'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('scalafix { includes = ["**/fruits/**"] }')
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        createSourceFile(projectDir, '''
+import scala.util.Random
+object Dog
+''', 'main', 'animals')
+        createSourceFile(projectDir, '''
+import scala.util.Random
+object DogTest
+''', 'test', 'animals')
+        createSourceFile(projectDir, 'object Apple', 'main', 'fruits')
+        createSourceFile(projectDir, 'object AppleTest', 'test', 'fruits')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '--stacktrace')
+
+        then:
+        buildResult.output.contains 'BUILD SUCCESSFUL' // offending files in 'animals' are skipped
+        buildResult.output.contains '''
+> Task :checkScalafixMain
+Running Scalafix on 1 Scala source file(s)
+'''
+        buildResult.output.contains '''
+> Task :checkScalafixTest
+Running Scalafix on 1 Scala source file(s)
+'''
     }
 
     def 'checkScalafix should skip excluded source files'() {
@@ -716,15 +759,7 @@ DisableSyntax.noVars = true
 
         where:
         scalaVersion || _
-        '2.11.8'     || _
-        '2.11.9'     || _
-        '2.11.10'    || _
-        '2.11.11'    || _
         '2.11.12'    || _
-        '2.12.4'     || _
-        '2.12.5'     || _
-        '2.12.6'     || _
-        '2.12.7'     || _
         '2.12.8'     || _
         '2.12.9'     || _
         '2.12.10'    || _
@@ -739,13 +774,15 @@ DisableSyntax.noVars = true
     @Unroll
     def 'scalafix should run custom rules in projects using Scala #scalaVersion'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        TemporaryFolder projectDir = createScalaProject("""
 dependencies {
-    scalafix 'com.github.vovapolu:scaluzzi_2.12:0.1.4'
-    scalafix 'com.nequissimus:sort-imports_2.12:0.3.2'
+    scalafix 'com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0'
 }
-''', scalaVersion)
-        createScalafixConfig(projectDir, 'rules = [ MissingFinal, SortImports ]')
+""", scalaVersion)
+        createScalafixConfig(projectDir, '''
+rules = [ OrganizeImports ]
+OrganizeImports { removeUnused = false }
+''')
         File srcFile = createSourceFile(projectDir, '''
 import scala.concurrent.duration._
 import java.lang.String
@@ -761,21 +798,22 @@ case class Cat(breed: String) extends Animal
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
+
         srcFile.getText() == '''
 import java.lang.String
 import scala.collection.immutable.List
 import scala.concurrent.duration._
 
 sealed trait Animal
-final case class Dog(breed: String) extends Animal
-final case class Cat(breed: String) extends Animal
+case class Dog(breed: String) extends Animal
+case class Cat(breed: String) extends Animal
 '''
 
         where:
-        scalaVersion || _
-        '2.11.12'    || _
-        '2.12.12'    || _
-        '2.13.3'     || _
+        scalaVersion || scalaBinaryVersion
+        '2.11.12'    || '2.11'
+        '2.12.12'    || '2.12'
+        '2.13.3'     || '2.13'
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {

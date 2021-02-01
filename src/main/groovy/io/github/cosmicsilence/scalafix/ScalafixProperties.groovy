@@ -49,7 +49,7 @@ abstract class ScalafixProperties {
                 supportedScalaVersion = supportedScala213Version
                 break
             default:
-                throw new GradleException("Unsupported Scala version. Scalafix supports only 2.11, 2.12 and 2.13")
+                throw new GradleException("Scala version '${scalaVersion}' is not supported. Scalafix supports only 2.11, 2.12 and 2.13")
         }
         supportedScalaVersion
     }
