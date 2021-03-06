@@ -7,6 +7,8 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.atomic.AtomicInteger
+
 class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafixMain task should run compileScala by default'() {
@@ -279,10 +281,12 @@ No Scalafix rules to run'''
     def 'scalafix should run semantic rewrite rule and fix input source files'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
-        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        createScalafixConfig(projectDir, 'rules = [ RemoveUnused, ExplicitResultTypes ]')
         File src = createSourceFile(projectDir, '''
 import scala.util.Random
-object HelloWorld
+object HelloWorld {
+  def foo = Map(1 -> "one")
+}
 ''')
 
         when:
@@ -290,7 +294,9 @@ object HelloWorld
 
         then:
         src.getText() == '''
-object HelloWorld
+object HelloWorld {
+  def foo: Map[Int,String] = Map(1 -> "one")
+}
 '''
     }
 
@@ -326,13 +332,13 @@ object HelloWorld
         then:
         UnexpectedBuildFailure err = thrown()
         err.message.contains 'Task :scalafixMain FAILED'
-        err.message.contains 'A semantic rule was run on a source file that has no associated *.semanticdb file'
+        err.message.contains 'The semanticdb compiler plugin is required to run semantic rules such as RemoveUnused.'
     }
 
     def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
-        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
+        createScalafixConfig(projectDir, 'rules = [ ExplicitResultTypes ]')
         createSourceFile(projectDir, 'object Foo')
 
         when:
@@ -341,7 +347,7 @@ object HelloWorld
         then:
         UnexpectedBuildFailure err = thrown()
         err.message.contains 'Task :checkScalafixMain FAILED'
-        err.message.contains 'A semantic rule was run on a source file that has no associated *.semanticdb file'
+        err.message.contains 'The semanticdb compiler plugin is required to run semantic rules such as ExplicitResultTypes.'
     }
 
     def 'scalafix should skip non-included source files'() {
@@ -691,8 +697,6 @@ object Foo {
         createScalafixConfig(projectDir, '''
 rules = [
   RemoveUnused
-  NoAutoTupling
-  DisableSyntax
   LeakingImplicitClassVal
   NoValInForComprehension
   ProcedureSyntax
@@ -700,10 +704,36 @@ rules = [
 
 DisableSyntax.noVars = true
 ''')
-        createSourceFile(projectDir, 'object Dog ')
-        createSourceFile(projectDir, 'object Cat')
-        createSourceFile(projectDir, 'class Bird')
-        createSourceFile(projectDir, 'class Fish')
+
+        File removeUnusedSource = createSourceFile(projectDir, '''
+object RemoveUnusedTest {
+  private def unused1 = "remove me"
+  def foo(): Unit = {
+    val unused2 = "remove me"
+    println("foo")
+  }
+}
+''')
+        File leakingImplicitClassValSource = createSourceFile(projectDir, '''
+object LeakingImplicitClassValTest {
+    implicit class XtensionVal(val str: String) extends AnyVal {
+      def doubled: String = str + str
+    }
+}
+''')
+        File noValInForComprehensionSource = createSourceFile(projectDir, '''
+object NoValInForComprehensionTest {
+    for {
+      n <- List(1, 2, 3)
+      val inc = n + 1
+    } println(inc)
+}
+''')
+        File procedureSyntaxSource = createSourceFile(projectDir, '''
+object ProcedureSyntaxTest {
+    def debug { println("debug") }
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix')
@@ -711,6 +741,35 @@ DisableSyntax.noVars = true
         then:
         buildResult.output.contains 'Running Scalafix on 4 Scala source file(s)'
         buildResult.output.contains 'BUILD SUCCESSFUL'
+        removeUnusedSource.getText() == '''
+object RemoveUnusedTest {
+  
+  def foo(): Unit = {
+    
+    println("foo")
+  }
+}
+'''
+        leakingImplicitClassValSource.getText() == '''
+object LeakingImplicitClassValTest {
+    implicit class XtensionVal(private val str: String) extends AnyVal {
+      def doubled: String = str + str
+    }
+}
+'''
+        noValInForComprehensionSource.getText() == '''
+object NoValInForComprehensionTest {
+    for {
+      n <- List(1, 2, 3)
+      inc = n + 1
+    } println(inc)
+}
+'''
+        procedureSyntaxSource.getText() == '''
+object ProcedureSyntaxTest {
+    def debug: Unit = { println("debug") }
+}
+'''
 
         where:
         scalaVersion || _
@@ -730,43 +789,55 @@ DisableSyntax.noVars = true
     @Unroll
     def 'scalafix should run custom rules in projects using Scala #scalaVersion'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        TemporaryFolder projectDir = createScalaProject("""
 dependencies {
-    scalafix 'com.github.vovapolu:scaluzzi_2.12:0.1.4'
-    scalafix 'com.nequissimus:sort-imports_2.12:0.3.2'
+    scalafix 'com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0'
 }
-''', scalaVersion)
-        createScalafixConfig(projectDir, 'rules = [ MissingFinal, SortImports ]')
+""", scalaVersion)
+        createScalafixConfig(projectDir, '''
+rules = [ OrganizeImports ]
+OrganizeImports {
+    groupedImports = Merge
+    groupExplicitlyImportedImplicitsSeparately = true
+    groups = [ "re:javax?\\\\.", "scala." ]
+    removeUnused = false
+}
+''')
         File srcFile = createSourceFile(projectDir, '''
 import scala.concurrent.duration._
+import scala.language.postfixOps
+import sun.misc.Unsafe
 import java.lang.String
 import scala.collection.immutable.List
+import scala.collection.immutable.Set
 
-sealed trait Animal
-case class Dog(breed: String) extends Animal
-case class Cat(breed: String) extends Animal
+object Foo
 ''')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix', '--stacktrace')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
         buildResult.output.contains 'BUILD SUCCESSFUL'
         srcFile.getText() == '''
 import java.lang.String
-import scala.collection.immutable.List
+
+import scala.collection.immutable.{List, Set}
 import scala.concurrent.duration._
 
-sealed trait Animal
-final case class Dog(breed: String) extends Animal
-final case class Cat(breed: String) extends Animal
+import sun.misc.Unsafe
+
+import scala.language.postfixOps
+
+object Foo
 '''
 
+        // FIXME uncomment 2.11/2.13 versions after https://github.com/cosmicsilence/gradle-scalafix/issues/32 is resolved
         where:
-        scalaVersion || _
-        '2.11.12'    || _
-        '2.12.12'    || _
-        '2.13.4'     || _
+        scalaVersion || scalaBinaryVersion
+//        '2.11.12'    || '2.11'
+        '2.12.12'    || '2.12'
+//        '2.13.4'     || '2.13'
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
@@ -816,8 +887,10 @@ $additionalBuildInstructions
 
         if (!pkgFolder.exists()) pkgFolder.mkdirs()
 
-        File scalaSrcFile = new File(pkgFolder, "source_${new Random().nextInt(1000)}.scala")
+        File scalaSrcFile = new File(pkgFolder, "source_${fileCount.incrementAndGet()}.scala")
         scalaSrcFile.write content
         scalaSrcFile
     }
+
+    private AtomicInteger fileCount = new AtomicInteger()
 }

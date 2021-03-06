@@ -89,8 +89,9 @@ class ScalafixPlugin implements Plugin<Project> {
             }))
             scalafixTask.mode = taskMode
             scalafixTask.scalaVersion = sourceSet.scalaVersion.get()
-            scalafixTask.classpath = sourceSet.classesDirs.collect { it.path }
+            scalafixTask.classpath = sourceSet.fullClasspath.collect { it.path }
             scalafixTask.compileOptions = sourceSet.compilerOptions
+            scalafixTask.semanticdbConfigured = extension.autoConfigureSemanticdb
 
             if (extension.autoConfigureSemanticdb) {
                 scalafixTask.dependsOn sourceSet.compileTask

@@ -129,9 +129,8 @@ dependencies in your Gradle build script using the `scalafix` configuration. Exa
 
 ```
 dependencies {
-    scalafix "org.scala-lang.modules:scala-collection-migrations_2.12:2.1.3"
-    scalafix "com.github.vovapolu:scaluzzi_2.12:0.1.3"
-    scalafix "com.nequissimus:sort-imports_2.12:0.3.2"
+    scalafix "com.github.vovapolu:scaluzzi_${scalaBinaryVersion}:0.1.18"
+    scalafix "com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0"
 }
 ```
 

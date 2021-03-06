@@ -1,6 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
-import io.github.cosmicsilence.utils.GradleCompat
+import io.github.cosmicsilence.compat.GradleCompat
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty

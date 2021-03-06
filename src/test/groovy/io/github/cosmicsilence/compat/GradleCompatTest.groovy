@@ -1,4 +1,4 @@
-package io.github.cosmicsilence.utils
+package io.github.cosmicsilence.compat
 
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
