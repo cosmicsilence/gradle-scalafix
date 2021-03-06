@@ -71,21 +71,21 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.scalafixMain // forces plugin configuration
         def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
         compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
                     !it.contains("scala-library")
         }
 
-        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.scalafixTest // forces plugin configuration
         def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
         compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileTestScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
                     !it.contains("scala-library")
         }
     }
@@ -98,24 +98,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.scalafixMain // forces plugin configuration
         scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // force plugin configuration
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-    }
-
-    def 'SemanticDB configuration is not added if the version of Scala is not supported'() {
-        given:
-        def scalaProject = buildScalaProject(null, [], "2.10.7")
-        applyScalafixPlugin(scalaProject, true)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.scalafixTest // forces plugin configuration
         scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 

@@ -1,0 +1,56 @@
+package io.github.cosmicsilence.scalafix
+
+import org.gradle.api.Project
+import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.tasks.ScalaRuntime
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.scala.ScalaCompile
+
+class ScalaSourceSet {
+
+    private final Project project
+    private final SourceSet sourceSet
+
+    ScalaSourceSet(Project project, SourceSet sourceSet) {
+        this.project = project
+        this.sourceSet = sourceSet
+    }
+
+    String getName() {
+        return sourceSet.name
+    }
+
+    List<File> getClassesDirs() {
+        return sourceSet.output.classesDirs.toList()
+    }
+
+    SourceDirectorySet getScalaSources() {
+        return sourceSet.allScala
+    }
+
+    ScalaCompile getCompileTask() {
+        return project.tasks.getByName(getCompileTaskName(sourceSet))
+    }
+
+    Optional<String> getScalaVersion() {
+        def scalaRuntime = project.extensions.findByType(ScalaRuntime)
+        def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
+        Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
+    }
+
+    List<String> getCompilerOptions() {
+        return compileTask.scalaCompileOptions.additionalParameters ?: []
+    }
+
+    void addCompilerOptions(List<String> opts) {
+        compileTask.scalaCompileOptions.additionalParameters = compilerOptions + opts
+    }
+
+    static boolean isScalaSourceSet(Project project, SourceSet sourceSet) {
+        return project.tasks.findByName(getCompileTaskName(sourceSet))
+    }
+
+    private static String getCompileTaskName(SourceSet sourceSet) {
+        return sourceSet.getCompileTaskName('scala')
+    }
+}
