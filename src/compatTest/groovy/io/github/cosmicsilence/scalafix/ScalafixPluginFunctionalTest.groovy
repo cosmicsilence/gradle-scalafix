@@ -95,7 +95,13 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { integTest { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets {
+    integTest {
+        compileClasspath += sourceSets.test.compileClasspath
+    }
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -111,7 +117,13 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'checkScalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { integTest { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets {
+    integTest {
+        compileClasspath += sourceSets.test.compileClasspath
+    }
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
@@ -144,7 +156,13 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'all scalafix tasks should be grouped'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { foo { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets {
+    foo {
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+}
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'tasks')
@@ -164,18 +182,17 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 '''
     }
 
-    def 'A warning message should inform when the SemanticDB compiler plugin is not auto-configured because the Scala version is not supported'() {
+    def 'scalafix tasks should not be created for source sets that do not have the Scala library in the classpath'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }', '2.10.7')
+        TemporaryFolder projectDir = createScalaProject('sourceSets { notScala { } }')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'tasks')
 
         then:
-        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
-                "Scala version used in source set 'main' is unsupported or could not be determined (value=2.10.7)"
-        buildResult.output.contains "WARNING: The SemanticDB compiler plugin could not be auto-configured because the " +
-                "Scala version used in source set 'test' is unsupported or could not be determined (value=2.10.7)"
+        buildResult.output.contains("WARNING: Skipping source set 'notScala' as the Scala version could not be detected")
+        !buildResult.output.contains('checkScalafixNotScala')
+        !buildResult.output.contains('scalafixNotScala')
     }
 
     def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
@@ -223,63 +240,39 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         }
     }
 
-    def 'scalafix task should not fail when no rules are informed'() {
+    def 'checkScalafix and scalafix tasks should not fail when no rules are informed'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
         createSourceFile(projectDir, 'object Foo')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', 'scalafix')
 
         then:
+        buildResult.output.contains '''
+> Task :checkScalafixMain
+No Scalafix rules to run'''
         buildResult.output.contains '''
 > Task :scalafixMain
 No Scalafix rules to run'''
         buildResult.output.contains 'BUILD SUCCESSFUL'
     }
 
-    def 'checkScalafix task should not fail when no rules are informed'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject()
-        createSourceFile(projectDir, 'object Foo')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
-
-        then:
-        buildResult.output.contains '''
-> Task :checkScalafixMain
-No Scalafix rules to run'''
-        buildResult.output.contains 'BUILD SUCCESSFUL'
-    }
-
-    def 'scalafix task should not fail when there is no source file to be processed'() {
+    def 'checkScalafix and scalafix tasks should not fail when there is no source file to be processed'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix')
-
-        then:
-        buildResult.output.contains ':scalafixMain NO-SOURCE'
-        buildResult.output.contains ':scalafixTest NO-SOURCE'
-        buildResult.output.contains ':scalafix UP-TO-DATE'
-        buildResult.output.contains 'BUILD SUCCESSFUL'
-    }
-
-    def 'checkScalafix task should not fail when there is no source file to be processed'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject()
-        createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'checkScalafix')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', 'scalafix')
 
         then:
         buildResult.output.contains ':checkScalafixMain NO-SOURCE'
         buildResult.output.contains ':checkScalafixTest NO-SOURCE'
         buildResult.output.contains ':checkScalafix UP-TO-DATE'
+        buildResult.output.contains ':scalafixMain NO-SOURCE'
+        buildResult.output.contains ':scalafixTest NO-SOURCE'
+        buildResult.output.contains ':scalafix UP-TO-DATE'
         buildResult.output.contains 'BUILD SUCCESSFUL'
     }
 
@@ -316,6 +309,7 @@ object HelloWorld
 
         then:
         UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :checkScalafixMain FAILED'
         err.message.contains 'A file on disk does not match the file contents if it was fixed with Scalafix'
         srcFile.getText() == originalSrcContent
     }
@@ -331,6 +325,7 @@ object HelloWorld
 
         then:
         UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :scalafixMain FAILED'
         err.message.contains 'A semantic rule was run on a source file that has no associated *.semanticdb file'
     }
 
@@ -345,6 +340,7 @@ object HelloWorld
 
         then:
         UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :checkScalafixMain FAILED'
         err.message.contains 'A semantic rule was run on a source file that has no associated *.semanticdb file'
     }
 
@@ -486,6 +482,7 @@ object HelloWorld {
 
         then:
         UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :scalafixMain FAILED'
         err.message.contains 'A linter error was reported'
         err.message.contains 'error: [DisableSyntax.var] mutable state should be avoided'
         srcFile.getText() == originalSrcContent
@@ -510,6 +507,7 @@ object HelloWorld {
 
         then:
         UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :checkScalafixMain FAILED'
         err.message.contains 'A linter error was reported'
         err.message.contains 'error: [DisableSyntax.var] mutable state should be avoided'
         srcFile.getText() == originalSrcContent
@@ -708,7 +706,7 @@ DisableSyntax.noVars = true
         createSourceFile(projectDir, 'class Fish')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix', '--stacktrace')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
         buildResult.output.contains 'Running Scalafix on 4 Scala source file(s)'
@@ -716,15 +714,7 @@ DisableSyntax.noVars = true
 
         where:
         scalaVersion || _
-        '2.11.8'     || _
-        '2.11.9'     || _
-        '2.11.10'    || _
-        '2.11.11'    || _
         '2.11.12'    || _
-        '2.12.4'     || _
-        '2.12.5'     || _
-        '2.12.6'     || _
-        '2.12.7'     || _
         '2.12.8'     || _
         '2.12.9'     || _
         '2.12.10'    || _
@@ -734,6 +724,7 @@ DisableSyntax.noVars = true
         '2.13.1'     || _
         '2.13.2'     || _
         '2.13.3'     || _
+        '2.13.4'     || _
     }
 
     @Unroll
@@ -775,7 +766,7 @@ final case class Cat(breed: String) extends Animal
         scalaVersion || _
         '2.11.12'    || _
         '2.12.12'    || _
-        '2.13.3'     || _
+        '2.13.4'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {

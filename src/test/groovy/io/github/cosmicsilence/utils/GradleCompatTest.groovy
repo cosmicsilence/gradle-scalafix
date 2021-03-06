@@ -1,16 +1,17 @@
 package io.github.cosmicsilence.utils
 
 import org.gradle.api.Project
+import org.gradle.api.invocation.Gradle
 import spock.lang.Specification
 
 class GradleCompatTest extends Specification {
 
-    Project mockProject
-    def gradle
+    private Project mockProject
+    private Gradle gradle
 
     def setup() {
         mockProject = GroovyMock(Project)
-        gradle = Mock(org.gradle.api.invocation.Gradle)
+        gradle = Mock(Gradle)
         mockProject.gradle >> gradle
     }
 
