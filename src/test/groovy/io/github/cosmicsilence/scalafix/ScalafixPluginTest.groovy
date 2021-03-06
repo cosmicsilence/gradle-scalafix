@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 class ScalafixPluginTest extends Specification {
 
-    private static final String SCALA_VERSION = '2.12.12'
+    private static final String SCALA_VERSION = '2.12.13'
     private static final List<String> DEFAULT_COMPILER_OPTS = ['-Ywarn-unused']
 
     private Project scalaProject
@@ -63,6 +63,19 @@ class ScalafixPluginTest extends Specification {
         project.tasks.scalafix
     }
 
+    def 'The plugin should throw an exception if the version of Scala is not supported'() {
+        given:
+        def scalaProject = buildScalaProject(null, [], "2.10.7")
+        applyScalafixPlugin(scalaProject, true)
+
+        when:
+        scalaProject.evaluate()
+        scalaProject.tasks.scalafixMain // forces plugin configuration
+
+        then:
+        thrown GradleException
+    }
+
     def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
         given:
         applyScalafixPlugin(scalaProject, true)
@@ -71,21 +84,21 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.scalafixMain // forces plugin configuration
         def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
         compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
                     !it.contains("scala-library")
         }
 
-        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.scalafixTest // forces plugin configuration
         def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
         compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
         compileTestScalaParameters.find {
             it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SemanticDB.supportedScala212Version}-${SemanticDB.scalametaVersion}.jar") &&
+                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
                     !it.contains("scala-library")
         }
     }
@@ -98,24 +111,9 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
+        scalaProject.tasks.scalafixMain // forces plugin configuration
         scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // force plugin configuration
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-    }
-
-    def 'SemanticDB configuration is not added if the version of Scala is not supported'() {
-        given:
-        def scalaProject = buildScalaProject(null, [], "2.10.7")
-        applyScalafixPlugin(scalaProject, true)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.scalafixMain // force plugin configuration
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // force plugin configuration
+        scalaProject.tasks.scalafixTest // forces plugin configuration
         scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
@@ -165,6 +163,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -190,6 +189,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -216,6 +216,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -241,6 +242,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -281,6 +283,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -306,6 +309,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -332,6 +336,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -357,6 +362,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -385,6 +391,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -412,6 +419,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -440,6 +448,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -467,6 +476,7 @@ class ScalafixPluginTest extends Specification {
         ].toSet()
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
+        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION

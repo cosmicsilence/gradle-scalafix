@@ -6,8 +6,12 @@ import static scalafix.interfaces.ScalafixError.*
 
 class ScalafixFailed extends RuntimeException {
 
+    ScalafixFailed(String msg) {
+        super(msg)
+    }
+
     ScalafixFailed(ScalafixError... errors) {
-        super("Errors:\n" + errors.collect { " - ${mapToDescription(it)}" }.join("\n"))
+        this("Errors:\n" + errors.collect { " - ${mapToDescription(it)}" }.join("\n"))
     }
 
     private static String mapToDescription(error) {
