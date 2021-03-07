@@ -26,14 +26,14 @@ plugins {
 
 By default, Scalafix won't run any rules unless they are specified via configuration file or command line argument. In 
 order to decide what rules to pick and how to configure them, please check out Scalafix's [built-in 
-rules](https://scalacenter.github.io/scalafix/docs/rules/overview.html) as well as custom rules provided by the
+rules](https://scalacenter.github.io/scalafix/docs/rules/overview.html) as well as external rules provided by the
 community (e.g. [scaluzzi](https://github.com/vovapolu/scaluzzi)).
 
 ##### 1. Via config file:
 This is the recommended approach if you want to repeatedly run Scalafix as part of your build and day-to-day development.
 For that you need to create a file named `.scalafix.conf` in the root directory of your project and enter the configuration 
 for the rules you want to have enabled. The configuration uses the HOCON syntax and is well documented on the Scalafix 
-[website](https://scalacenter.github.io/scalafix/docs/users/configuration.html). If you are using external/custom rules,
+[website](https://scalacenter.github.io/scalafix/docs/users/configuration.html). If you are using external rules,
 please take a look at the documentation provided by them. Below is a basic example of using one of the Scalafix's built-in 
 rules so you can quickly get started:
 
@@ -121,10 +121,10 @@ scalafix {
 
 
 &nbsp;
-## Loading Custom Rules
+## Loading External Rules
 One of the nice things about the Scalafix tool is that it is extensible. That means that you can implement your own custom
 rules (or maybe simply reuse rules somebody else has already done) and load them into Scalafix to run in your projects.
-The Gradle Scalafix plugin lets you take advantage of that feature by allowing custom rules to be informed as regular
+The Gradle Scalafix plugin lets you take advantage of that feature by allowing external rules to be informed as regular
 dependencies in your Gradle build script using the `scalafix` configuration. Example:
 
 ```

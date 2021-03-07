@@ -35,7 +35,7 @@ class ScalaSourceSet {
     Optional<String> getScalaVersion() {
         def scalaRuntime = project.extensions.findByType(ScalaRuntime)
         def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
-        Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
+        return Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
     }
 
     List<String> getCompilerOptions() {
