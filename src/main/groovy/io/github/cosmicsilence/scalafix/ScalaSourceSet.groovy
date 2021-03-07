@@ -20,8 +20,8 @@ class ScalaSourceSet {
         return sourceSet.name
     }
 
-    List<File> getClassesDirs() {
-        return sourceSet.output.classesDirs.toList()
+    List<File> getFullClasspath() {
+        return (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList()
     }
 
     SourceDirectorySet getScalaSources() {
