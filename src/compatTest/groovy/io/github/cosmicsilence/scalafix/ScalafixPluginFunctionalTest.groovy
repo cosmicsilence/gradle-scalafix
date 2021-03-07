@@ -844,7 +844,7 @@ object OrganizeImportsTest
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
         return GradleRunner.create()
                 .withProjectDir(projectDir.getRoot())
-                .withArguments(arguments)
+                .withArguments(arguments.toList() + '--stacktrace')
                 .withGradleVersion(System.getProperty('compat.gradle.version'))
                 .withPluginClasspath()
                 .forwardOutput()
