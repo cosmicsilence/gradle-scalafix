@@ -197,6 +197,21 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         !buildResult.output.contains('scalafixNotScala')
     }
 
+    def 'scalafix task should fail if the Scala version is not supported'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }', '2.10.7')
+        createSourceFile(projectDir, 'object Foo', 'main')
+
+        when:
+        runGradle(projectDir, 'scalafix')
+
+        then:
+        UnexpectedBuildFailure err = thrown()
+        err.message.contains 'Task :scalafixMain FAILED'
+        err.message.contains "Scala version '2.10.7' is not supported"
+        err.message.contains 'BUILD FAILED'
+    }
+
     def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject()

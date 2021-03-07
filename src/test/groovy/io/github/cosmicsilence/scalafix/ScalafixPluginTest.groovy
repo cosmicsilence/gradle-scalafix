@@ -63,6 +63,19 @@ class ScalafixPluginTest extends Specification {
         project.tasks.scalafix
     }
 
+    def 'The plugin should throw an exception if the version of Scala is not supported'() {
+        given:
+        def scalaProject = buildScalaProject(null, [], "2.10.7")
+        applyScalafixPlugin(scalaProject, true)
+
+        when:
+        scalaProject.evaluate()
+        scalaProject.tasks.scalafixMain // forces plugin configuration
+
+        then:
+        thrown GradleException
+    }
+
     def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
         given:
         applyScalafixPlugin(scalaProject, true)

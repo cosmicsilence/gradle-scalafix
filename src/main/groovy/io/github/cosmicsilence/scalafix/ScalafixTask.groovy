@@ -58,11 +58,13 @@ class ScalafixTask extends SourceTask {
         def sourcePaths = source.collect { it.toPath() }
         def configFilePath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
         def customRulesConfiguration = project.configurations.getByName(ScalafixPlugin.CUSTOM_RULES_CONFIGURATION)
+        def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion)
 
         logger.debug(
                 """Running Scalafix with the following arguments:
                   | - Mode: ${mode}
                   | - Config file: ${configFilePath}
+                  | - Scalafix cli artifact: ${scalafixCliCoordinates}
                   | - Custom rules classpath: ${customRulesConfiguration.asPath}
                   | - Scala version: ${scalaVersion}
                   | - Scalac options: ${compileOptions}
@@ -71,9 +73,12 @@ class ScalafixTask extends SourceTask {
                   | - Classpath: ${classpath}
                   |""".stripMargin())
 
-        def classloader = Scalafix.class.classLoader
-        def externalRulesClassloader = classloaderFrom(customRulesConfiguration, classloader)
-        def scalafixArgs = Scalafix.classloadInstance(classloader)
+        def cliDependency = project.dependencies.create(scalafixCliCoordinates)
+        def cliConfiguration = project.configurations.detachedConfiguration(cliDependency)
+        def parentClassloader = new ScalafixInterfacesClassloader(Scalafix.class.classLoader)
+        def scalafixClassloader = classloaderFrom(cliConfiguration, parentClassloader)
+        def externalRulesClassloader = classloaderFrom(customRulesConfiguration, scalafixClassloader) // TODO WIP
+        def scalafixArgs = Scalafix.classloadInstance(scalafixClassloader)
                 .newArguments()
                 .withMode(mode)
                 .withConfig(configFilePath)

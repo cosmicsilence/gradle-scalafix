@@ -1,5 +1,7 @@
 package io.github.cosmicsilence.scalafix
 
+import org.gradle.api.GradleException
+
 abstract class ScalafixProps {
 
     private static final String PROPS_FILE_PATH = "scalafix-interfaces.properties"
@@ -33,7 +35,24 @@ abstract class ScalafixProps {
         return PROPS.getProperty("scala213")
     }
 
-    static String getSemanticDbArtifactCoordinates(String scalaVersion) {
-        return "org.scalameta:semanticdb-scalac_${scalaVersion}:${scalametaVersion}"
+    static String getSupportedScalaVersion(String projectScalaVersion) {
+        switch (projectScalaVersion) {
+            case ~/^2\.11\..+$/:
+                return supportedScala211Version
+            case ~/^2\.12\..+$/:
+                return supportedScala212Version
+            case ~/^2\.13\..+$/:
+                return supportedScala213Version
+            default:
+                throw new GradleException("Scala version '${projectScalaVersion}' is not supported")
+        }
+    }
+
+    static String getScalafixCliArtifactCoordinates(String projectScalaVersion) {
+        return "ch.epfl.scala:scalafix-cli_${getSupportedScalaVersion(projectScalaVersion)}:${scalafixVersion}"
+    }
+
+    static String getSemanticDbArtifactCoordinates(String projectScalaVersion) {
+        return "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${scalametaVersion}"
     }
 }
