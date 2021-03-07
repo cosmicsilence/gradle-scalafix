@@ -706,18 +706,36 @@ object Foo {
     }
 
     @Unroll
-    def 'scalafix should run built-in semantic and syntactic rules in projects using Scala #scalaVersion'() {
+    def 'scalafix should run semantic/syntactic built-in and external rules in projects using Scala #scalaVersion'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('', scalaVersion)
+        def scalaBinaryVersion = scalaVersion.substring(0, scalaVersion.lastIndexOf('.'))
+        TemporaryFolder projectDir = createScalaProject("""
+dependencies {
+    scalafix 'com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0'
+}
+""", scalaVersion)
+
         createScalafixConfig(projectDir, '''
 rules = [
   RemoveUnused
   LeakingImplicitClassVal
   NoValInForComprehension
   ProcedureSyntax
+  OrganizeImports
 ]
 
 DisableSyntax.noVars = true
+
+RemoveUnused {
+  imports = false
+}
+
+OrganizeImports {
+    groupedImports = Merge
+    groupExplicitlyImportedImplicitsSeparately = true
+    groups = [ "re:javax?\\\\.", "scala." ]
+    removeUnused = false
+}
 ''')
 
         File removeUnusedSource = createSourceFile(projectDir, '''
@@ -749,12 +767,22 @@ object ProcedureSyntaxTest {
     def debug { println("debug") }
 }
 ''')
+        File organizeImportsSource = createSourceFile(projectDir, '''
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import sun.misc.Unsafe
+import java.lang.String
+import scala.collection.immutable.List
+import scala.collection.immutable.Set
+
+object OrganizeImportsTest
+''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
-        buildResult.output.contains 'Running Scalafix on 4 Scala source file(s)'
+        buildResult.output.contains 'Running Scalafix on 5 Scala source file(s)'
         buildResult.output.contains 'BUILD SUCCESSFUL'
         removeUnusedSource.getText() == '''
 object RemoveUnusedTest {
@@ -785,6 +813,18 @@ object ProcedureSyntaxTest {
     def debug: Unit = { println("debug") }
 }
 '''
+        organizeImportsSource.getText() == '''
+import java.lang.String
+
+import scala.collection.immutable.{List, Set}
+import scala.concurrent.duration._
+
+import sun.misc.Unsafe
+
+import scala.language.postfixOps
+
+object OrganizeImportsTest
+'''
 
         where:
         scalaVersion || _
@@ -799,60 +839,6 @@ object ProcedureSyntaxTest {
         '2.13.2'     || _
         '2.13.3'     || _
         '2.13.4'     || _
-    }
-
-    @Unroll
-    def 'scalafix should run custom rules in projects using Scala #scalaVersion'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject("""
-dependencies {
-    scalafix 'com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0'
-}
-""", scalaVersion)
-        createScalafixConfig(projectDir, '''
-rules = [ OrganizeImports ]
-OrganizeImports {
-    groupedImports = Merge
-    groupExplicitlyImportedImplicitsSeparately = true
-    groups = [ "re:javax?\\\\.", "scala." ]
-    removeUnused = false
-}
-''')
-        File srcFile = createSourceFile(projectDir, '''
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import sun.misc.Unsafe
-import java.lang.String
-import scala.collection.immutable.List
-import scala.collection.immutable.Set
-
-object Foo
-''')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix')
-
-        then:
-        buildResult.output.contains 'BUILD SUCCESSFUL'
-        srcFile.getText() == '''
-import java.lang.String
-
-import scala.collection.immutable.{List, Set}
-import scala.concurrent.duration._
-
-import sun.misc.Unsafe
-
-import scala.language.postfixOps
-
-object Foo
-'''
-
-        // FIXME uncomment 2.11/2.13 versions after https://github.com/cosmicsilence/gradle-scalafix/issues/32 is resolved
-        where:
-        scalaVersion || scalaBinaryVersion
-//        '2.11.12'    || '2.11'
-        '2.12.12'    || '2.12'
-//        '2.13.4'     || '2.13'
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {

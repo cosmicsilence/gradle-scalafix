@@ -26,7 +26,7 @@ plugins {
 
 By default, Scalafix won't run any rules unless they are specified via configuration file or command line argument. In 
 order to decide what rules to pick and how to configure them, please check out Scalafix's [built-in 
-rules](https://scalacenter.github.io/scalafix/docs/rules/overview.html) as well as custom rules provided by the 
+rules](https://scalacenter.github.io/scalafix/docs/rules/overview.html) as well as custom rules provided by the
 community (e.g. [scaluzzi](https://github.com/vovapolu/scaluzzi)).
 
 ##### 1. Via config file:
