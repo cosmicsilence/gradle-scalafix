@@ -9,7 +9,6 @@ import scalafix.internal.interfaces.ScalafixInterfacesClassloader
 
 import java.util.concurrent.ConcurrentHashMap
 
-/** Caches the dynamically loaded Scalafix jars during the entire lifetime of a Gradle daemon */
 abstract class CachedClassloaders {
 
     private static final Logger logger = Logging.getLogger(CachedClassloaders)
@@ -28,8 +27,9 @@ abstract class CachedClassloaders {
     }
 
     static ClassLoader forExternalRules(Configuration rulesConfiguration, ClassLoader scalafixCliClassloader) {
-        def externalRuleCoordinates = rulesConfiguration.dependencies
-                .collect { "${it.group}:${it.name}:${it.version}" }.toSet().sort().join(";")
+       def externalRuleCoordinates = rulesConfiguration.resolvedConfiguration.firstLevelModuleDependencies.collect {
+            "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
+        }.toSet().sort().join(";")
         def cacheKey = new Tuple2(externalRuleCoordinates, scalafixCliClassloader)
         return cache.computeIfAbsent(cacheKey, {
             logger.info("Creating classloader for '${externalRuleCoordinates}'")
@@ -38,7 +38,7 @@ abstract class CachedClassloaders {
     }
 
     private static URLClassLoader classloaderFrom(Configuration configuration, ClassLoader parent) {
-        def jars = configuration.collect { it.toURI().toURL() }.toArray(new URL[0])
-        return new URLClassLoader(jars, parent)
+        def jarFiles = configuration.collect { it.toURI().toURL() }.toArray(new URL[0])
+        return new URLClassLoader(jarFiles, parent)
     }
 }
