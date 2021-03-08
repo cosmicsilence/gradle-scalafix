@@ -18,7 +18,7 @@ class ScalafixPlugin implements Plugin<Project> {
     private static final Logger logger = Logging.getLogger(ScalafixPlugin)
 
     private static final String EXTENSION = "scalafix"
-    private static final String CUSTOM_RULES_CONFIGURATION = "scalafix"
+    private static final String EXTERNAL_RULES_CONFIGURATION = "scalafix"
     private static final String TASK_GROUP = "scalafix"
     private static final String FIX_TASK = "scalafix"
     private static final String CHECK_TASK = "checkScalafix"
@@ -27,8 +27,8 @@ class ScalafixPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
-        def customRulesConfiguration = project.configurations.create(CUSTOM_RULES_CONFIGURATION)
-        customRulesConfiguration.description = "Dependencies containing custom Scalafix rules"
+        def externalRulesConfiguration = project.configurations.create(EXTERNAL_RULES_CONFIGURATION)
+        externalRulesConfiguration.description = "Dependencies containing external Scalafix rules"
 
         project.afterEvaluate {
             if (!project.plugins.hasPlugin(ScalaPlugin)) {
