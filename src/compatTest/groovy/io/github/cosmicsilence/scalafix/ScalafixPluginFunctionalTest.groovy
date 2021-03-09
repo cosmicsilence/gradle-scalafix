@@ -834,11 +834,13 @@ object OrganizeImportsTest
         '2.12.10'    || _
         '2.12.11'    || _
         '2.12.12'    || _
+        '2.12.13'    || _
         '2.13.0'     || _
         '2.13.1'     || _
         '2.13.2'     || _
         '2.13.3'     || _
         '2.13.4'     || _
+        '2.13.5'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
