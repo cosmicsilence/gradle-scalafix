@@ -106,6 +106,7 @@ The plugin defines an extension with the namespace `scalafix`. The following pro
 |`excludes`                |`SetProperty<String>` |\<empty\>      |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded. |
 |`ignoreSourceSets`        |`SetProperty<String>` |\<empty\>      |Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first.|
 |`autoConfigureSemanticdb` |`Boolean`             |`true`         |Used to indicate whether the Scalafix plugin should auto-configure the SemanticDB compiler plugin. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin provides only the minimum required configuration to get SemanticDB set up (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult the [Scalafix docs](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) or the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB options can be informed through Gradle's `ScalaCompile` task as shown earlier. If your project only uses syntactic rules, then it's recommended that this property is set to `false` to shorten the running time. |
+|`semanticdbVersion`       |`Property<String>`    |\<empty\>      |Used to define a specific version of SemanticDB to run semantic rules. This property is ignored when the SemanticDB configuration is not enabled. |
 
 
 Example:
@@ -116,6 +117,7 @@ scalafix {
     excludes = ["**/generated/**"]
     ignoreSourceSets = ["scoverage"]
     autoConfigureSemanticdb = false
+    semanticdbVersion = '4.4.10'
 }
 ```
 
