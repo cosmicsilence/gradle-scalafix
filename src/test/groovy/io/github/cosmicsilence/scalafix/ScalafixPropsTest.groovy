@@ -11,7 +11,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.scalafixVersion
 
         then:
-        version == "0.9.24"
+        version == "0.9.26"
     }
 
     def 'it should return the Scalameta version'() {
@@ -19,7 +19,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.scalametaVersion
 
         then:
-        version == "4.4.0"
+        version == "4.4.10"
     }
 
     def 'it should return the supported Scala 2.11.x version'() {
@@ -35,7 +35,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.supportedScala212Version
 
         then:
-        version == "2.12.12"
+        version == "2.12.13"
     }
 
     def 'it should return the supported Scala 2.13.x version'() {
@@ -43,7 +43,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.supportedScala213Version
 
         then:
-        version == "2.13.4"
+        version == "2.13.5"
     }
 
     @Unroll
