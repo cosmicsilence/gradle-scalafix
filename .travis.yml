@@ -19,8 +19,8 @@ jobs:
       name: "Compat tests for Gradle 5.6.4"
     - script: "./gradlew compatTest6.0.1"
       name: "Compat tests for Gradle 6.0.1"
-    - script: "./gradlew compatTest6.5"
-      name: "Compat tests for Gradle 6.5"
+    - script: "./gradlew compatTest6.8.3"
+      name: "Compat tests for Gradle 6.8.3"
 
     - stage: release
       script: skip
