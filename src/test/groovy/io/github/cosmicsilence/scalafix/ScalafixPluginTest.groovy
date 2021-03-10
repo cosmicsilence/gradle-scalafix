@@ -7,6 +7,7 @@ import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ScalafixPluginTest extends Specification {
 
@@ -101,6 +102,38 @@ class ScalafixPluginTest extends Specification {
                     it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
                     !it.contains("scala-library")
         }
+    }
+
+    @Unroll
+    def 'The plugin uses semanticdb version #semanticdbVersion when provided using the scalafix extension'() {
+        given:
+        applyScalafixPlugin(scalaProject, true)
+        scalaProject.scalafix.semanticdbVersion = semanticdbVersion
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        scalaProject.tasks.scalafixMain // forces plugin configuration
+        def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
+        compileScalaParameters.find {
+            it.startsWith('-Xplugin:') &&
+                    it.endsWith(expectedSemanticdbJar) &&
+                    !it.contains("scala-library")
+        }
+
+        scalaProject.tasks.scalafixTest // forces plugin configuration
+        def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
+        compileTestScalaParameters.find {
+            it.startsWith('-Xplugin:') &&
+                    it.endsWith(expectedSemanticdbJar) &&
+                    !it.contains("scala-library")
+        }
+
+        where:
+        semanticdbVersion   || expectedSemanticdbJar
+        '4.4.9'             || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.4.10'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
     }
 
     def 'SemanticDB configuration is not added if autoConfigureSemanticdb is set to false'() {

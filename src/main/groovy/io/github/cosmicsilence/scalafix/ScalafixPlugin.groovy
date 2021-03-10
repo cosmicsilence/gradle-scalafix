@@ -102,7 +102,8 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet) {
-        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get())
+        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get(),
+                project.scalafix.semanticdbVersion.getOrNull())
         def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
         def compilerOpts = [

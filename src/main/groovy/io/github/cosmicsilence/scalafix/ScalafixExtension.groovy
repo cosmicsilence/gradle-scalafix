@@ -4,6 +4,7 @@ import io.github.cosmicsilence.compat.GradleCompat
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 
 class ScalafixExtension {
@@ -42,6 +43,11 @@ class ScalafixExtension {
      */
     Boolean autoConfigureSemanticdb = true
 
+    /**
+     * SemanticDB version used by scalafix to run semantic rules.
+     */
+    final Property<String> semanticdbVersion
+
     private final Project project
 
     ScalafixExtension(Project project) {
@@ -52,6 +58,7 @@ class ScalafixExtension {
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
+        semanticdbVersion = project.objects.property(String)
     }
 
     private RegularFile locateConfigFile(Project project) {

@@ -107,4 +107,19 @@ class ScalafixPropsTest extends Specification {
         '2.12.10'           || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
         '2.13.0'            || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
     }
+
+    @Unroll
+    def 'it should return the semanticdb artifact coordinates for #scalametaVersion meta version'() {
+        when:
+        def coordinates = ScalafixProps.getSemanticDbArtifactCoordinates('2.12.10', scalametaVersion)
+
+        then:
+        coordinates == expectedCoordinates
+
+        where:
+        scalametaVersion || expectedCoordinates
+        '4.4.10'         || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
+        '4.4.9'          || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
+        '4.4.8'          || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
+    }
 }
