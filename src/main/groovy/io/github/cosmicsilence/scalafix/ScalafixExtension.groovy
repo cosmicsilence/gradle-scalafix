@@ -44,7 +44,8 @@ class ScalafixExtension {
     Boolean autoConfigureSemanticdb = true
 
     /**
-     * SemanticDB version used by scalafix to run semantic rules.
+     * Used to override the version of the SemanticDB compiler plugin. By default
+     * this plugin uses a version that is guaranteed to be compatible with Scalafix.
      */
     final Property<String> semanticdbVersion
 
