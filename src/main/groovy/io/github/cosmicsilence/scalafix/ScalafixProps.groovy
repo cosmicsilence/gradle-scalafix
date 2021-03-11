@@ -52,7 +52,7 @@ abstract class ScalafixProps {
         return "ch.epfl.scala:scalafix-cli_${getSupportedScalaVersion(projectScalaVersion)}:${scalafixVersion}"
     }
 
-    static String getSemanticDbArtifactCoordinates(String projectScalaVersion, String customScalametaVersion = null) {
-        return "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${customScalametaVersion?: scalametaVersion}"
+    static String getSemanticDbArtifactCoordinates(String projectScalaVersion, Optional<String> scalametaVersionOverride) {
+        return "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${scalametaVersionOverride.orElse(scalametaVersion)}"
     }
 }
