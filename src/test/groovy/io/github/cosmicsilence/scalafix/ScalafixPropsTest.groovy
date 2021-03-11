@@ -120,6 +120,5 @@ class ScalafixPropsTest extends Specification {
         scalametaVersion || expectedCoordinates
         '4.4.10'         || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
         '4.4.9'          || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
-        '4.4.8'          || "org.scalameta:semanticdb-scalac_2.12.10:${scalametaVersion}"
     }
 }
