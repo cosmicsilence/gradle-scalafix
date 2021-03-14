@@ -55,7 +55,7 @@ class ScalafixPluginTest extends Specification {
         def project = ProjectBuilder.builder().build()
         project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
         project.pluginManager.apply 'scala'
-        project.scalafix.autoConfigureSemanticdb = false
+        project.scalafix.semanticdb.autoConfigure = false
 
         when:
         project.evaluate()
@@ -77,7 +77,7 @@ class ScalafixPluginTest extends Specification {
         thrown GradleException
     }
 
-    def 'The plugin adds the semanticdb plugin config to the compiler options when autoConfigureSemanticdb is set to true'() {
+    def 'The plugin adds the semanticdb plugin config to the compiler options when semanticdb.autoConfigure is set to true'() {
         given:
         applyScalafixPlugin(scalaProject, true)
 
@@ -136,9 +136,23 @@ class ScalafixPluginTest extends Specification {
         '4.4.10'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
     }
 
-    def 'SemanticDB configuration is not added if autoConfigureSemanticdb is set to false'() {
+    def 'SemanticDB configuration is not added if semanticdb.autoConfigure is set to false'() {
         given:
         applyScalafixPlugin(scalaProject, false)
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        scalaProject.tasks.scalafixMain // forces plugin configuration
+        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.tasks.scalafixTest // forces plugin configuration
+        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+    }
+
+    def 'SemanticDB configuration is not added if autoConfigureSemanticDb is set to false'() {
+        given:
+        applyScalafixPlugin(scalaProject, null, '', null, false)
 
         when:
         scalaProject.evaluate()
@@ -203,7 +217,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'checkScalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
+    def 'checkScalafixMain task configuration validation when semanticdb.autoConfigure is enabled'() {
         given:
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
@@ -258,7 +272,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'checkScalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
+    def 'checkScalafixTest task configuration validation when semanticdb.autoConfigure is enabled'() {
         given:
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
@@ -327,7 +341,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'scalafixMain task configuration validation when autoConfigureSemanticDb is enabled'() {
+    def 'scalafixMain task configuration validation when semanticdb.autoConfigure is enabled'() {
         given:
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
@@ -382,7 +396,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'scalafixTest task configuration validation when autoConfigureSemanticDb is enabled'() {
+    def 'scalafixTest task configuration validation when semanticdb.autoConfigure is enabled'() {
         given:
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
 
@@ -439,7 +453,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'scalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
+    def 'scalafix<SourceSet> task configuration validation when additional source set is present and semanticdb.autoConfigure is enabled'() {
         given:
         def scalaProject = buildScalaProject(null, ["bar"])
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
@@ -498,7 +512,7 @@ class ScalafixPluginTest extends Specification {
         !task.semanticdbConfigured
     }
 
-    def 'checkScalafix<SourceSet> task configuration validation when additional source set is present and autoConfigureSemanticDb is enabled'() {
+    def 'checkScalafix<SourceSet> task configuration validation when additional source set is present and semanticdb.autoConfigure is enabled'() {
         given:
         def scalaProject = buildScalaProject(null, ["bar"])
         applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
@@ -666,11 +680,13 @@ class ScalafixPluginTest extends Specification {
     private applyScalafixPlugin(Project project,
                                 Boolean autoConfigureSemanticDb = false,
                                 String rules = '',
-                                File configFile = null) {
+                                File configFile = null,
+                                Boolean deprecatedautoConfigureSemanticDb = null) {
         project.with {
             apply plugin: 'io.github.cosmicsilence.scalafix'
 
-            scalafix.autoConfigureSemanticdb = autoConfigureSemanticDb
+            if (autoConfigureSemanticDb) scalafix.semanticdb.autoConfigure = autoConfigureSemanticDb
+            if (deprecatedautoConfigureSemanticDb) scalafix.autoConfigureSemanticDb = deprecatedautoConfigureSemanticDb
             if (configFile) scalafix.configFile = configFile
             ext.'scalafix.rules' = rules
         }
