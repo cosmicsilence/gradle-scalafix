@@ -3,6 +3,8 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 
+import javax.inject.Inject
+
 
 class SemanticdbParameters {
 
@@ -18,6 +20,7 @@ class SemanticdbParameters {
      */
     final Property<String> version
 
+    @Inject
     SemanticdbParameters(ObjectFactory objectFactory) {
         autoConfigure = objectFactory.property(Boolean).convention(true)
         version = objectFactory.property(String)

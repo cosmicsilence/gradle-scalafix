@@ -71,7 +71,8 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixExtension extension) {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
-            if (extension.autoConfigureSemanticdb) {
+            if (extension.isSemanticdbEnabled()) {
+                println('SemanticDB enabled')
                 configureSemanticdbCompilerPlugin(project, sourceSet)
             }
 
@@ -91,9 +92,9 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.scalaVersion = sourceSet.scalaVersion.get()
             scalafixTask.classpath = sourceSet.fullClasspath.collect { it.path }
             scalafixTask.compileOptions = sourceSet.compilerOptions
-            scalafixTask.semanticdbConfigured = extension.autoConfigureSemanticdb
+            scalafixTask.semanticdbConfigured = extension.isSemanticdbEnabled()
 
-            if (extension.autoConfigureSemanticdb) {
+            if (extension.isSemanticdbEnabled()) {
                 scalafixTask.dependsOn sourceSet.compileTask
             }
         })
@@ -103,7 +104,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
     private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet) {
         def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get(),
-                Optional.ofNullable(project.scalafix.semanticdbVersion.getOrNull()))
+                Optional.ofNullable(project.scalafix.semanticdb.version.getOrNull()))
         def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
         def compilerOpts = [

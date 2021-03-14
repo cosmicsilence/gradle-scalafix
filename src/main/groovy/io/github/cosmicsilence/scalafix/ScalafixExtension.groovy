@@ -4,8 +4,9 @@ import io.github.cosmicsilence.compat.GradleCompat
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 
 class ScalafixExtension {
 
@@ -44,7 +45,7 @@ class ScalafixExtension {
     @Deprecated
     Boolean autoConfigureSemanticdb
 
-    private final SemanticdbParameters semanticDb
+    private final SemanticdbParameters semanticdb
 
     private final Project project
 
@@ -56,7 +57,7 @@ class ScalafixExtension {
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
-        semanticDb = project.objects.newInstance(SemanticdbParameters)
+        semanticdb = project.objects.newInstance(SemanticdbParameters)
     }
 
     private RegularFile locateConfigFile(Project project) {
@@ -72,5 +73,18 @@ class ScalafixExtension {
      */
     void setConfigFile(String path) {
         configFile.set(project.file(path))
+    }
+
+    // TODO: add scala doc
+    boolean isSemanticdbEnabled() {
+        println "deprecated -> ${autoConfigureSemanticdb}"
+        println "semanticdb.autoConfigure -> ${semanticdb.autoConfigure.get()}"
+        autoConfigureSemanticdb != false && semanticdb.autoConfigure.get() != false
+    }
+
+    @Nested
+    @Optional
+    SemanticdbParameters getSemanticdb() {
+        return semanticdb
     }
 }

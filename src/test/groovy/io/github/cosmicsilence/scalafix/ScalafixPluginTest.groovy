@@ -108,7 +108,7 @@ class ScalafixPluginTest extends Specification {
     def 'The plugin uses semanticdb version #semanticdbVersion when provided using the scalafix extension'() {
         given:
         applyScalafixPlugin(scalaProject, true)
-        scalaProject.scalafix.semanticdbVersion = semanticdbVersion
+        scalaProject.scalafix.semanticdb.version = semanticdbVersion
 
         when:
         scalaProject.evaluate()
@@ -685,8 +685,8 @@ class ScalafixPluginTest extends Specification {
         project.with {
             apply plugin: 'io.github.cosmicsilence.scalafix'
 
-            if (autoConfigureSemanticDb) scalafix.semanticdb.autoConfigure = autoConfigureSemanticDb
-            if (deprecatedautoConfigureSemanticDb) scalafix.autoConfigureSemanticDb = deprecatedautoConfigureSemanticDb
+            if (autoConfigureSemanticDb != null) scalafix.semanticdb.autoConfigure = autoConfigureSemanticDb
+            if (deprecatedautoConfigureSemanticDb != null) scalafix.autoConfigureSemanticDb = deprecatedautoConfigureSemanticDb
             if (configFile) scalafix.configFile = configFile
             ext.'scalafix.rules' = rules
         }
