@@ -41,13 +41,10 @@ class ScalafixExtension {
      * Auto configures the SemanticDB Scala compiler. This is required to run
      * semantic rules.
      */
-    Boolean autoConfigureSemanticdb = true
+    @Deprecated
+    Boolean autoConfigureSemanticdb
 
-    /**
-     * Used to override the version of the SemanticDB compiler plugin. By default
-     * this plugin uses a version that is guaranteed to be compatible with Scalafix.
-     */
-    final Property<String> semanticdbVersion
+    private final SemanticdbParameters semanticDb
 
     private final Project project
 
@@ -59,7 +56,7 @@ class ScalafixExtension {
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
-        semanticdbVersion = project.objects.property(String)
+        semanticDb = project.objects.newInstance(SemanticdbParameters)
     }
 
     private RegularFile locateConfigFile(Project project) {
