@@ -77,8 +77,6 @@ class ScalafixExtension {
 
     // TODO: add scala doc
     boolean isSemanticdbEnabled() {
-        println "deprecated -> ${autoConfigureSemanticdb}"
-        println "semanticdb.autoConfigure -> ${semanticdb.autoConfigure.get()}"
         autoConfigureSemanticdb != false && semanticdb.autoConfigure.get() != false
     }
 
