@@ -1,6 +1,7 @@
 package io.github.cosmicsilence.scalafix
 
 import io.github.cosmicsilence.compat.GradleCompat
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
@@ -88,4 +89,9 @@ class ScalafixExtension {
     SemanticdbParameters getSemanticdb() {
         return semanticdb
     }
+
+    void semanticdb(Action<? super SemanticdbParameters> action) {
+        action.execute(semanticdb);
+    }
+
 }
