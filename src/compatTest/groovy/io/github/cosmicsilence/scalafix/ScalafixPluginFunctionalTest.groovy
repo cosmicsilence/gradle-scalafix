@@ -76,7 +76,7 @@ when scalafix.autoConfigureSemanticdb is disabled'() {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
-        false
+        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
     def 'checkScalafix task should run compileScala by default'() {
@@ -142,10 +142,10 @@ when scalafix.autoConfigureSemanticdb is disabled'() {
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
-        false
+        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {

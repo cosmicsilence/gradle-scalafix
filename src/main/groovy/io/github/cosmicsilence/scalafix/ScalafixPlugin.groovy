@@ -72,8 +72,9 @@ class ScalafixPlugin implements Plugin<Project> {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
             if (extension.isSemanticdbEnabled()) {
-                println('SemanticDB enabled')
                 configureSemanticdbCompilerPlugin(project, sourceSet)
+            } else if (extension.autoConfigureSemanticdb == false) {
+                logger.warn('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
