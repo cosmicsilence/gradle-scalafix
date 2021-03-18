@@ -39,9 +39,9 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'scalafixMain task should not run compileScala when semanticdb.autoconfigure is disabled in the scalafix extension'() {
+    def 'scalafixMain task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''scalafix { semanticdb { autoconfigure = false } }''')
+        TemporaryFolder projectDir = createScalaProject('''scalafix { semanticdb { autoConfigure = false } }''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -107,7 +107,7 @@ when scalafix.autoConfigureSemanticdb is disabled'() {
         buildResult.output.contains(':checkScalafixTest SKIPPED')
     }
 
-    def 'checkScalafix task should not run compileScala when semanticdb.autoconfigure is disabled in the scalafix extension'() {
+    def 'checkScalafix task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
 
@@ -265,7 +265,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         err.message.contains 'BUILD FAILED'
     }
 
-    def '*.semanticdb files should be created during compilation when semanticdb.autoconfigure is true and scalafix task is run'() {
+    def '*.semanticdb files should be created during compilation when semanticdb.autoConfigure is true and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
         File mainSrc = createSourceFile(projectDir, 'object Foo', 'main')
@@ -294,7 +294,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         !buildDir.exists()
     }
 
-    def '*.semanticdb files should not be created during compilation when semanticdb.autoconfigure is false and scalafix task is run'() {
+    def '*.semanticdb files should not be created during compilation when semanticdb.autoConfigure is false and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createSourceFile(projectDir, 'object Foo', 'main')
