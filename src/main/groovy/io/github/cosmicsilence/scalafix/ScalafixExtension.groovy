@@ -75,7 +75,10 @@ class ScalafixExtension {
         configFile.set(project.file(path))
     }
 
-    // TODO: add scala doc
+    /**
+     * Checks if SemanticDB is enabled in the extension. It will return true as
+     * long as neither autoConfigureSemanticdb nor semanticdb.autoConfigure are false.
+     */
     boolean isSemanticdbEnabled() {
         autoConfigureSemanticdb != false && semanticdb.autoConfigure.get() != false
     }
