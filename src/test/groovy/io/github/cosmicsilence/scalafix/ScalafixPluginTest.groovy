@@ -117,17 +117,13 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.scalafixMain // forces plugin configuration
         def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
         compileScalaParameters.find {
-            it.startsWith('-Xplugin:') &&
-                    it.endsWith(expectedSemanticdbJar) &&
-                    !it.contains("scala-library")
+            it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
         }
 
         scalaProject.tasks.scalafixTest // forces plugin configuration
         def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
         compileTestScalaParameters.find {
-            it.startsWith('-Xplugin:') &&
-                    it.endsWith(expectedSemanticdbJar) &&
-                    !it.contains("scala-library")
+            it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
         }
 
         where:
