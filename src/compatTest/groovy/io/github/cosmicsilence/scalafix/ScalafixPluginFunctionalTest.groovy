@@ -53,7 +53,8 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'scalafixMain task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+    def 'scalafixMain task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
+ is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -65,17 +66,8 @@ class ScalafixPluginFunctionalTest extends Specification {
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
-    }
 
-    def 'scalafixMain task should log a message warning the user scalafix.autoConfigureSemanticdb is deprecated when \
-when scalafix.autoConfigureSemanticdb is disabled'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
-
-        then:
+        and:
         buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
@@ -122,7 +114,8 @@ when scalafix.autoConfigureSemanticdb is disabled'() {
 
     }
 
-    def 'checkScalafix task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+    def 'checkScalafix task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
+ is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -134,17 +127,8 @@ when scalafix.autoConfigureSemanticdb is disabled'() {
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixMain SKIPPED')
         buildResult.output.contains(':checkScalafixTest SKIPPED')
-    }
 
-    def 'checkScalafix task should log a message warning the user scalafix.autoConfigureSemanticdb is deprecated when \
-when scalafix.autoConfigureSemanticdb is disabled'() {
-        given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
-
-        when:
-        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
-
-        then:
+        and:
         buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
