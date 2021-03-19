@@ -58,7 +58,7 @@ class ScalafixExtension {
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
-        semanticdb = project.objects.newInstance(SemanticdbParameters)
+        semanticdb = project.objects.newInstance(SemanticdbParameters, project)
     }
 
     private RegularFile locateConfigFile(Project project) {

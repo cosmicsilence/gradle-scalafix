@@ -3,6 +3,7 @@ package io.github.cosmicsilence.compat
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
 
 abstract class GradleCompat {
 
@@ -24,5 +25,19 @@ abstract class GradleCompat {
         }
 
         return fileProp
+    }
+
+    static Property<Boolean> booleanProperty(Project project, Boolean defaultBoolean = null) {
+        def booleanProp = project.objects.property(Boolean)
+
+        if (defaultBoolean) {
+            if (isVersion4(project)) {
+                booleanProp.set(project.provider { defaultBoolean })
+            } else {
+                booleanProp.convention(defaultBoolean)
+            }
+        }
+
+        return booleanProp
     }
 }
