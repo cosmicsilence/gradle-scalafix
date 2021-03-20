@@ -25,9 +25,9 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'scalafixMain task should run compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
+    def 'scalafixMain task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = true } }')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -39,7 +39,22 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'scalafixMain task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+    def 'scalafixMain task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('''scalafix { semanticdb { autoConfigure = false } }''')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
+
+        then:
+        !buildResult.output.contains(':compileScala SKIPPED')
+        !buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':scalafixMain SKIPPED')
+        buildResult.output.contains(':scalafixTest SKIPPED')
+    }
+
+    def 'scalafixMain task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
+ is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -51,6 +66,9 @@ class ScalafixPluginFunctionalTest extends Specification {
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
+
+        and:
+        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
     def 'checkScalafix task should run compileScala by default'() {
@@ -67,7 +85,7 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':checkScalafixTest SKIPPED')
     }
 
-    def 'checkScalafix task should run compileScala when autoConfigureSemanticdb is enabled in the scalafix extension'() {
+    def 'checkScalafix task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = true }')
 
@@ -81,7 +99,23 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':checkScalafixTest SKIPPED')
     }
 
-    def 'checkScalafix task should not run compileScala when autoConfigureSemanticdb is disabled in the scalafix extension'() {
+    def 'checkScalafix task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
+
+        then:
+        !buildResult.output.contains(':compileScala SKIPPED')
+        !buildResult.output.contains(':compileTestScala SKIPPED')
+        buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':checkScalafixTest SKIPPED')
+
+    }
+
+    def 'checkScalafix task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
+ is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -93,6 +127,9 @@ class ScalafixPluginFunctionalTest extends Specification {
         !buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixMain SKIPPED')
         buildResult.output.contains(':checkScalafixTest SKIPPED')
+
+        and:
+        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
     }
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
@@ -199,7 +236,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 
     def 'scalafix task should fail if the Scala version is not supported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }', '2.10.7')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }', '2.10.7')
         createSourceFile(projectDir, 'object Foo', 'main')
 
         when:
@@ -212,7 +249,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
         err.message.contains 'BUILD FAILED'
     }
 
-    def '*.semanticdb files should be created during compilation when autoConfigureSemanticdb is true and scalafix task is run'() {
+    def '*.semanticdb files should be created during compilation when semanticdb.autoConfigure is true and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
         File mainSrc = createSourceFile(projectDir, 'object Foo', 'main')
@@ -230,6 +267,20 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
     def '*.semanticdb files should not be created during compilation when autoConfigureSemanticdb is false and scalafix task is run'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        createSourceFile(projectDir, 'object Foo', 'main')
+        createSourceFile(projectDir, 'object FooTest', 'test')
+        File buildDir = new File(projectDir.root, 'build')
+
+        when:
+        runGradle(projectDir, 'scalafix')
+
+        then:
+        !buildDir.exists()
+    }
+
+    def '*.semanticdb files should not be created during compilation when semanticdb.autoConfigure is false and scalafix task is run'() {
+        given:
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createSourceFile(projectDir, 'object Foo', 'main')
         createSourceFile(projectDir, 'object FooTest', 'test')
         File buildDir = new File(projectDir.root, 'build')
@@ -337,7 +388,7 @@ object HelloWorld
 
     def 'scalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         createSourceFile(projectDir, 'object Foo')
 
@@ -352,7 +403,7 @@ object HelloWorld
 
     def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, 'rules = [ ExplicitResultTypes ]')
         createSourceFile(projectDir, 'object Foo')
 
@@ -462,7 +513,9 @@ object HelloWorld
         TemporaryFolder projectDir = createScalaProject('''
 scalafix {
   excludes = ["**/dummy/**"]
-  autoConfigureSemanticdb = false
+  semanticdb {
+    autoConfigure = false
+  }
 }
 ''')
         createScalafixConfig(projectDir, '''
@@ -486,7 +539,7 @@ object HelloWorld {
 
     def 'scalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -511,7 +564,7 @@ object HelloWorld {
 
     def 'checkScalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -556,7 +609,7 @@ object HelloWorld {
 
     def 'checkScalafix should run syntactic linter rule and succeed if there are no violations'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
+        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true

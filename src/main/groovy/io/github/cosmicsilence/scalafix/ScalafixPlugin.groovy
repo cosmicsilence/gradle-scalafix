@@ -71,8 +71,10 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixExtension extension) {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
-            if (extension.autoConfigureSemanticdb) {
+            if (extension.isSemanticdbEnabled()) {
                 configureSemanticdbCompilerPlugin(project, sourceSet)
+            } else if (extension.autoConfigureSemanticdb == false) {
+                logger.warn('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
@@ -91,9 +93,9 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.scalaVersion = sourceSet.scalaVersion.get()
             scalafixTask.classpath = sourceSet.fullClasspath.collect { it.path }
             scalafixTask.compileOptions = sourceSet.compilerOptions
-            scalafixTask.semanticdbConfigured = extension.autoConfigureSemanticdb
+            scalafixTask.semanticdbConfigured = extension.isSemanticdbEnabled()
 
-            if (extension.autoConfigureSemanticdb) {
+            if (extension.isSemanticdbEnabled()) {
                 scalafixTask.dependsOn sourceSet.compileTask
             }
         })
@@ -102,7 +104,8 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet) {
-        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get())
+        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get(),
+                Optional.ofNullable(project.scalafix.semanticdb.version.getOrNull()))
         def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
         def compilerOpts = [

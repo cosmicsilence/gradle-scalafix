@@ -1,10 +1,13 @@
 package io.github.cosmicsilence.scalafix
 
 import io.github.cosmicsilence.compat.GradleCompat
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.SetProperty
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 
 class ScalafixExtension {
 
@@ -40,7 +43,10 @@ class ScalafixExtension {
      * Auto configures the SemanticDB Scala compiler. This is required to run
      * semantic rules.
      */
-    Boolean autoConfigureSemanticdb = true
+    @Deprecated
+    Boolean autoConfigureSemanticdb
+
+    private final SemanticdbParameters semanticdb
 
     private final Project project
 
@@ -52,6 +58,7 @@ class ScalafixExtension {
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
         ignoreSourceSets = project.objects.setProperty(String)
+        semanticdb = project.objects.newInstance(SemanticdbParameters, project)
     }
 
     private RegularFile locateConfigFile(Project project) {
@@ -67,5 +74,23 @@ class ScalafixExtension {
      */
     void setConfigFile(String path) {
         configFile.set(project.file(path))
+    }
+
+    /**
+     * Checks if SemanticDB is enabled in the extension. It will return true as
+     * long as neither autoConfigureSemanticdb nor semanticdb.autoConfigure are false.
+     */
+    boolean isSemanticdbEnabled() {
+        autoConfigureSemanticdb != false && semanticdb.autoConfigure.get() != false
+    }
+
+    @Nested
+    @Optional
+    SemanticdbParameters getSemanticdb() {
+        return semanticdb
+    }
+
+    void semanticdb(Closure closure) {
+        project.configure(semanticdb, closure)
     }
 }

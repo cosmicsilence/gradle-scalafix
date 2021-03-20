@@ -96,7 +96,7 @@ class ScalafixPropsTest extends Specification {
     @Unroll
     def 'it should return the semanticdb artifact coordinates for a #projectScalaVersion project'() {
         when:
-        def coordinates = ScalafixProps.getSemanticDbArtifactCoordinates(projectScalaVersion)
+        def coordinates = ScalafixProps.getSemanticDbArtifactCoordinates(projectScalaVersion, Optional.empty())
 
         then:
         coordinates == expectedCoordinates
@@ -106,5 +106,13 @@ class ScalafixPropsTest extends Specification {
         '2.11.11'           || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
         '2.12.10'           || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
         '2.13.0'            || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
+    }
+
+    def 'it should return the semanticdb artifact coordinates using a version override'() {
+        when:
+        def coordinates = ScalafixProps.getSemanticDbArtifactCoordinates('2.12.10', Optional.of('1.2.3'))
+
+        then:
+        coordinates == "org.scalameta:semanticdb-scalac_2.12.10:1.2.3"
     }
 }
