@@ -90,8 +90,7 @@ class ScalafixExtension {
         return semanticdb
     }
 
-    void semanticdb(Action<? super SemanticdbParameters> action) {
-        action.execute(semanticdb);
+    void semanticdb(Closure closure) {
+        project.configure(semanticdb, closure)
     }
-
 }
