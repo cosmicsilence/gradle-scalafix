@@ -2,7 +2,6 @@ plugins {
     id 'org.ajoberstar.stutter' version '0.5.1'
     id 'org.ajoberstar.reckon' version '0.12.0'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.8.4'
     id 'com.gradle.plugin-publish' version '0.11.0'
     id 'groovy'
     id 'java-gradle-plugin'
@@ -72,20 +71,6 @@ pluginBundle {
             tags = ['scalafix']
         }
     }
-}
-
-bintray {
-    user = project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER")
-    key  = project.findProperty("bintray.key")  ?: System.getenv("BINTRAY_KEY")
-    pkg {
-        repo = 'maven'
-        name = 'gradle-scalafix'
-        userOrg = 'cosmicsilence'
-        version {
-            name = project.version
-        }
-    }
-    publications = ['pluginMaven']
 }
 
 def pomConfig = {
