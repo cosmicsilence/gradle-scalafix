@@ -21,7 +21,15 @@ class ScalaSourceSet {
     }
 
     List<File> getFullClasspath() {
-        return (sourceSet.output.classesDirs + sourceSet.compileClasspath).toList()
+        return classesDirs + jarDependencies
+    }
+
+    private List<File> getClassesDirs() {
+        return sourceSet.output.classesDirs.toList()
+    }
+
+    private List<File> getJarDependencies() {
+        return sourceSet.compileClasspath.toList().findAll { it.name.toLowerCase().endsWith(".jar") }
     }
 
     SourceDirectorySet getScalaSources() {

@@ -207,6 +207,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -234,6 +235,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -262,6 +264,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -289,6 +292,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -331,6 +335,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -358,6 +363,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -386,6 +392,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -413,6 +420,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -443,6 +451,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -472,6 +481,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -502,6 +512,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions == DEFAULT_COMPILER_OPTS
         task.scalaVersion == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
@@ -531,6 +542,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
         task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
         task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
         task.compileOptions.find { it.startsWith("-Xplugin:") }
         task.scalaVersion == SCALA_VERSION
@@ -709,7 +721,8 @@ class ScalafixPluginTest extends Specification {
             }
 
             dependencies {
-                compile "org.scala-lang:scala-library:$scalaVersion"
+                compile group: 'org.scala-lang', name: 'scala-library', version: scalaVersion
+                compile group: 'org.scala-lang', name: 'scala-library', version: scalaVersion, ext: 'pom'
             }
 
             sourceSets {
