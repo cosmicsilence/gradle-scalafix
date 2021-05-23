@@ -894,6 +894,7 @@ object OrganizeImportsTest
         '2.13.3'     || _
         '2.13.4'     || _
         '2.13.5'     || _
+        '2.13.6'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
