@@ -11,7 +11,7 @@ import spock.lang.Unroll
 
 class ScalafixPluginTest extends Specification {
 
-    private static final String SCALA_VERSION = '2.12.12'
+    private static final String SCALA_VERSION = '2.13.6'
     private static final List<String> DEFAULT_COMPILER_OPTS = ['-Ywarn-unused']
 
     private Project scalaProject
@@ -128,8 +128,8 @@ class ScalafixPluginTest extends Specification {
 
         where:
         semanticdbVersion   || expectedSemanticdbJar
-        '4.4.9'             || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
-        '4.4.10'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.4.18'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.4.19'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
     }
 
     def 'SemanticDB configuration is not added if semanticdb.autoConfigure is set to false'() {

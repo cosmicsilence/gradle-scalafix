@@ -24,11 +24,11 @@ class ScalafixExtensionTest extends Specification {
 
         where:
         autoConfigure | deprecatedAutoConfigure | enabled
-        true | true | true
-        true | false | false
-        false | true | false
-        false | false | false
-        false | null | false
-        true | null | true
+        true          | true                    | true
+        true          | false                   | false
+        false         | true                    | false
+        false         | false                   | false
+        false         | null                    | false
+        true          | null                    | true
     }
 }

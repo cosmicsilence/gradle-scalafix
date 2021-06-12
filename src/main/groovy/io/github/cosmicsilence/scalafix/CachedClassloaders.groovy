@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 abstract class CachedClassloaders {
 
     private static final Logger logger = Logging.getLogger(CachedClassloaders)
-    private static ConcurrentHashMap<Object, ClassLoader> cache = new ConcurrentHashMap<>()
+    private static final ConcurrentHashMap<Object, ClassLoader> cache = new ConcurrentHashMap<>()
 
     private CachedClassloaders() {}
 
