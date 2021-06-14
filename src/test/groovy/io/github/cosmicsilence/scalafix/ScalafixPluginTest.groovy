@@ -3,6 +3,7 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
@@ -75,6 +76,21 @@ class ScalafixPluginTest extends Specification {
 
         then:
         thrown GradleException
+    }
+
+    def 'The plugin should not trigger dependency resolution during the configuration phase'() {
+        given:
+        applyScalafixPlugin(scalaProject, true)
+
+        when:
+        scalaProject.evaluate()
+
+        then:
+        scalaProject.tasks.scalafixMain // forces plugin configuration
+        scalaProject.configurations.compileClasspath.state == Configuration.State.UNRESOLVED
+
+        scalaProject.tasks.scalafixTest // forces plugin configuration
+        scalaProject.configurations.testCompileClasspath.state == Configuration.State.UNRESOLVED
     }
 
     def 'The plugin adds the semanticdb plugin config to the compiler options when semanticdb.autoConfigure is set to true'() {
