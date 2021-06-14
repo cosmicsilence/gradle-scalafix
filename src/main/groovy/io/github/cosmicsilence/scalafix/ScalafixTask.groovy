@@ -38,7 +38,7 @@ class ScalafixTask extends SourceTask {
 
     @Input
     @Optional
-    List<String> classpath
+    final ListProperty<String> classpath = project.objects.listProperty(String)
 
     @Input
     String sourceRoot
@@ -68,7 +68,7 @@ class ScalafixTask extends SourceTask {
                   | - Scalac options: ${compileOptions}
                   | - Source root: ${sourceRoot}
                   | - Sources: ${sourcePaths}
-                  | - Classpath: ${classpath}
+                  | - Classpath: ${classpath.get()}
                   |""".stripMargin())
 
         def scalafixClassloader = CachedClassloaders.forScalafixCli(project, scalafixCliCoordinates)
@@ -81,7 +81,7 @@ class ScalafixTask extends SourceTask {
                 .withSourceroot(Paths.get(sourceRoot))
                 .withPaths(sourcePaths)
                 .withToolClasspath(externalRulesClassloader)
-                .withClasspath((classpath ?: []).collect { Paths.get(it)} )
+                .withClasspath(classpath.getOrElse([]).collect { Paths.get(it) } )
                 .withScalaVersion(scalaVersion)
                 .withScalacOptions(compileOptions)
 

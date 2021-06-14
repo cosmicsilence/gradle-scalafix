@@ -40,7 +40,7 @@ class ScalaSourceSet {
         return project.tasks.getByName(getCompileTaskName(sourceSet))
     }
 
-    Optional<String> getScalaVersion() {
+    Optional<String> getScalaVersion() { // FIXME
         def scalaRuntime = project.extensions.findByType(ScalaRuntime)
         def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
         return Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
