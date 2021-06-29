@@ -5,6 +5,7 @@ import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
@@ -35,6 +36,12 @@ class ScalafixExtension {
     final SetProperty<String> excludes
 
     /**
+     * The version of Scala used to compile the source files. If not informed,
+     * the plugin tries to detect it by resolving the compile dependencies.
+     */
+    final Property<String> scalaVersion
+
+    /**
      * Name of source sets to which the Scalafix plugin should not be applied.
      */
     final SetProperty<String> ignoreSourceSets
@@ -57,6 +64,7 @@ class ScalafixExtension {
         configFile = GradleCompat.fileProperty(project, defaultRegularFile)
         includes = project.objects.setProperty(String)
         excludes = project.objects.setProperty(String)
+        scalaVersion = project.objects.property(String)
         ignoreSourceSets = project.objects.setProperty(String)
         semanticdb = project.objects.newInstance(SemanticdbParameters, project)
     }

@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import groovy.transform.Memoized
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.tasks.ScalaRuntime
@@ -40,10 +41,11 @@ class ScalaSourceSet {
         return project.tasks.getByName(getCompileTaskName(sourceSet))
     }
 
-    Optional<String> getScalaVersion() { // FIXME
+    @Memoized
+    String getResolvedScalaVersion() {
         def scalaRuntime = project.extensions.findByType(ScalaRuntime)
         def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
-        return Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
+        return scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null
     }
 
     List<String> getCompilerOptions() {

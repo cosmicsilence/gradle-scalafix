@@ -50,16 +50,15 @@ class ScalafixPlugin implements Plugin<Project> {
 
         project.tasks.named('check').configure { it.dependsOn checkTask }
 
+        if (!extension.autoConfigureSemanticdb) { // TODO remove in a future version
+            logger.warn("WARNING: the 'autoConfigureSemanticdb' property is deprecated. Please use 'semanticdb.autoconfigure' instead")
+        }
+
         project.sourceSets.each { SourceSet sourceSet ->
             if (ScalaSourceSet.isScalaSourceSet(project, sourceSet) && !extension.ignoreSourceSets.get().contains(sourceSet.name)) {
                 def scalaSourceSet = new ScalaSourceSet(project, sourceSet)
-
-                if (scalaSourceSet.scalaVersion.present) {
-                    configureTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension)
-                    configureTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension)
-                } else {
-                    logger.warn("WARNING: Skipping source set '${sourceSet.name}' as the Scala version could not be detected")
-                }
+                configureTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension)
+                configureTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension)
             }
         }
     }
@@ -71,10 +70,8 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixExtension extension) {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
-            if (extension.isSemanticdbEnabled()) {
-                configureSemanticdbCompilerPlugin(project, sourceSet, Optional.ofNullable(extension.semanticdb.version.getOrNull()))
-            } else if (!extension.autoConfigureSemanticdb) {
-                logger.warn('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
+            if (extension.semanticdbEnabled) {
+                configureSemanticdbCompilerPlugin(project, sourceSet, extension)
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
@@ -90,14 +87,13 @@ class ScalafixPlugin implements Plugin<Project> {
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             scalafixTask.mode = taskMode
-            scalafixTask.scalaVersion = sourceSet.scalaVersion.get()
-            scalafixTask.classpath.set(project.provider( {
-                sourceSet.fullClasspath.collect { it.path }
-            }))
-            scalafixTask.compileOptions = sourceSet.compilerOptions
-            scalafixTask.semanticdbConfigured = extension.isSemanticdbEnabled()
+            scalafixTask.sourceSetName = sourceSet.name
+            scalafixTask.scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet, extension) }))
+            scalafixTask.classpath.set(project.provider( { sourceSet.fullClasspath.collect { it.path } }))
+            scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
+            scalafixTask.semanticdbConfigured = extension.semanticdbEnabled
 
-            if (extension.isSemanticdbEnabled()) {
+            if (extension.semanticdbEnabled) {
                 scalafixTask.dependsOn sourceSet.compileTask
             }
         })
@@ -105,8 +101,17 @@ class ScalafixPlugin implements Plugin<Project> {
         mainTask.dependsOn taskProvider
     }
 
-    private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, Optional<String> semanticDbVersion) {
-        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(sourceSet.scalaVersion.get(), semanticDbVersion)
+    private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, ScalafixExtension extension) {
+        def scalaVersion = resolveScalaVersion(sourceSet, extension)
+
+        if (scalaVersion == null || scalaVersion.blank) {
+            throw new GradleException("Unable to detect the Scala version for the '${sourceSet.name}' source set. " +
+                    "Please inform it via the 'scalaVersion' property in the scalafix extension or consider adding " +
+                    "'${sourceSet.name}' to 'ignoreSourceSets'")
+        }
+
+        def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.getOrNull())
+        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion)
         def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
         def compilerOpts = [
@@ -114,8 +119,11 @@ class ScalafixPlugin implements Plugin<Project> {
                 '-P:semanticdb:sourceroot:' + project.projectDir,
                 '-Yrangepos'
         ]
-        // intentionally mutating the Scala compile task here to avoid that the Semanticdb compiler plugin
-        // always gets configured and runs even when the Scalafix task is not run (which can be costly).
         sourceSet.addCompilerOptions(compilerOpts)
+    }
+
+    private String resolveScalaVersion(ScalaSourceSet sourceSet, ScalafixExtension extension) {
+        def extScalaVersion = extension.scalaVersion.getOrElse("")
+        return extScalaVersion.blank ? sourceSet.resolvedScalaVersion : extScalaVersion
     }
 }

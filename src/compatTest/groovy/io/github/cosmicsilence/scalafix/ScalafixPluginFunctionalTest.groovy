@@ -53,8 +53,7 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
     }
 
-    def 'scalafixMain task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
- is disabled in the scalafix extension'() {
+    def 'scalafixMain task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -68,7 +67,7 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':scalafixTest SKIPPED')
 
         and:
-        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
+        buildResult.output.contains("WARNING: the 'autoConfigureSemanticdb' property is deprecated. Please use 'semanticdb.autoconfigure' instead")
     }
 
     def 'checkScalafix task should run compileScala by default'() {
@@ -114,8 +113,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     }
 
-    def 'checkScalafix task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb\
- is disabled in the scalafix extension'() {
+    def 'checkScalafix task should skip compileScala and log a deprecation warning when autoConfigureSemanticdb is disabled in the scalafix extension'() {
         given:
         TemporaryFolder projectDir = createScalaProject('scalafix { autoConfigureSemanticdb = false }')
 
@@ -129,7 +127,7 @@ class ScalafixPluginFunctionalTest extends Specification {
         buildResult.output.contains(':checkScalafixTest SKIPPED')
 
         and:
-        buildResult.output.contains('Scala Fix extension setting autoConfigureSemanticdb is deprecated. Use semanticdb.autoconfigure instead.')
+        buildResult.output.contains("WARNING: the 'autoConfigureSemanticdb' property is deprecated. Please use 'semanticdb.autoconfigure' instead")
     }
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
@@ -221,17 +219,28 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 '''
     }
 
-    def 'scalafix tasks should not be created for source sets that do not have the Scala library in the classpath'() {
+    def 'scalafix task should fail if the Scala version cannot be detected'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { notScala { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets { 
+    noScala { } 
+}
+
+scalafix { 
+    semanticdb { autoConfigure = false }
+}
+''')
+        createSourceFile(projectDir, 'object Foo', 'noScala')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'tasks')
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
 
         then:
-        buildResult.output.contains("WARNING: Skipping source set 'notScala' as the Scala version could not be detected")
-        !buildResult.output.contains('checkScalafixNotScala')
-        !buildResult.output.contains('scalafixNotScala')
+        UnexpectedBuildFailure err = thrown()
+        err.message.contains "Task :scalafixNoScala FAILED"
+        err.message.contains "Unable to detect the Scala version for the 'noScala' source set. Please inform it via the 'scalaVersion' " +
+                "property in the scalafix extension or consider adding 'noScala' to 'ignoreSourceSets'"
+        err.message.contains 'BUILD FAILED'
     }
 
     def 'scalafix task should fail if the Scala version is not supported'() {
