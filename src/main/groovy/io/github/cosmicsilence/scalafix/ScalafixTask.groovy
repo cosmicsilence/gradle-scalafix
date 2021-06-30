@@ -27,13 +27,9 @@ class ScalafixTask extends SourceTask {
     final ListProperty<String> rules = project.objects.listProperty(String)
 
     @Input
-    String sourceSetName
-
-    @Input
     ScalafixMainMode mode
 
     @Input
-    @Optional // made optional so that the task can return a more detailed error message
     final Property<String> scalaVersion = project.objects.property(String)
 
     @Input
@@ -52,23 +48,13 @@ class ScalafixTask extends SourceTask {
 
     @TaskAction
     void run() {
-        if (source.empty) {
-            logger.warn("No sources to be processed")
-            return
-        }
-
-        if (scalaVersion.getOrElse("").blank) {
-            throw new GradleException("Unable to detect the Scala version for the '$sourceSetName' source set. " +
-                    "Please inform it via the 'scalaVersion' property in the scalafix extension or consider adding " +
-                    "'$sourceSetName' to 'ignoreSourceSets'")
-        }
-
-        processSources()
+        if (!source.empty) processSources()
+        else logger.warn("No sources to be processed")
     }
 
     private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
-        def configFilePath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
+        def configFilePath = java.util.Optional.ofNullable(configFile.orNull).map { it.asFile.toPath() }
         def externalRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXTERNAL_RULES_CONFIGURATION)
         def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion.get())
 
@@ -78,12 +64,12 @@ class ScalafixTask extends SourceTask {
                   | - Config file: ${configFilePath}
                   | - Scalafix cli artifact: ${scalafixCliCoordinates}
                   | - External rules classpath: ${externalRulesConfiguration.asPath}
-                  | - Rules: ${rules.getOrNull()}
+                  | - Rules: ${rules.orNull}
                   | - Scala version: ${scalaVersion.get()}
-                  | - Scalac options: ${compileOptions.getOrNull()}
+                  | - Scalac options: ${compileOptions.orNull}
                   | - Source root: ${sourceRoot}
                   | - Sources: ${sourcePaths}
-                  | - Classpath: ${classpath.getOrNull()}
+                  | - Classpath: ${classpath.orNull}
                   |""".stripMargin())
 
         def scalafixClassloader = CachedClassloaders.forScalafixCli(project, scalafixCliCoordinates)

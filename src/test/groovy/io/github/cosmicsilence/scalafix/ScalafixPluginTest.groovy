@@ -109,21 +109,6 @@ class ScalafixPluginTest extends Specification {
         scalaProject.configurations.testCompileClasspath.state == Configuration.State.RESOLVED
     }
 
-    def 'The plugin should trigger dependency resolution during the configuration phase if scalaVersion is blank and semanticdb.autoConfigure is true'() {
-        given:
-        applyScalafixPlugin(scalaProject)
-        scalaProject.scalafix.scalaVersion = "  "
-
-        when:
-        scalaProject.evaluate()
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        scalaProject.tasks.scalafixTest // forces plugin configuration
-
-        then:
-        scalaProject.configurations.compileClasspath.state == Configuration.State.RESOLVED
-        scalaProject.configurations.testCompileClasspath.state == Configuration.State.RESOLVED
-    }
-
     def 'The plugin should fail if semanticdb.autoConfigure is true but neither scalaVersion is informed nor the Scala version can be detected from the classpath'() {
         given:
         applyScalafixPlugin(scalaProject)
@@ -265,7 +250,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.checkScalafixMain
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "main"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -296,7 +280,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.checkScalafixMain
         task.dependsOn.find{ it.name == 'compileScala' }
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "main"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -329,7 +312,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.checkScalafixTest
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "test"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -360,7 +342,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.checkScalafixTest
         task.dependsOn.find{ it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "test"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -407,7 +388,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.scalafixMain
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "main"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -438,7 +418,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.scalafixMain
         task.dependsOn.find { it.name == 'compileScala' }
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "main"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -471,7 +450,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.scalafixTest
         task.dependsOn.isEmpty()
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "test"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -502,7 +480,6 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask task = scalaProject.tasks.scalafixTest
         task.dependsOn.find { it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "test"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -537,7 +514,6 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.isEmpty()
         scalaProject.tasks.scalafix.dependsOn(task)
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "foo"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -570,7 +546,6 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find { it.name == 'compileBarScala' }
         scalaProject.tasks.scalafix.dependsOn(task)
         task.mode == ScalafixMainMode.IN_PLACE
-        task.sourceSetName == "bar"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -605,7 +580,6 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.isEmpty()
         scalaProject.tasks.checkScalafix.dependsOn(task)
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "foo"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
@@ -638,7 +612,6 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find { it.name == 'compileBarScala' }
         scalaProject.tasks.checkScalafix.dependsOn(task)
         task.mode == ScalafixMainMode.CHECK
-        task.sourceSetName == "bar"
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [

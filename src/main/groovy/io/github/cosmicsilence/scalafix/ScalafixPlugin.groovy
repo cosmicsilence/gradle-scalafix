@@ -10,7 +10,8 @@ import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
 import scalafix.interfaces.ScalafixMainMode
 
-import static scalafix.interfaces.ScalafixMainMode.*
+import static scalafix.interfaces.ScalafixMainMode.CHECK
+import static scalafix.interfaces.ScalafixMainMode.IN_PLACE
 
 /** Gradle plugin for running Scalafix */
 class ScalafixPlugin implements Plugin<Project> {
@@ -87,9 +88,8 @@ class ScalafixPlugin implements Plugin<Project> {
                 prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
             }))
             scalafixTask.mode = taskMode
-            scalafixTask.sourceSetName = sourceSet.name
             scalafixTask.scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet, extension) }))
-            scalafixTask.classpath.set(project.provider( { sourceSet.fullClasspath.collect { it.path } }))
+            scalafixTask.classpath.set(project.provider({ sourceSet.fullClasspath.collect { it.path } }))
             scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
             scalafixTask.semanticdbConfigured = extension.semanticdbEnabled
 
@@ -103,14 +103,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
     private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, ScalafixExtension extension) {
         def scalaVersion = resolveScalaVersion(sourceSet, extension)
-
-        if (scalaVersion == null || scalaVersion.blank) {
-            throw new GradleException("Unable to detect the Scala version for the '${sourceSet.name}' source set. " +
-                    "Please inform it via the 'scalaVersion' property in the scalafix extension or consider adding " +
-                    "'${sourceSet.name}' to 'ignoreSourceSets'")
-        }
-
-        def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.getOrNull())
+        def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.orNull)
         def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion)
         def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
@@ -123,7 +116,14 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private String resolveScalaVersion(ScalaSourceSet sourceSet, ScalafixExtension extension) {
-        def extScalaVersion = extension.scalaVersion.getOrElse("")
-        return extScalaVersion.blank ? sourceSet.resolvedScalaVersion : extScalaVersion
+        def fromExtension = extension.scalaVersion.orNull
+        if (fromExtension) return fromExtension
+
+        def fromClasspath = sourceSet.resolvedScalaVersion
+        if (fromClasspath) return fromClasspath
+
+        throw new GradleException("Unable to detect the Scala version for the '${sourceSet.name}' source set. " +
+                "Please inform it via the 'scalaVersion' property in the scalafix extension or consider adding " +
+                "'${sourceSet.name}' to 'ignoreSourceSets'")
     }
 }
