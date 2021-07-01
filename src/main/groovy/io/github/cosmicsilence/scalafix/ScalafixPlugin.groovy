@@ -73,6 +73,7 @@ class ScalafixPlugin implements Plugin<Project> {
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
             if (extension.semanticdbEnabled) {
                 configureSemanticdbCompilerPlugin(project, sourceSet, extension)
+                scalafixTask.dependsOn sourceSet.compileTask
             }
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
@@ -92,10 +93,6 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.classpath.set(project.provider({ sourceSet.fullClasspath.collect { it.path } }))
             scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
             scalafixTask.semanticdbConfigured = extension.semanticdbEnabled
-
-            if (extension.semanticdbEnabled) {
-                scalafixTask.dependsOn sourceSet.compileTask
-            }
         })
 
         mainTask.dependsOn taskProvider
