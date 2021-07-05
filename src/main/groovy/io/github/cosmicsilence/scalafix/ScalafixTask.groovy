@@ -43,16 +43,10 @@ class ScalafixTask extends SourceTask {
     @Input
     String sourceRoot
 
-    @Input
     Boolean semanticdbConfigured
 
     @TaskAction
     void run() {
-        if (!source.empty) processSources()
-        else logger.warn("No sources to be processed")
-    }
-
-    private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
         def configFilePath = java.util.Optional.ofNullable(configFile.orNull).map { it.asFile.toPath() }
         def externalRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXTERNAL_RULES_CONFIGURATION)

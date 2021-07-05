@@ -86,7 +86,7 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.configFile = extension.configFile
             scalafixTask.rules.set(project.provider({
                 String prop = project.findProperty(RULES_PROPERTY) ?: ''
-                prop.split('\\s*,\\s*').findAll { !it.isEmpty() }.toList()
+                prop.split('\\s*,\\s*').findAll { !it.empty }.toList()
             }))
             scalafixTask.mode = taskMode
             scalafixTask.scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet, extension) }))
