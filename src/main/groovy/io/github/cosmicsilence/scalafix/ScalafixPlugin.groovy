@@ -78,7 +78,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
             scalafixTask.group = mainTask.group
-            scalafixTask.sourceRoot = project.projectDir.path
+            scalafixTask.sourceRoot = project.projectDir
             scalafixTask.source = sourceSet.scalaSources.matching {
                 include(extension.includes.get())
                 exclude(extension.excludes.get())

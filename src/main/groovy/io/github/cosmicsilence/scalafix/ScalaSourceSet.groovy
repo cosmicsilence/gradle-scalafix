@@ -57,7 +57,7 @@ class ScalaSourceSet {
     }
 
     static boolean isScalaSourceSet(Project project, SourceSet sourceSet) {
-        return project.tasks.findByName(getCompileTaskName(sourceSet))
+        return project.tasks.named(getCompileTaskName(sourceSet)).present
     }
 
     private static String getCompileTaskName(SourceSet sourceSet) {
