@@ -96,24 +96,23 @@ any of these tasks will trigger partial or complete compilation of Scala source 
 &nbsp;
 <a name="extension"></a>
 ## Extension
-The plugin defines an extension with the namespace `scalafix`. The following properties can be configured:
+The plugin defines an extension with the namespace `scalafix` that allows to customise it. **None** of the properties are mandatory:
 
-| Property name            | Type                              | Default value                          | Description |
-|:-------------------------|-----------------------------------|----------------------------------------|-------------|
-|`configFile`              |`RegularFileProperty`              |\<empty\>                               |Used to inform a different location/name for the Scalafix configuration file. If not informed, the plugin will search for a `.scalafix.conf` in the current project directory and (if not found) in the root project directory. |
-|`configFile`              |`String`                           |\<empty\>                               |Same as above. |
-|`includes`                |`SetProperty<String>`              |\<empty\>                               |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. Filter is applied to package portion of the source file path. By default all files are included. |
-|`excludes`                |`SetProperty<String>`              |\<empty\>                               |[Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded. |
-|`ignoreSourceSets`        |`SetProperty<String>`              |\<empty\>                               |Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first.|
-|~~`autoConfigureSemanticdb`~~ |`Boolean`                          |\<empty\>                               |**Deprecated**: please use `semanticdb.autoConfigure` instead (see below). |
-|`semanticdb`              |`SemanticdbParameters`|See [`semanticdb`](#semanticdb-closure) |Used to configure the SemanticDB compiler plugin. |
+| Property name                | Type                              | Description |
+|:-----------------------------|-----------------------------------|-------------|
+|`configFile`                  |`RegularFileProperty`              | Used to inform a different location/name for the Scalafix configuration file. If not informed, the plugin will search for a `.scalafix.conf` in the current project directory and (if not found) in the root project directory. |
+|`configFile`                  |`String`                           | Same as above. |
+|`includes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. Filter is applied to package portion of the source file path. By default all files are included. |
+|`excludes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded. |
+|`ignoreSourceSets`            |`SetProperty<String>`              | Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first.|
+|`semanticdb`                  |`SemanticdbParameters`             | Used to configure the SemanticDB compiler plugin. See [`semanticdb`](#semanticdb-closure) |
 
 <a name="semanticdb-closure"></a>`semanticdb` is a closure where the following properties can be configured:
 
-| Property name | Type              | Default value | Description |
-|:--------------|-------------------|---------------|-------------|
-|`autoConfigure`|`Property<Boolean>`|`true`         |Used to indicate whether the SemanticDB compiler plugin should be automatically configured. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin only informs the necessary parameters to get the SemanticDB plugin set up (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult the [Scalafix docs](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) or the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB parameters can be informed via the `ScalaCompile` tasks as shown earlier. **Important:** If your project only uses syntactic rules, we advise to set this property to `false` as that would make the Scalafix tasks run considerably faster. |
-|`version`      |`Property<String>` |\<empty\>      |Used to override the version of the SemanticDB compiler plugin. By default, the plugin uses a version that is guaranteed to be compatible with Scalafix. Users **do not need** to set this property unless a specific version is required. This property is ignored when `autoConfigure` is disabled. |
+| Property name | Type               | Description |
+|:--------------|--------------------|-------------|
+|`autoConfigure`|`Property<Boolean>` | Used to indicate whether the SemanticDB compiler plugin should be automatically configured. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin only informs the necessary parameters to get the SemanticDB plugin set up (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult the [Scalafix docs](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) or the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB parameters can be informed via the `ScalaCompile` tasks as shown earlier. **Important:** If your project only uses syntactic rules, we advise to set this property to `false` as that would make the Scalafix tasks run considerably faster. |
+|`version`      |`Property<String>`  | Used to override the version of the SemanticDB compiler plugin. By default, the plugin uses a version that is guaranteed to be compatible with Scalafix. Users **do not need** to set this property unless a specific version is required. This property is ignored when `autoConfigure` is disabled. |
 
 Example:
 ```

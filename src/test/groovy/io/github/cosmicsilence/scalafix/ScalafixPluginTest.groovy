@@ -146,20 +146,6 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
-    def 'SemanticDB configuration is not added if autoConfigureSemanticdb is set to false'() {
-        given:
-        applyScalafixPlugin(scalaProject, null, '', null, false)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // forces plugin configuration
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-    }
-
     def 'SemanticDB configuration is not added if the scalafix task creation is deferred'() {
         given:
         applyScalafixPlugin(scalaProject, true)
@@ -688,13 +674,11 @@ class ScalafixPluginTest extends Specification {
     private applyScalafixPlugin(Project project,
                                 Boolean autoConfigureSemanticdb = false,
                                 String rules = '',
-                                File configFile = null,
-                                Boolean deprecatedAutoConfigureSemanticdb = null) {
+                                File configFile = null) {
         project.with {
             apply plugin: 'io.github.cosmicsilence.scalafix'
 
             if (autoConfigureSemanticdb != null) scalafix.semanticdb.autoConfigure = autoConfigureSemanticdb
-            if (deprecatedAutoConfigureSemanticdb != null) scalafix.autoConfigureSemanticdb = deprecatedAutoConfigureSemanticdb
             if (configFile) scalafix.configFile = configFile
             ext.'scalafix.rules' = rules
         }
