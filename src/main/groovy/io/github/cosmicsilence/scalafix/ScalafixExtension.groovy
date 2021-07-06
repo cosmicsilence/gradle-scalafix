@@ -47,12 +47,8 @@ class ScalafixExtension {
     final SetProperty<String> ignoreSourceSets
 
     /**
-     * Auto configures the SemanticDB Scala compiler. This is required to run
-     * semantic rules.
+     * Semanticdb settings.
      */
-    @Deprecated
-    Boolean autoConfigureSemanticdb
-
     private final SemanticdbParameters semanticdb
 
     private final Project project
@@ -82,14 +78,6 @@ class ScalafixExtension {
      */
     void setConfigFile(String path) {
         configFile.set(project.file(path))
-    }
-
-    /**
-     * Checks if SemanticDB is enabled in the extension. It will return true as
-     * long as neither autoConfigureSemanticdb nor semanticdb.autoConfigure are false.
-     */
-    boolean isSemanticdbEnabled() {
-        autoConfigureSemanticdb != false && semanticdb.autoConfigure.get() != false
     }
 
     @Nested

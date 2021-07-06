@@ -194,22 +194,6 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
     }
 
-    def 'SemanticDB configuration is not added if autoConfigureSemanticdb is set to false'() {
-        given:
-        applyScalafixPlugin(scalaProject)
-        scalaProject.scalafix.semanticdb.autoConfigure = false
-        scalaProject.scalafix.autoConfigureSemanticdb = false
-
-        when:
-        scalaProject.evaluate()
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        scalaProject.tasks.scalafixTest // forces plugin configuration
-
-        then:
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-    }
-
     def 'SemanticDB configuration is not added if the scalafix task creation is deferred'() {
         given:
         applyScalafixPlugin(scalaProject)

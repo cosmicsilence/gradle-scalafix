@@ -4,8 +4,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.tasks.SourceSet
 import scalafix.interfaces.ScalafixMainMode
@@ -15,8 +13,6 @@ import static scalafix.interfaces.ScalafixMainMode.IN_PLACE
 
 /** Gradle plugin for running Scalafix */
 class ScalafixPlugin implements Plugin<Project> {
-
-    private static final Logger logger = Logging.getLogger(ScalafixPlugin)
 
     private static final String EXTENSION = "scalafix"
     private static final String EXTERNAL_RULES_CONFIGURATION = "scalafix"
@@ -51,10 +47,6 @@ class ScalafixPlugin implements Plugin<Project> {
 
         project.tasks.named('check').configure { it.dependsOn checkTask }
 
-        if (!extension.autoConfigureSemanticdb) { // TODO remove in a future version
-            logger.warn("WARNING: the 'autoConfigureSemanticdb' property is deprecated. Please use 'semanticdb.autoconfigure' instead")
-        }
-
         project.sourceSets.each { SourceSet sourceSet ->
             if (ScalaSourceSet.isScalaSourceSet(project, sourceSet) && !extension.ignoreSourceSets.get().contains(sourceSet.name)) {
                 def scalaSourceSet = new ScalaSourceSet(project, sourceSet)
@@ -71,7 +63,7 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixExtension extension) {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
-            if (extension.semanticdbEnabled) {
+            if (extension.semanticdb.autoConfigure.get()) {
                 configureSemanticdbCompilerPlugin(project, sourceSet, extension)
                 scalafixTask.dependsOn sourceSet.compileTask
             }
@@ -92,7 +84,7 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet, extension) }))
             scalafixTask.classpath.set(project.provider({ sourceSet.fullClasspath.collect { it.path } }))
             scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
-            scalafixTask.semanticdbConfigured = extension.semanticdbEnabled
+            scalafixTask.semanticdbConfigured = extension.semanticdb.autoConfigure.get()
         })
 
         mainTask.dependsOn taskProvider
