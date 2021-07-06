@@ -43,6 +43,7 @@ class ScalafixTask extends SourceTask {
     @InputDirectory
     File sourceRoot
 
+    @Internal
     Boolean semanticdbConfigured
 
     @TaskAction
