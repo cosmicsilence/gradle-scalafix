@@ -185,17 +185,28 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 '''
     }
 
-    def 'scalafix tasks should not be created for source sets that do not have the Scala library in the classpath'() {
+    def 'scalafix task should fail if the Scala version cannot be detected'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('sourceSets { notScala { } }')
+        TemporaryFolder projectDir = createScalaProject('''
+sourceSets { 
+    noScala { } 
+}
+
+scalafix { 
+    semanticdb { autoConfigure = false }
+}
+''')
+        createSourceFile(projectDir, 'object Foo', 'noScala')
 
         when:
-        BuildResult buildResult = runGradle(projectDir, 'tasks')
+        runGradle(projectDir, 'scalafix')
 
         then:
-        buildResult.output.contains("WARNING: Skipping source set 'notScala' as the Scala version could not be detected")
-        !buildResult.output.contains('checkScalafixNotScala')
-        !buildResult.output.contains('scalafixNotScala')
+        UnexpectedBuildFailure err = thrown()
+        err.message.contains "Task :scalafixNoScala FAILED"
+        err.message.contains "Unable to detect the Scala version for the 'noScala' source set. Please ensure it " +
+                "declares dependency to scala-library or consider adding it to 'ignoreSourceSets'"
+        err.message.contains 'BUILD FAILED'
     }
 
     def 'scalafix task should fail if the Scala version is not supported'() {
@@ -537,7 +548,7 @@ object HelloWorld {
         srcFile.getText() == originalSrcContent
     }
 
-    def 'scalafix should run semantic rewrite rule and leave wart-free code unchanged'() {
+    def 'scalafix should run semantic rewrite rule and leave code without violations unchanged'() {
         given:
         TemporaryFolder projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')

@@ -3,6 +3,8 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
@@ -41,7 +43,7 @@ class ScalafixPluginTest extends Specification {
     def 'The plugin throws an exception if the scala plugin has not been applied to the project'() {
         given:
         def project = ProjectBuilder.builder().build()
-        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
+        applyScalafixPlugin(project)
 
         when:
         project.evaluate()
@@ -53,109 +55,30 @@ class ScalafixPluginTest extends Specification {
     def 'The plugin should not throw any exception if the scala plugin is applied after it'() {
         given:
         def project = ProjectBuilder.builder().build()
-        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
-        project.pluginManager.apply 'scala'
+        applyScalafixPlugin(project)
+        applyScalaPlugin(project)
         project.scalafix.semanticdb.autoConfigure = false
 
         when:
         project.evaluate()
-
-        then:
         project.tasks.scalafix
+
+        then:
+        noExceptionThrown()
     }
 
-    def 'The plugin should throw an exception if the version of Scala is not supported'() {
+    def 'The plugin should not trigger dependency resolution during the configuration phase'() {
         given:
-        def scalaProject = buildScalaProject(null, [], "2.10.7")
-        applyScalafixPlugin(scalaProject, true)
+        applyScalafixPlugin(scalaProject)
 
         when:
         scalaProject.evaluate()
         scalaProject.tasks.scalafixMain // forces plugin configuration
-
-        then:
-        thrown GradleException
-    }
-
-    def 'The plugin adds the semanticdb plugin config to the compiler options when semanticdb.autoConfigure is set to true'() {
-        given:
-        applyScalafixPlugin(scalaProject, true)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
-        compileScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
-        compileScalaParameters.find {
-            it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
-                    !it.contains("scala-library")
-        }
-
         scalaProject.tasks.scalafixTest // forces plugin configuration
-        def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
-        compileTestScalaParameters.containsAll(DEFAULT_COMPILER_OPTS + ['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
-        compileTestScalaParameters.find {
-            it.startsWith('-Xplugin:') &&
-                    it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
-                    !it.contains("scala-library")
-        }
-    }
-
-    @Unroll
-    def 'The plugin uses semanticdb version #semanticdbVersion when provided using the scalafix extension'() {
-        given:
-        applyScalafixPlugin(scalaProject, true)
-        scalaProject.scalafix.semanticdb.version = semanticdbVersion
-
-        when:
-        scalaProject.evaluate()
 
         then:
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        def compileScalaParameters = scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters
-        compileScalaParameters.find {
-            it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
-        }
-
-        scalaProject.tasks.scalafixTest // forces plugin configuration
-        def compileTestScalaParameters = scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters
-        compileTestScalaParameters.find {
-            it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
-        }
-
-        where:
-        semanticdbVersion   || expectedSemanticdbJar
-        '4.4.18'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
-        '4.4.19'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
-    }
-
-    def 'SemanticDB configuration is not added if semanticdb.autoConfigure is set to false'() {
-        given:
-        applyScalafixPlugin(scalaProject, false)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.scalafixMain // forces plugin configuration
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.scalafixTest // forces plugin configuration
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-    }
-
-    def 'SemanticDB configuration is not added if the scalafix task creation is deferred'() {
-        given:
-        applyScalafixPlugin(scalaProject, true)
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        scalaProject.tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
-        scalaProject.tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalaProject.configurations.compileClasspath.state == Configuration.State.UNRESOLVED
+        scalaProject.configurations.testCompileClasspath.state == Configuration.State.UNRESOLVED
     }
 
     def 'checkScalafix task configuration validation'() {
@@ -174,35 +97,9 @@ class ScalafixPluginTest extends Specification {
 
     def 'checkScalafixMain task configuration validation'() {
         given:
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        ScalafixTask task = scalaProject.tasks.checkScalafixMain
-        task.dependsOn.isEmpty()
-        task.mode == ScalafixMainMode.CHECK
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
-    }
-
-    def 'checkScalafixMain task configuration validation when semanticdb.autoConfigure is enabled'() {
-        given:
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -218,48 +115,21 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
     }
 
     def 'checkScalafixTest task configuration validation'() {
         given:
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        ScalafixTask task = scalaProject.tasks.checkScalafixTest
-        task.dependsOn.isEmpty()
-        task.mode == ScalafixMainMode.CHECK
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
-    }
-
-    def 'checkScalafixTest task configuration validation when semanticdb.autoConfigure is enabled'() {
-        given:
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -275,13 +145,12 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
     }
@@ -302,14 +171,16 @@ class ScalafixPluginTest extends Specification {
 
     def 'scalafixMain task configuration validation'() {
         given:
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixMain
-        task.dependsOn.isEmpty()
+        task.dependsOn.find{ it.name == 'compileScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -318,55 +189,28 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
-    }
-
-    def 'scalafixMain task configuration validation when semanticdb.autoConfigure is enabled'() {
-        given:
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        ScalafixTask task = scalaProject.tasks.scalafixMain
-        task.dependsOn.find { it.name == 'compileScala' }
-        task.mode == ScalafixMainMode.IN_PLACE
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/main/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/main")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/main")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/main")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/main")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
     }
 
     def 'scalafixTest task configuration validation'() {
         given:
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixTest
-        task.dependsOn.isEmpty()
+        task.dependsOn.find{ it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -375,41 +219,12 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
-    }
-
-    def 'scalafixTest task configuration validation when semanticdb.autoConfigure is enabled'() {
-        given:
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        ScalafixTask task = scalaProject.tasks.scalafixTest
-        task.dependsOn.find { it.name == 'compileTestScala' }
-        task.mode == ScalafixMainMode.IN_PLACE
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/test/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/test")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/test")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/test")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/test")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
     }
@@ -417,15 +232,16 @@ class ScalafixPluginTest extends Specification {
     def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
         given:
         def scalaProject = buildScalaProject(null, ["foo"])
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixFoo
-        task.dependsOn.isEmpty()
-        scalaProject.tasks.scalafix.dependsOn(task)
+        task.dependsOn.find{ it.name == 'compileFooScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -434,43 +250,12 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
-    }
-
-    def 'scalafix<SourceSet> task configuration validation when additional source set is present and semanticdb.autoConfigure is enabled'() {
-        given:
-        def scalaProject = buildScalaProject(null, ["bar"])
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
-
-        when:
-        scalaProject.evaluate()
-
-        then:
-        ScalafixTask task = scalaProject.tasks.scalafixBar
-        task.dependsOn.find { it.name == 'compileBarScala' }
-        scalaProject.tasks.scalafix.dependsOn(task)
-        task.mode == ScalafixMainMode.IN_PLACE
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/bar/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
     }
@@ -478,15 +263,16 @@ class ScalafixPluginTest extends Specification {
     def 'checkScalafix<SourceSet> task configuration validation when additional source set is present'() {
         given:
         def scalaProject = buildScalaProject(null, ["foo"])
-        applyScalafixPlugin(scalaProject, false, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
+        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
 
         then:
         ScalafixTask task = scalaProject.tasks.checkScalafixFoo
-        task.dependsOn.isEmpty()
-        scalaProject.tasks.checkScalafix.dependsOn(task)
+        task.dependsOn.find{ it.name == 'compileFooScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -495,45 +281,132 @@ class ScalafixPluginTest extends Specification {
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Duck.scala")
         ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/foo")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions == DEFAULT_COMPILER_OPTS
-        task.scalaVersion == SCALA_VERSION
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
+        task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/foo")
+        task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
+        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
+        task.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        !task.semanticdbConfigured
+        task.semanticdbConfigured
     }
 
-    def 'checkScalafix<SourceSet> task configuration validation when additional source set is present and semanticdb.autoConfigure is enabled'() {
+    def 'scalafix* and checkScalafix* tasks configuration when semanticdb.autoconfigure is false'() {
         given:
-        def scalaProject = buildScalaProject(null, ["bar"])
-        applyScalafixPlugin(scalaProject, true, 'Foo,Bar', scalaProject.file('.custom.conf'))
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.semanticdb.autoConfigure = false
 
         when:
         scalaProject.evaluate()
 
         then:
-        ScalafixTask task = scalaProject.tasks.checkScalafixBar
-        task.dependsOn.find { it.name == 'compileBarScala' }
-        scalaProject.tasks.checkScalafix.dependsOn(task)
-        task.mode == ScalafixMainMode.CHECK
-        task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir.path
-        task.source.files == [
-                new File(scalaProject.projectDir, "/src/bar/scala/Cat.scala"),
-                new File(scalaProject.projectDir, "/src/bar/scala/Dog.scala"),
-                new File(scalaProject.projectDir, "/src/bar/scala/Duck.scala")
-        ].toSet()
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/scala/bar")
-        task.classpath.contains(scalaProject.projectDir.path + "/build/classes/java/bar")
-        task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
-        task.compileOptions.containsAll(DEFAULT_COMPILER_OPTS + "-Yrangepos")
-        task.compileOptions.find { it.startsWith("-Xplugin:") }
-        task.scalaVersion == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        TaskContainer tasks = scalaProject.tasks
+        [tasks.scalafixMain, tasks.scalafixTest, tasks.checkScalafixMain, tasks.checkScalafixTest].each { ScalafixTask task ->
+            assert !task.semanticdbConfigured
+            assert task.dependsOn.empty
+        }
+    }
+
+    def 'the semanticdb compiler plugin is not configured before the execution phase'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+
+        when:
+        scalaProject.evaluate()
+        TaskContainer tasks = scalaProject.tasks
+        ScalafixTask scalafixMainTask = tasks.scalafixMain // forces plugin configuration
+        ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
+
+        then:
+        tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalafixMainTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        scalafixTestTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
+    }
+
+    def 'the semanticdb compiler plugin is configured during the execution phase'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+
+        when:
+        scalaProject.evaluate()
+        TaskContainer tasks = scalaProject.tasks
+        ScalafixTask scalafixMainTask = tasks.scalafixMain // forces plugin configuration
+        ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
+        ScalaCompile compileMainTask = tasks.compileScala
+        ScalaCompile compileTestTask = tasks.compileTestScala
+        [compileMainTask, compileTestTask].each { task -> // emulates the task execution
+            task.actions.find { it.displayName.contains('doFirst') }.execute(task)
+        }
+
+        then:
+        [compileMainTask, compileTestTask].each { task ->
+            def compileOpts = task.scalaCompileOptions.additionalParameters
+            assert compileOpts.containsAll(DEFAULT_COMPILER_OPTS)
+            assert compileOpts.containsAll(['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
+            assert compileOpts.find {
+                it.startsWith('-Xplugin:') &&
+                        it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
+                        !it.contains("scala-library")
+            }
+        }
+        scalafixMainTask.compileOptions.get() == compileMainTask.scalaCompileOptions.additionalParameters
+        scalafixTestTask.compileOptions.get() == compileTestTask.scalaCompileOptions.additionalParameters
+    }
+
+    @Unroll
+    def 'The plugin uses semanticdb version #semanticdbVersion when provided using the scalafix extension'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.semanticdb.version = semanticdbVersion
+
+        when:
+        scalaProject.evaluate()
+        TaskContainer tasks = scalaProject.tasks
+        ScalafixTask scalafixMainTask = tasks.scalafixMain // forces plugin configuration
+        ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
+        ScalaCompile compileMainTask = tasks.compileScala
+        ScalaCompile compileTestTask = tasks.compileTestScala
+        [compileMainTask, compileTestTask].each { task -> // emulates the task execution
+            task.actions.find { it.displayName.contains('doFirst') }.execute(task)
+        }
+
+        then:
+        [compileMainTask, compileTestTask].each { task ->
+            assert task.scalaCompileOptions.additionalParameters.find {
+                it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
+            }
+        }
+        scalafixMainTask.compileOptions.get() == compileMainTask.scalaCompileOptions.additionalParameters
+        scalafixTestTask.compileOptions.get() == compileTestTask.scalaCompileOptions.additionalParameters
+
+        where:
+        semanticdbVersion   || expectedSemanticdbJar
+        '4.4.18'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.4.19'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+    }
+
+    def 'the semanticdb compiler plugin is not configured if semanticdb.autoConfigure is set to false'() {
+        given:
+        applyScalafixPlugin(scalaProject)
+        scalaProject.scalafix.semanticdb.autoConfigure = false
+
+        when:
+        scalaProject.evaluate()
+        TaskContainer tasks = scalaProject.tasks
+        ScalafixTask scalafixMainTask = tasks.scalafixMain // forces plugin configuration
+        ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
+        ScalaCompile compileMainTask = tasks.compileScala
+        ScalaCompile compileTestTask = tasks.compileTestScala
+        [compileMainTask, compileTestTask].each { task -> // emulates the task execution
+            task.actions.find { it.displayName.contains('doFirst') }?.execute(task)
+        }
+
+        then:
+        compileMainTask.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        compileTestTask.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        scalafixMainTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
+        scalafixTestTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
     }
 
     def 'scalafix uses the config file provided via extension'() {
@@ -549,7 +422,9 @@ class ScalafixPluginTest extends Specification {
         File extensionConfig = new File(subProject.projectDir, '.custom.conf')
         extensionConfig.write 'rules = [Foo, Bar]'
 
-        applyScalafixPlugin(subProject, false, '', extensionConfig)
+        applyScalafixPlugin(subProject)
+        subProject.scalafix.configFile = extensionConfig
+        subProject.scalafix.semanticdb.autoConfigure = false
 
         when:
         subProject.evaluate()
@@ -671,20 +546,15 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.findByName('checkScalafixTest')
     }
 
-    private applyScalafixPlugin(Project project,
-                                Boolean autoConfigureSemanticdb = false,
-                                String rules = '',
-                                File configFile = null) {
-        project.with {
-            apply plugin: 'io.github.cosmicsilence.scalafix'
-
-            if (autoConfigureSemanticdb != null) scalafix.semanticdb.autoConfigure = autoConfigureSemanticdb
-            if (configFile) scalafix.configFile = configFile
-            ext.'scalafix.rules' = rules
-        }
+    private applyScalaPlugin(Project project) {
+        project.pluginManager.apply 'scala'
     }
 
-    private Project buildScalaProject(Project parent = null, List<String> extraSourceSets = [], String scalaVersion = SCALA_VERSION) {
+    private applyScalafixPlugin(Project project) {
+        project.pluginManager.apply 'io.github.cosmicsilence.scalafix'
+    }
+
+    private Project buildScalaProject(Project parent = null, List<String> extraSourceSets = []) {
         def project = ProjectBuilder.builder().withParent(parent).build()
         def standardSourceSets = ["main", "test"]
 
@@ -705,8 +575,8 @@ class ScalafixPluginTest extends Specification {
             }
 
             dependencies {
-                compile group: 'org.scala-lang', name: 'scala-library', version: scalaVersion
-                compile group: 'org.scala-lang', name: 'scala-library', version: scalaVersion, ext: 'pom'
+                compile group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION
+                compile group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION, ext: 'pom'
             }
 
             sourceSets {

@@ -6,6 +6,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
@@ -29,34 +30,28 @@ class ScalafixTask extends SourceTask {
     ScalafixMainMode mode
 
     @Input
-    @Optional
-    String scalaVersion
+    final Property<String> scalaVersion = project.objects.property(String)
 
     @Input
     @Optional
-    List<String> compileOptions
+    final ListProperty<String> compileOptions = project.objects.listProperty(String)
 
     @Input
     @Optional
-    List<String> classpath
+    final ListProperty<String> classpath = project.objects.listProperty(String)
 
     @Input
     String sourceRoot
 
-    @Input
+    @Internal
     Boolean semanticdbConfigured
 
     @TaskAction
     void run() {
-        if (!source.isEmpty()) processSources()
-        else logger.warn("No sources to be processed")
-    }
-
-    private void processSources() {
         def sourcePaths = source.collect { it.toPath() }
-        def configFilePath = java.util.Optional.ofNullable(configFile.getOrNull()).map { it.asFile.toPath() }
+        def configFilePath = java.util.Optional.ofNullable(configFile.orNull).map { it.asFile.toPath() }
         def externalRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXTERNAL_RULES_CONFIGURATION)
-        def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion)
+        def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion.get())
 
         logger.debug(
                 """Running Scalafix with the following arguments:
@@ -64,11 +59,12 @@ class ScalafixTask extends SourceTask {
                   | - Config file: ${configFilePath}
                   | - Scalafix cli artifact: ${scalafixCliCoordinates}
                   | - External rules classpath: ${externalRulesConfiguration.asPath}
-                  | - Scala version: ${scalaVersion}
-                  | - Scalac options: ${compileOptions}
+                  | - Rules: ${rules.orNull}
+                  | - Scala version: ${scalaVersion.get()}
+                  | - Scalac options: ${compileOptions.orNull}
                   | - Source root: ${sourceRoot}
                   | - Sources: ${sourcePaths}
-                  | - Classpath: ${classpath}
+                  | - Classpath: ${classpath.orNull}
                   |""".stripMargin())
 
         def scalafixClassloader = CachedClassloaders.forScalafixCli(project, scalafixCliCoordinates)
@@ -77,13 +73,13 @@ class ScalafixTask extends SourceTask {
                 .newArguments()
                 .withMode(mode)
                 .withConfig(configFilePath)
-                .withRules(rules.get())
+                .withRules(rules.getOrElse([]))
                 .withSourceroot(Paths.get(sourceRoot))
                 .withPaths(sourcePaths)
                 .withToolClasspath(externalRulesClassloader)
-                .withClasspath((classpath ?: []).collect { Paths.get(it)} )
-                .withScalaVersion(scalaVersion)
-                .withScalacOptions(compileOptions)
+                .withClasspath(classpath.getOrElse([]).collect { Paths.get(it) } )
+                .withScalaVersion(scalaVersion.get())
+                .withScalacOptions(compileOptions.getOrElse([]))
 
         logger.debug(
                 """Scalafix rules:
@@ -106,9 +102,9 @@ class ScalafixTask extends SourceTask {
         def semanticRules = rulesThatWillRun.findAll { it.kind().isSemantic() }
 
         if (!semanticRules.empty && !semanticdbConfigured) {
-            def semanticRuleNames = semanticRules.collect { it.name() }.join(", ")
-            throw new GradleException("The semanticdb compiler plugin is required to run semantic rules such as ${semanticRuleNames}. " +
-                    "To fix this problem, please enable 'semanticdb.autoConfigure' in the scalafix plugin extension")
+            def ruleNames = semanticRules.collect { it.name() }.join(", ")
+            throw new GradleException("The semanticdb compiler plugin is required to run semantic rules such as $ruleNames. " +
+                    "To fix this problem, please enable 'semanticdb.autoConfigure' in the plugin extension")
         }
     }
 }
