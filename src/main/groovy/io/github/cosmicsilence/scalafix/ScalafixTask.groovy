@@ -40,8 +40,8 @@ class ScalafixTask extends SourceTask {
     @Optional
     final ListProperty<String> classpath = project.objects.listProperty(String)
 
-    @InputDirectory
-    File sourceRoot
+    @Input
+    String sourceRoot
 
     @Internal
     Boolean semanticdbConfigured
@@ -74,7 +74,7 @@ class ScalafixTask extends SourceTask {
                 .withMode(mode)
                 .withConfig(configFilePath)
                 .withRules(rules.getOrElse([]))
-                .withSourceroot(sourceRoot.toPath())
+                .withSourceroot(Paths.get(sourceRoot))
                 .withPaths(sourcePaths)
                 .withToolClasspath(externalRulesClassloader)
                 .withClasspath(classpath.getOrElse([]).collect { Paths.get(it) } )

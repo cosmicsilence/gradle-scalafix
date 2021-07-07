@@ -109,7 +109,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
@@ -139,7 +139,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
@@ -183,7 +183,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/main/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/main/scala/Dog.scala"),
@@ -213,7 +213,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileTestScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/test/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/test/scala/Dog.scala"),
@@ -244,7 +244,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileFooScala' }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/foo/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
@@ -275,7 +275,7 @@ class ScalafixPluginTest extends Specification {
         task.dependsOn.find{ it.name == 'compileFooScala' }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
-        task.sourceRoot == scalaProject.projectDir
+        task.sourceRoot == scalaProject.projectDir.path
         task.source.files == [
                 new File(scalaProject.projectDir, "/src/foo/scala/Cat.scala"),
                 new File(scalaProject.projectDir, "/src/foo/scala/Dog.scala"),
