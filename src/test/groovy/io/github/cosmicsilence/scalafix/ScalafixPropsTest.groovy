@@ -1,6 +1,7 @@
 package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.GradleException
+import scalafix.interfaces.Scalafix
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -11,7 +12,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.scalafixVersion
 
         then:
-        version == "0.9.30"
+        version == Scalafix.package.implementationVersion
     }
 
     def 'it should return the Scalameta version'() {
@@ -19,7 +20,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.scalametaVersion
 
         then:
-        version == "4.4.27"
+        version ==~ "\\d+.\\d+.\\d+"
     }
 
     def 'it should return the supported Scala 2.11.x version'() {
@@ -27,7 +28,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.supportedScala211Version
 
         then:
-        version == "2.11.12"
+        version ==~ "2.11.\\d+"
     }
 
     def 'it should return the supported Scala 2.12.x version'() {
@@ -35,7 +36,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.supportedScala212Version
 
         then:
-        version == "2.12.14"
+        version ==~ "2.12.\\d+"
     }
 
     def 'it should return the supported Scala 2.13.x version'() {
@@ -43,7 +44,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.supportedScala213Version
 
         then:
-        version == "2.13.6"
+        version ==~ "2.13.\\d+"
     }
 
     @Unroll
