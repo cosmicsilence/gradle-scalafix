@@ -81,12 +81,14 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
             scalafixTask.semanticdbConfigured = extension.semanticdb.autoConfigure.get()
 
-            if (extension.semanticdb.autoConfigure.get()) {
-                // configures the semanticdb compiler plugin during the execution phase, but before the
-                // compile task is executed. This prevents dependencies from being resolved too early
-                sourceSet.compileTask.doFirst {
+            sourceSet.compileTask.doFirst {
+                if (extension.semanticdb.autoConfigure.get()) {
+                    // configures the semanticdb compiler plugin during the execution phase, but before the
+                    // compile task is executed. This prevents dependencies from being resolved too early
                     configureSemanticdbCompilerPlugin(project, sourceSet, extension)
                 }
+            }
+            if (extension.semanticdb.autoConfigure.get()) {
                 scalafixTask.dependsOn sourceSet.compileTask
             }
         })
