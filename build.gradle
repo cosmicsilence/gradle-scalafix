@@ -108,8 +108,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/cosmicsilence/gradle-scalafix")
             credentials {
-                username = project.findProperty("github.user") ?: System.getenv("GITHUB_USER")
-                password = project.findProperty("github.key")  ?: System.getenv("GITHUB_KEY")
+                username = project.findProperty("github.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("github.key")  ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }
