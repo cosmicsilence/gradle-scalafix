@@ -1,0 +1,23 @@
+name: Main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  unit_tests:
+    steps:
+      - run: ./gradlew test
+  compat_tests:
+    strategy:
+      matrix:
+        gradle_version:
+          - "4.9"
+          - "4.10.3"
+          - "5.1.1"
+          - "5.6.4"
+          - "6.0.1"
+          - "6.8.3"
+          - "7.0"
+    steps:
+      - run: ./gradlew compatTest${{ matrix.gradle_version }}
