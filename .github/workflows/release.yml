@@ -1,4 +1,4 @@
-name: Release
+name: release
 on:
   push:
     tags: ["*"]
@@ -13,7 +13,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '8'
-          cache: 'gradle'
       - name: Configure Gradle
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}

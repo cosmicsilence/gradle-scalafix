@@ -1,4 +1,4 @@
-name: Main
+name: master
 on:
   push:
     branches:
@@ -15,7 +15,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '8'
-          cache: 'gradle'
       - name: Run unit tests
         run: ./gradlew test
   compat_tests:
@@ -38,6 +37,5 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '8'
-          cache: 'gradle'
       - name: Run compat tests for Gradle ${{ matrix.gradle_version }}
         run: ./gradlew compatTest${{ matrix.gradle_version }}
