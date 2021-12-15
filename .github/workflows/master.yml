@@ -27,12 +27,13 @@ jobs:
           - "5.1.1"
           - "5.6.4"
           - "6.0.1"
-          - "6.8.3"
-          - "7.0"
+          - "6.9.1"
+          - "7.0.2"
+          - "7.3.1"
     steps:
       - name: Download repo
         uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
