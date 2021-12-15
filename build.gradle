@@ -1,24 +1,11 @@
-// Fix required since jgit 6 is compiled for java 11. We can remove this lock once we move to java 11 or reckon plugins lock the version.
-buildscript {
-    dependencies  {
-        classpath('org.eclipse.jgit:org.eclipse.jgit') {
-            version {
-                strictly '5.13.0.202109080827-r'
-            }
-        }
-    }
-}
-
 plugins {
-    id 'org.ajoberstar.stutter' version '0.5.1'
-    id 'org.ajoberstar.reckon' version '0.12.0'
+    id 'org.ajoberstar.stutter' version '0.6.0'
+    id 'org.ajoberstar.reckon' version '0.13.1'
     id 'maven-publish'
     id 'com.gradle.plugin-publish' version '0.11.0'
     id 'groovy'
     id 'java-gradle-plugin'
 }
-
-
 
 group 'io.github.cosmicsilence'
 
