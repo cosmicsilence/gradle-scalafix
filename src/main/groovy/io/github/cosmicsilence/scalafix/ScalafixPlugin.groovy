@@ -50,8 +50,16 @@ class ScalafixPlugin implements Plugin<Project> {
         project.sourceSets.each { SourceSet sourceSet ->
             if (ScalaSourceSet.isScalaSourceSet(project, sourceSet) && !extension.ignoreSourceSets.get().contains(sourceSet.name)) {
                 def scalaSourceSet = new ScalaSourceSet(project, sourceSet)
-                configureTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension)
-                configureTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension)
+                ConfigureSemanticdbCompiler configureSemanticdbCompilerTask = project.tasks.create(
+                        "configure${sourceSet.name.capitalize()}SemanticdbCompilerPlugin", ConfigureSemanticdbCompiler) { task ->
+                    scalaVersion = project.provider({ resolveScalaVersion(scalaSourceSet) })
+                    semanticdbVersion = extension.semanticdb.version
+                    task.scalaSourceSet = scalaSourceSet
+
+                    onlyIf { extension.semanticdb.autoConfigure.get() }
+                }
+                configureTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configureSemanticdbCompilerTask)
+                configureTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configureSemanticdbCompilerTask)
             }
         }
     }
@@ -60,7 +68,8 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalaSourceSet sourceSet,
                                            ScalafixMainMode taskMode,
                                            Task mainTask,
-                                           ScalafixExtension extension) {
+                                           ScalafixExtension extension,
+                                           ConfigureSemanticdbCompiler configureSemanticdbCompilerTask) {
         def taskName = mainTask.name + sourceSet.name.capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
             scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
@@ -81,33 +90,14 @@ class ScalafixPlugin implements Plugin<Project> {
             scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
             scalafixTask.semanticdbConfigured = extension.semanticdb.autoConfigure.get()
 
-            sourceSet.compileTask.doFirst {
-                if (extension.semanticdb.autoConfigure.get()) {
-                    // configures the semanticdb compiler plugin during the execution phase, but before the
-                    // compile task is executed. This prevents dependencies from being resolved too early
-                    configureSemanticdbCompilerPlugin(project, sourceSet, extension)
-                }
-            }
+            sourceSet.compileTask.dependsOn configureSemanticdbCompilerTask
+
             if (extension.semanticdb.autoConfigure.get()) {
                 scalafixTask.dependsOn sourceSet.compileTask
             }
         })
 
         mainTask.dependsOn taskProvider
-    }
-
-    private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, ScalafixExtension extension) {
-        def scalaVersion = resolveScalaVersion(sourceSet)
-        def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.orNull)
-        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion)
-        def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
-        def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
-        def compilerOpts = [
-                '-Xplugin:' + configuration.asPath,
-                '-P:semanticdb:sourceroot:' + project.projectDir,
-                '-Yrangepos'
-        ]
-        sourceSet.addCompilerOptions(compilerOpts)
     }
 
     private String resolveScalaVersion(ScalaSourceSet sourceSet) {

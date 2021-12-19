@@ -335,8 +335,10 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
         ScalaCompile compileMainTask = tasks.compileScala
         ScalaCompile compileTestTask = tasks.compileTestScala
-        [compileMainTask, compileTestTask].each { task -> // emulates the task execution
-            task.actions.find { it.displayName.contains('doFirst') }.execute(task)
+
+        [tasks.configureMainSemanticdbCompilerPlugin, tasks.configureTestSemanticdbCompilerPlugin].each { task -> // emulates the task execution
+            assert task.onlyIf.specs.get(1).isSatisfiedBy(task)
+            task.run()
         }
 
         then:
@@ -367,8 +369,9 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
         ScalaCompile compileMainTask = tasks.compileScala
         ScalaCompile compileTestTask = tasks.compileTestScala
-        [compileMainTask, compileTestTask].each { task -> // emulates the task execution
-            task.actions.find { it.displayName.contains('doFirst') }.execute(task)
+        [tasks.configureMainSemanticdbCompilerPlugin, tasks.configureTestSemanticdbCompilerPlugin].each { task -> // emulates the task execution
+            assert task.onlyIf.specs.get(1).isSatisfiedBy(task)
+            task.run()
         }
 
         then:

@@ -127,3 +127,5 @@ publishing {
         }
     }
 }
+
+version = '1234'
