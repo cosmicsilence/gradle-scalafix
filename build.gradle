@@ -1,5 +1,6 @@
 plugins {
     id 'org.ajoberstar.stutter' version '0.5.1'
+    id 'org.ajoberstar.reckon' version '0.11.0'
     id 'maven-publish'
     id 'com.gradle.plugin-publish' version '0.11.0'
     id 'groovy'
@@ -52,6 +53,11 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     archiveClassifier = 'javadoc'
     from javadoc.destinationDir
+}
+
+reckon {
+    scopeFromProp()
+    stageFromProp('beta', 'rc', 'final')
 }
 
 pluginBundle {
