@@ -1,0 +1,11 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.fasterxml.jackson.core:jackson-annotations:2.9.0
+com.fasterxml.jackson.core:jackson-core:2.9.8
+com.fasterxml.jackson.core:jackson-databind:2.9.8
+com.gradle.plugin-publish:com.gradle.plugin-publish.gradle.plugin:0.15.0
+com.gradle.publish:plugin-publish-plugin:0.15.0
+org.ajoberstar.stutter:org.ajoberstar.stutter.gradle.plugin:0.5.0
+org.ajoberstar:gradle-stutter:0.5.0
+org.apache.maven:maven-model:3.6.3

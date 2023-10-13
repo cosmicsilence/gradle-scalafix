@@ -842,13 +842,12 @@ object OrganizeImportsTest
 
         where:
         scalaVersion || _
-        '2.11.12'    || _
-        '2.12.12'    || _
-        '2.12.13'    || _
-        '2.12.14'    || _
-        '2.13.4'     || _
-        '2.13.5'     || _
-        '2.13.6'     || _
+        '2.12.16'    || _
+        '2.12.17'    || _
+        '2.12.18'    || _
+        '2.13.10'     || _
+        '2.13.11'     || _
+        '2.13.12'     || _
     }
 
     private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
@@ -861,7 +860,7 @@ object OrganizeImportsTest
                 .build()
     }
 
-    private TemporaryFolder createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.6') {
+    private TemporaryFolder createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.12') {
         TemporaryFolder projectDir = new TemporaryFolder()
         projectDir.create()
         projectDir.newFile("build.gradle").write """
