@@ -1,0 +1,6 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+ch.epfl.scala:scalafix-interfaces:0.11.1
+io.get-coursier:interface:1.0.18
+org.slf4j:slf4j-api:1.7.36

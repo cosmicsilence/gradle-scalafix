@@ -23,14 +23,6 @@ class ScalafixPropsTest extends Specification {
         version ==~ "\\d+.\\d+.\\d+"
     }
 
-    def 'it should return the supported Scala 2.11.x version'() {
-        when:
-        def version = ScalafixProps.supportedScala211Version
-
-        then:
-        version ==~ "2.11.\\d+"
-    }
-
     def 'it should return the supported Scala 2.12.x version'() {
         when:
         def version = ScalafixProps.supportedScala212Version
@@ -57,7 +49,6 @@ class ScalafixPropsTest extends Specification {
 
         where:
         projectScalaVersion || expectedScalaVersion
-        '2.11.0'            || ScalafixProps.supportedScala211Version
         '2.12.0'            || ScalafixProps.supportedScala212Version
         '2.13.0'            || ScalafixProps.supportedScala213Version
     }
@@ -86,7 +77,6 @@ class ScalafixPropsTest extends Specification {
 
         where:
         projectScalaVersion || expectedCoordinates
-        '2.11.11'           || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala211Version}:${ScalafixProps.scalafixVersion}"
         '2.12.10'           || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala212Version}:${ScalafixProps.scalafixVersion}"
         '2.13.0'            || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala213Version}:${ScalafixProps.scalafixVersion}"
     }
@@ -101,7 +91,6 @@ class ScalafixPropsTest extends Specification {
 
         where:
         projectScalaVersion || expectedCoordinates
-        '2.11.11'           || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
         '2.12.10'           || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
         '2.13.0'            || "org.scalameta:semanticdb-scalac_${projectScalaVersion}:${ScalafixProps.scalametaVersion}"
     }

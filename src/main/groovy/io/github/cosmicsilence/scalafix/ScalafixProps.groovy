@@ -23,10 +23,6 @@ abstract class ScalafixProps {
         return PROPS.getProperty("scalametaVersion")
     }
 
-    static String getSupportedScala211Version() {
-        return PROPS.getProperty("scala211")
-    }
-
     static String getSupportedScala212Version() {
         return PROPS.getProperty("scala212")
     }
@@ -37,8 +33,6 @@ abstract class ScalafixProps {
 
     static String getSupportedScalaVersion(String projectScalaVersion) {
         switch (projectScalaVersion) {
-            case ~/^2\.11\..+$/:
-                return supportedScala211Version
             case ~/^2\.12\..+$/:
                 return supportedScala212Version
             case ~/^2\.13\..+$/:

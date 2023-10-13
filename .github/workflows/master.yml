@@ -14,7 +14,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '8'
+          java-version: '11'
       - name: Run unit tests
         run: ./gradlew test
   compat_tests:
@@ -22,7 +22,6 @@ jobs:
     strategy:
       matrix:
         gradle_version:
-          - "4.9"
           - "4.10.3"
           - "5.1.1"
           - "5.6.4"
@@ -37,6 +36,6 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '8'
+          java-version: '11'
       - name: Run compat tests for Gradle ${{ matrix.gradle_version }}
         run: ./gradlew compatTest${{ matrix.gradle_version }}
