@@ -9,7 +9,7 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 &nbsp;
 ## Usage
 
-*Make sure you are using Gradle version 4.9 or later (except 5.0).*
+*Make sure you are using Gradle version 4.10 or later (except 5.0).*
 
 To use the Scalafix plugin, please include the following snippet in your build script:
 
