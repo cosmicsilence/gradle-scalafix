@@ -6,6 +6,7 @@ buildscript {
 
 plugins {
     id 'org.ajoberstar.stutter' version '0.5.0'
+    id 'org.ajoberstar.reckon' version '0.9.0'
     id 'maven-publish'
     id 'com.gradle.plugin-publish' version '0.15.0'
     id 'groovy'
@@ -50,6 +51,11 @@ stutter {
         compatibleRange '5.0'
         compatibleRange '5.1'
     }
+}
+
+reckon {
+    scopeFromProp()
+    stageFromProp('beta', 'rc', 'final')
 }
 
 validateTaskProperties {
