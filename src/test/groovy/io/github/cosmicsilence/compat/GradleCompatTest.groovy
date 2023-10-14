@@ -17,7 +17,7 @@ class GradleCompatTest extends Specification {
 
     def 'isVersion4 should return true if the gradle version is 4.x'() {
         given:
-        gradle.gradleVersion >> '4.9'
+        gradle.gradleVersion >> '4.10.3'
 
         when:
         boolean isVersion4 = GradleCompat.isVersion4(mockProject)
