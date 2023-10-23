@@ -575,8 +575,8 @@ class ScalafixPluginTest extends Specification {
             }
 
             dependencies {
-                compile group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION
-                compile group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION, ext: 'pom'
+                implementation group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION
+                implementation group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION, ext: 'pom'
             }
 
             sourceSets {
