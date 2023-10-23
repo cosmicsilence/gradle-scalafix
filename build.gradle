@@ -57,8 +57,8 @@ stutter {
                 languageVersion = JavaLanguageVersion.of(8)
             }
             gradleVersions {
-                compatibleRange '4.10'
-                incompatible '5.0'
+                compatible '4.10'
+                compatibleRange '5.1'
             }
         }
         java11 {
@@ -66,8 +66,8 @@ stutter {
                 languageVersion = JavaLanguageVersion.of(11)
             }
             gradleVersions {
-                compatibleRange '4.10'
-                incompatible '5.0'
+                compatible '4.10'
+                compatibleRange '5.1'
             }
         }
     }
