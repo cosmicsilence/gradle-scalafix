@@ -22,7 +22,7 @@ class ScalaSourceSet {
     }
 
     List<File> getFullClasspath() {
-        return classesDirs + jarDependencies
+        return getClassesDirs() + getJarDependencies()
     }
 
     private List<File> getClassesDirs() {
@@ -44,16 +44,16 @@ class ScalaSourceSet {
     @Memoized
     Optional<String> getScalaVersion() {
         def scalaRuntime = project.extensions.findByType(ScalaRuntime)
-        def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
+        def scalaJar = scalaRuntime?.findScalaJar(getCompileTask().classpath, 'library')
         return Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
     }
 
     List<String> getCompilerOptions() {
-        return compileTask.scalaCompileOptions.additionalParameters ?: []
+        return getCompileTask().scalaCompileOptions.additionalParameters ?: []
     }
 
     void addCompilerOptions(List<String> opts) {
-        compileTask.scalaCompileOptions.additionalParameters = compilerOptions + opts
+        getCompileTask().scalaCompileOptions.additionalParameters = getCompilerOptions() + opts
     }
 
     static boolean isScalaSourceSet(Project project, SourceSet sourceSet) {

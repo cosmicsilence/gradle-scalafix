@@ -1,9 +1,9 @@
 package io.github.cosmicsilence.scalafix
 
+import org.gradle.internal.impldep.com.google.common.io.Files
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -13,7 +13,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafixMain task should run compileScala by default'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -27,7 +27,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafixMain task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = true } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = true } }')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -41,7 +41,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafixMain task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''scalafix { semanticdb { autoConfigure = false } }''')
+        File projectDir = createScalaProject('''scalafix { semanticdb { autoConfigure = false } }''')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
@@ -55,7 +55,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'checkScalafix task should run compileScala by default'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
@@ -69,7 +69,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'checkScalafix task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = true } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = true } }')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
@@ -83,7 +83,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'checkScalafix task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
@@ -98,7 +98,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        File projectDir = createScalaProject('''
 sourceSets {
     integTest {
         compileClasspath += sourceSets.test.compileClasspath
@@ -120,7 +120,7 @@ sourceSets {
 
     def 'checkScalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        File projectDir = createScalaProject('''
 sourceSets {
     integTest {
         compileClasspath += sourceSets.test.compileClasspath
@@ -142,7 +142,7 @@ sourceSets {
 
     def 'check task should run checkScalafix tasks but not scalafix'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
 
         when:
         BuildResult buildResult = runGradle(projectDir, 'check', '-m')
@@ -159,7 +159,7 @@ sourceSets {
 
     def 'all scalafix tasks should be grouped'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        File projectDir = createScalaProject('''
 sourceSets {
     foo {
         compileClasspath += sourceSets.main.compileClasspath
@@ -187,7 +187,7 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
 
     def 'scalafix task should fail if the Scala version cannot be detected'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        File projectDir = createScalaProject('''
 sourceSets { 
     noScala { } 
 }
@@ -211,7 +211,7 @@ scalafix {
 
     def 'scalafix task should fail if the Scala version is not supported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }', '2.10.7')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }', '2.10.7')
         createSourceFile(projectDir, 'object Foo', 'main')
 
         when:
@@ -226,10 +226,10 @@ scalafix {
 
     def '*.semanticdb files should be created during compilation when semanticdb.autoConfigure is true and scalafix task is run'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         File mainSrc = createSourceFile(projectDir, 'object Foo', 'main')
         File testSrc = createSourceFile(projectDir, 'object FooTest', 'test')
-        File buildDir = new File(projectDir.root, 'build')
+        File buildDir = new File(projectDir, 'build')
 
         when:
         runGradle(projectDir, 'scalafix')
@@ -241,10 +241,10 @@ scalafix {
 
     def '*.semanticdb files should not be created during compilation when semanticdb.autoConfigure is false and scalafix task is run'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createSourceFile(projectDir, 'object Foo', 'main')
         createSourceFile(projectDir, 'object FooTest', 'test')
-        File buildDir = new File(projectDir.root, 'build')
+        File buildDir = new File(projectDir, 'build')
 
         when:
         runGradle(projectDir, 'scalafix')
@@ -255,10 +255,10 @@ scalafix {
 
     def '*.semanticdb files should not be created during compilation when scalafix task is not run'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createSourceFile(projectDir, 'object Foo', 'main')
         createSourceFile(projectDir, 'object FooTest', 'test')
-        File buildDir = new File(projectDir.root, 'build')
+        File buildDir = new File(projectDir, 'build')
 
         when:
         runGradle(projectDir, 'compileScala', 'compileTestScala')
@@ -271,7 +271,7 @@ scalafix {
 
     def 'checkScalafix and scalafix tasks should not fail when no rules are informed'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createSourceFile(projectDir, 'object Foo')
 
         when:
@@ -289,7 +289,7 @@ No Scalafix rules to run'''
 
     def 'checkScalafix and scalafix tasks should not fail when there is no source file to be processed'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
 
         when:
@@ -307,7 +307,7 @@ No Scalafix rules to run'''
 
     def 'scalafix should run semantic rewrite rule and fix input source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused, ExplicitResultTypes ]')
         File src = createSourceFile(projectDir, '''
 import scala.util.Random
@@ -329,7 +329,7 @@ object HelloWorld {
 
     def 'checkScalafix should run semantic rewrite rule and fail the build without fixing input source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         String originalSrcContent = '''
 import scala.util.Random
@@ -349,7 +349,7 @@ object HelloWorld
 
     def 'scalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         createSourceFile(projectDir, 'object Foo')
 
@@ -364,7 +364,7 @@ object HelloWorld
 
     def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, 'rules = [ ExplicitResultTypes ]')
         createSourceFile(projectDir, 'object Foo')
 
@@ -379,7 +379,7 @@ object HelloWorld
 
     def 'scalafix should skip non-included source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { includes = ["**/animals/**"] }')
+        File projectDir = createScalaProject('scalafix { includes = ["**/animals/**"] }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         String dogSrcContent = '''
 import scala.util.Random
@@ -423,7 +423,7 @@ Running Scalafix on 1 Scala source file(s)
 
     def 'checkScalafix should skip non-included source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { includes = ["**/fruits/**"] }')
+        File projectDir = createScalaProject('scalafix { includes = ["**/fruits/**"] }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         createSourceFile(projectDir, '''
 import scala.util.Random
@@ -453,7 +453,7 @@ Running Scalafix on 1 Scala source file(s)
 
     def 'scalafix should skip excluded source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { excludes = ["**/dummy/**"] }')
+        File projectDir = createScalaProject('scalafix { excludes = ["**/dummy/**"] }')
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         String originalSrcContent = '''
 import scala.util.Random
@@ -471,7 +471,7 @@ object HelloWorld
 
     def 'checkScalafix should skip excluded source files'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('''
+        File projectDir = createScalaProject('''
 scalafix {
   excludes = ["**/dummy/**"]
   semanticdb {
@@ -500,7 +500,7 @@ object HelloWorld {
 
     def 'scalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -525,7 +525,7 @@ object HelloWorld {
 
     def 'checkScalafix should run syntactic linter rule and fail the build if any violation is reported'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -550,7 +550,7 @@ object HelloWorld {
 
     def 'scalafix should run semantic rewrite rule and leave code without violations unchanged'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused ]')
         String originalSrcContent = '''
 import scala.util.Random
@@ -570,7 +570,7 @@ object HelloWorld {
 
     def 'checkScalafix should run syntactic linter rule and succeed if there are no violations'() {
         given:
-        TemporaryFolder projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
+        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createScalafixConfig(projectDir, '''
 rules = [ DisableSyntax ]
 DisableSyntax.noVars = true
@@ -592,7 +592,7 @@ object HelloWorld {
 
     def 'scalafix should run single rule informed via command line even when it is not defined in the config file'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         File src = createSourceFile(projectDir, '''
 import scala.util.Random
 object Foo {
@@ -615,7 +615,7 @@ object Foo {
 
     def 'scalafix should run multiple rules informed via command line even when they are not defined in the config file'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         File src = createSourceFile(projectDir, '''
 import scala.util.Random
 object Foo {
@@ -637,7 +637,7 @@ object Foo {
 
     def 'scalafix should only run rule informed via command line when there are other rules defined in the config file'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, '''
 rules = [
   DisableSyntax
@@ -671,7 +671,7 @@ object Foo {
 
     def 'scalafix should run rules defined in the config file if blank value is informed via command line'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ RemoveUnused, ProcedureSyntax ]')
         File src = createSourceFile(projectDir, '''
 import scala.util.Random
@@ -694,7 +694,7 @@ object Foo {
 
     def 'scalafix should fail if invalid rule is informed via command line'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createSourceFile(projectDir, 'object Bar')
 
         when:
@@ -707,7 +707,7 @@ object Foo {
 
     def 'scalafix should fail if invalid rule is informed via config file'() {
         given:
-        TemporaryFolder projectDir = createScalaProject()
+        File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ Foo ]')
         createSourceFile(projectDir, 'object Bar')
 
@@ -723,7 +723,7 @@ object Foo {
     def 'scalafix should run semantic/syntactic built-in and external rules in projects using Scala #scalaVersion'() {
         given:
         def scalaBinaryVersion = scalaVersion.substring(0, scalaVersion.lastIndexOf('.'))
-        TemporaryFolder projectDir = createScalaProject("""
+        File projectDir = createScalaProject("""
 dependencies {
     scalafix 'com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0'
 }
@@ -850,9 +850,9 @@ object OrganizeImportsTest
         '2.13.12'     || _
     }
 
-    private BuildResult runGradle(TemporaryFolder projectDir, String... arguments) {
+    private BuildResult runGradle(File projectDir, String... arguments) {
         return GradleRunner.create()
-                .withProjectDir(projectDir.getRoot())
+                .withProjectDir(projectDir)
                 .withArguments(arguments.toList() + '--stacktrace')
                 .withGradleVersion(System.getProperty('compat.gradle.version'))
                 .withPluginClasspath()
@@ -860,10 +860,9 @@ object OrganizeImportsTest
                 .build()
     }
 
-    private TemporaryFolder createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.12') {
-        TemporaryFolder projectDir = new TemporaryFolder()
-        projectDir.create()
-        projectDir.newFile("build.gradle").write """
+    private File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.12') {
+        File projectDir = Files.createTempDir()
+        new File(projectDir, "build.gradle").write """
 plugins {
     id 'scala'
     id 'io.github.cosmicsilence.scalafix'
@@ -884,16 +883,16 @@ tasks.withType(ScalaCompile) {
 
 $additionalBuildInstructions
 """
-        projectDir.newFile("settings.gradle").write "rootProject.name = 'hello-world'"
+        new File(projectDir, "settings.gradle").write "rootProject.name = 'hello-world'"
         projectDir
     }
 
-    private File createScalafixConfig(TemporaryFolder projectDir, String content) {
-        projectDir.newFile(".scalafix.conf").write content
+    private File createScalafixConfig(File projectDir, String content) {
+        new File(projectDir, ".scalafix.conf").write content
     }
 
-    private File createSourceFile(TemporaryFolder projectDir, String content, String sourceSet = 'main', String pkgName = "dummy") {
-        File pkgFolder = new File(projectDir.root, "src/$sourceSet/scala/$pkgName")
+    private File createSourceFile(File projectDir, String content, String sourceSet = 'main', String pkgName = "dummy") {
+        File pkgFolder = new File(projectDir, "src/$sourceSet/scala/$pkgName")
 
         if (!pkgFolder.exists()) pkgFolder.mkdirs()
 

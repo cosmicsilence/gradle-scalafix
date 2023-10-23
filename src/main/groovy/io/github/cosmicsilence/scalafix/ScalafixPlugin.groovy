@@ -61,12 +61,12 @@ class ScalafixPlugin implements Plugin<Project> {
                                            ScalafixMainMode taskMode,
                                            Task mainTask,
                                            ScalafixExtension extension) {
-        def taskName = mainTask.name + sourceSet.name.capitalize()
+        def taskName = mainTask.name + sourceSet.getName().capitalize()
         def taskProvider = project.tasks.register(taskName, ScalafixTask, { scalafixTask ->
-            scalafixTask.description = "${mainTask.description} in '${sourceSet.name}'"
+            scalafixTask.description = "${mainTask.description} in '${sourceSet.getName()}'"
             scalafixTask.group = mainTask.group
             scalafixTask.sourceRoot = project.projectDir.path
-            scalafixTask.source = sourceSet.scalaSources.matching {
+            scalafixTask.source = sourceSet.getScalaSources().matching {
                 include(extension.includes.get())
                 exclude(extension.excludes.get())
             }
@@ -77,17 +77,17 @@ class ScalafixPlugin implements Plugin<Project> {
             }))
             scalafixTask.mode = taskMode
             scalafixTask.scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet) }))
-            scalafixTask.classpath.set(project.provider({ sourceSet.fullClasspath.collect { it.path } }))
-            scalafixTask.compileOptions.set(project.provider({ sourceSet.compilerOptions }))
+            scalafixTask.classpath.set(project.provider({ sourceSet.getFullClasspath().collect { it.path } }))
+            scalafixTask.compileOptions.set(project.provider({ sourceSet.getCompilerOptions() }))
             scalafixTask.semanticdbConfigured = extension.semanticdb.autoConfigure.get()
 
             if (extension.semanticdb.autoConfigure.get()) {
                 // configures the semanticdb compiler plugin during the execution phase, but before the
                 // compile task is executed. This prevents dependencies from being resolved too early
-                sourceSet.compileTask.doFirst {
+                sourceSet.getCompileTask().doFirst {
                     configureSemanticdbCompilerPlugin(project, sourceSet, extension)
                 }
-                scalafixTask.dependsOn sourceSet.compileTask
+                scalafixTask.dependsOn sourceSet.getCompileTask()
             }
         })
 
@@ -109,8 +109,8 @@ class ScalafixPlugin implements Plugin<Project> {
     }
 
     private String resolveScalaVersion(ScalaSourceSet sourceSet) {
-        sourceSet.scalaVersion.orElseThrow {
-            new GradleException("Unable to detect the Scala version for the '${sourceSet.name}' source set. Please " +
+        sourceSet.getScalaVersion().orElseThrow {
+            new GradleException("Unable to detect the Scala version for the '${sourceSet.getName()}' source set. Please " +
                     "ensure it declares dependency to scala-library or consider adding it to 'ignoreSourceSets'")
         }
     }

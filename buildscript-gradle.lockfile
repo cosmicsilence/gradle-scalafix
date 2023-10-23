@@ -1,0 +1,22 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.fasterxml.jackson.core:jackson-annotations:2.14.3=classpath
+com.fasterxml.jackson.core:jackson-core:2.14.3=classpath
+com.fasterxml.jackson.core:jackson-databind:2.14.3=classpath
+com.fasterxml.jackson:jackson-bom:2.14.3=classpath
+com.github.zafarkhaja:java-semver:0.9.0=classpath
+com.googlecode.javaewah:JavaEWAH:1.2.3=classpath
+com.gradle.plugin-publish:com.gradle.plugin-publish.gradle.plugin:0.21.0=classpath
+com.gradle.publish:plugin-publish-plugin:0.21.0=classpath
+commons-codec:commons-codec:1.16.0=classpath
+org.ajoberstar.reckon:org.ajoberstar.reckon.gradle.plugin:0.18.1=classpath
+org.ajoberstar.reckon:reckon-core:0.18.1=classpath
+org.ajoberstar.reckon:reckon-gradle:0.18.1=classpath
+org.ajoberstar.stutter:org.ajoberstar.stutter.gradle.plugin:0.7.3=classpath
+org.ajoberstar:gradle-stutter:0.7.3=classpath
+org.apache.commons:commons-lang3:3.13.0=classpath
+org.apache.maven:maven-model:3.6.3=classpath
+org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r=classpath
+org.slf4j:slf4j-api:2.0.9=classpath
+empty=

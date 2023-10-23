@@ -5,12 +5,12 @@ buildscript {
 }
 
 plugins {
-    id 'org.ajoberstar.stutter' version '0.5.0'
-    id 'org.ajoberstar.reckon' version '0.9.0'
-    id 'maven-publish'
-    id 'com.gradle.plugin-publish' version '0.15.0'
     id 'groovy'
     id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'org.ajoberstar.stutter' version '0.7.3'
+    id 'org.ajoberstar.reckon' version '0.18.1'
+    id 'com.gradle.plugin-publish' version '0.21.0'
 }
 
 group 'io.github.cosmicsilence'
@@ -19,22 +19,27 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
     implementation 'ch.epfl.scala:scalafix-interfaces:0.11.1'
     compatTestImplementation gradleTestKit()
-    compatTestImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
-    testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
+    compatTestImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
 }
 
-configurations {
-    compileClasspath {
-        resolutionStrategy.activateDependencyLocking()
-    }
+dependencyLocking {
+    lockAllConfigurations()
 }
 
 tasks.withType(Test) {
+    useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
@@ -43,13 +48,26 @@ tasks.withType(Test) {
 
 stutter {
     sparse = true
-    java(8) {
-        compatibleRange '5.0'
-        compatibleRange '5.1'
-    }
-    java(11) {
-        compatibleRange '5.0'
-        compatibleRange '5.1'
+
+    matrices {
+        java8 {
+            javaToolchain {
+                languageVersion = JavaLanguageVersion.of(8)
+            }
+            gradleVersions {
+                compatible '4.10'
+                compatibleRange '5.1'
+            }
+        }
+        java11 {
+            javaToolchain {
+                languageVersion = JavaLanguageVersion.of(11)
+            }
+            gradleVersions {
+                compatible '4.10'
+                compatibleRange '5.1'
+            }
+        }
     }
 }
 
@@ -58,7 +76,7 @@ reckon {
     stageFromProp('beta', 'rc', 'final')
 }
 
-validateTaskProperties {
+validatePlugins {
     failOnWarning = true
 }
 
