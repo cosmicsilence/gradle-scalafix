@@ -1,7 +1,15 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-ch.epfl.scala:scalafix-interfaces:0.11.1=compileClasspath
-io.get-coursier:interface:1.0.18=compileClasspath
-org.slf4j:slf4j-api:1.7.36=compileClasspath
-empty=
+ch.epfl.scala:scalafix-interfaces:0.11.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+io.get-coursier:interface:1.0.18=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.apiguardian:apiguardian-api:1.1.2=compatTestCompileClasspath,testCompileClasspath
+org.codehaus.groovy:groovy:3.0.12=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.hamcrest:hamcrest:2.2=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.junit.platform:junit-platform-commons:1.9.0=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.junit.platform:junit-platform-engine:1.9.0=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.junit:junit-bom:5.9.0=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.opentest4j:opentest4j:1.2.0=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:1.7.36=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.spockframework:spock-core:2.3-groovy-3.0=compatTestCompileClasspath,compatTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
+empty=annotationProcessor,compatTestAnnotationProcessor,testAnnotationProcessor
