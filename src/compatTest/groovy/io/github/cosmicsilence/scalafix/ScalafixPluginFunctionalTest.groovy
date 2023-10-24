@@ -1,12 +1,13 @@
 package io.github.cosmicsilence.scalafix
 
-import org.gradle.internal.impldep.com.google.common.io.Files
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 class ScalafixPluginFunctionalTest extends Specification {
@@ -861,7 +862,8 @@ object OrganizeImportsTest
     }
 
     private File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.12') {
-        File projectDir = Files.createTempDir()
+        File projectDir = Files.createTempDirectory("test").toFile()
+
         new File(projectDir, "build.gradle").write """
 plugins {
     id 'scala'
