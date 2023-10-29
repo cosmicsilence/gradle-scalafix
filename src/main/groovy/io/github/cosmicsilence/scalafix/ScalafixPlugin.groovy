@@ -85,7 +85,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 // configures the semanticdb compiler plugin during the execution phase, but before the
                 // compile task is executed. This prevents dependencies from being resolved too early
                 sourceSet.getCompileTask().doFirst {
-                    configureSemanticdbCompilerPlugin(sourceSet, extension)
+                    configureSemanticdbCompilerPlugin(project, sourceSet, extension)
                 }
                 scalafixTask.dependsOn sourceSet.getCompileTask()
             }
@@ -94,19 +94,17 @@ class ScalafixPlugin implements Plugin<Project> {
         mainTask.dependsOn taskProvider
     }
 
-    private void configureSemanticdbCompilerPlugin(ScalaSourceSet sourceSet, ScalafixExtension extension) {
+    private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, ScalafixExtension extension) {
         def scalaVersion = resolveScalaVersion(sourceSet)
         def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.orNull)
+        def relSourceRoot = sourceSet.getOutputDir().toPath().relativize(project.projectDir.toPath())
         sourceSet.addCompilerPlugin(ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion))
         sourceSet.addCompilerOptions([
-                // Gradle does not use the project root as it's working directory. Instead, it has N workers that run
-                // under their own directories and point to the `scalac` task's output location (which is under the
-                // project). Setting `sourceroot` to `project.projectDir` is problematic for large code bases that
-                // require aggressive caching: any difference in compiler options between machines forces Gradle to
-                // recompile, rather than to download existing compiled artifacts. For that reason, we set `sourceroot`
-                // relative to `targetroot`. E.g.: `{proj_root}/build/classes/scala/{source_set}/` -> `{proj_root}/`.
-                // For more context, see: https://github.com/scalameta/scalameta/issues/2515
-                '-P:semanticdb:sourceroot:targetroot:../../../../',
+                // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
+                // aggressive caching: any difference in compiler options between machines forces Gradle to recompile,
+                // rather than to download existing compiled artifacts. For that reason, `sourceroot` is set relative
+                // to `targetroot`. For more context, see: https://github.com/scalameta/scalameta/issues/2515
+                '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot,
                 '-Yrangepos'
         ])
     }

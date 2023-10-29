@@ -345,7 +345,7 @@ class ScalafixPluginTest extends Specification {
         [compileMainTask, compileTestTask].each { task ->
             def compileOpts = task.scalaCompileOptions.additionalParameters
             assert compileOpts.containsAll(DEFAULT_COMPILER_OPTS)
-            assert compileOpts.containsAll(['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:../../../../'])
+            assert compileOpts.containsAll(['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:../../../..'])
             assert task.scalaCompilerPlugins.find {
                 it.absolutePath.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar")
             }
@@ -374,7 +374,7 @@ class ScalafixPluginTest extends Specification {
 
         then:
         [compileMainTask, compileTestTask].each { task ->
-            assert task.scalaCompilerPlugins.find {it.absolutePath.endsWith(expectedSemanticdbJar) }
+            assert task.scalaCompilerPlugins.find { it.absolutePath.endsWith(expectedSemanticdbJar) }
         }
         scalafixMainTask.compileOptions.get() == compileMainTask.scalaCompileOptions.additionalParameters
         scalafixTestTask.compileOptions.get() == compileTestTask.scalaCompileOptions.additionalParameters

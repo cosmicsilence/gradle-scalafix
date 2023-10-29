@@ -27,6 +27,14 @@ class ScalaSourceSet {
         return sourceSet.name
     }
 
+    File getOutputDir() {
+        // Supported in Gradle >= 6.1
+        if (compileTask.hasProperty('destinationDirectory')) {
+            return compileTask.destinationDirectory.asFile.get()
+        }
+        return compileTask.destinationDir
+    }
+
     List<File> getFullClasspath() {
         return getClassesDirs() + getJarDependencies()
     }
