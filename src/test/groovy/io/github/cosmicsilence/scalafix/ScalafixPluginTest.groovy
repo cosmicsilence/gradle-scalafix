@@ -343,7 +343,7 @@ class ScalafixPluginTest extends Specification {
         [compileMainTask, compileTestTask].each { task ->
             def compileOpts = task.scalaCompileOptions.additionalParameters
             assert compileOpts.containsAll(DEFAULT_COMPILER_OPTS)
-            assert compileOpts.containsAll(['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
+            assert compileOpts.containsAll(['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:../../../../'])
             assert compileOpts.find {
                 it.startsWith('-Xplugin:') &&
                         it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&

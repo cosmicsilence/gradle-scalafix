@@ -102,7 +102,14 @@ class ScalafixPlugin implements Plugin<Project> {
         def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
         def compilerOpts = [
                 '-Xplugin:' + configuration.asPath,
-                '-P:semanticdb:sourceroot:' + project.projectDir,
+                // Gradle does not use the project root as it's working directory. Instead, it has N workers that run
+                // under their own directories and point to the `scalac` task's output location (which is under the project).
+                // Setting `sourceroot` to `project.projectDir` is problematic for large code bases that require aggressive
+                // caching: any difference in compiler options between machines forces Gradle to recompile, rather than
+                // to download existing compiled artifacts. For that reason, we set `sourceroot` relative to `targetroot`
+                // (e.g. `{project_root}/build/classes/scala/{source_set}/` -> `{project_root}/`).
+                // For more context, see: https://github.com/scalameta/scalameta/issues/2515
+                '-P:semanticdb:sourceroot:targetroot:../../../../',
                 '-Yrangepos'
         ]
         sourceSet.addCompilerOptions(compilerOpts)
