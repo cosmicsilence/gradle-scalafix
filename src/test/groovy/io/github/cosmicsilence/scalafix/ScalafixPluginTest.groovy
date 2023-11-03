@@ -318,7 +318,9 @@ class ScalafixPluginTest extends Specification {
         ScalafixTask scalafixTestTask = tasks.scalafixTest // forces plugin configuration
 
         then:
+        tasks.compileScala.scalaCompilerPlugins.empty
         tasks.compileScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        tasks.compileTestScala.scalaCompilerPlugins.empty
         tasks.compileTestScala.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
         scalafixMainTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
         scalafixTestTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
@@ -343,12 +345,11 @@ class ScalafixPluginTest extends Specification {
         [compileMainTask, compileTestTask].each { task ->
             def compileOpts = task.scalaCompileOptions.additionalParameters
             assert compileOpts.containsAll(DEFAULT_COMPILER_OPTS)
-            assert compileOpts.containsAll(['-Yrangepos', "-P:semanticdb:sourceroot:${scalaProject.projectDir}".toString()])
-            assert compileOpts.find {
-                it.startsWith('-Xplugin:') &&
-                        it.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar") &&
-                        !it.contains("scala-library")
+            assert compileOpts.containsAll(['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:../../../..'])
+            assert task.scalaCompilerPlugins.find {
+                it.absolutePath.endsWith("semanticdb-scalac_${SCALA_VERSION}-${ScalafixProps.scalametaVersion}.jar")
             }
+            assert !task.scalaCompilerPlugins.find { it.name.contains("scala-library") }
         }
         scalafixMainTask.compileOptions.get() == compileMainTask.scalaCompileOptions.additionalParameters
         scalafixTestTask.compileOptions.get() == compileTestTask.scalaCompileOptions.additionalParameters
@@ -373,17 +374,15 @@ class ScalafixPluginTest extends Specification {
 
         then:
         [compileMainTask, compileTestTask].each { task ->
-            assert task.scalaCompileOptions.additionalParameters.find {
-                it.startsWith('-Xplugin:') && it.endsWith(expectedSemanticdbJar) && !it.contains("scala-library")
-            }
+            assert task.scalaCompilerPlugins.find { it.absolutePath.endsWith(expectedSemanticdbJar) }
         }
         scalafixMainTask.compileOptions.get() == compileMainTask.scalaCompileOptions.additionalParameters
         scalafixTestTask.compileOptions.get() == compileTestTask.scalaCompileOptions.additionalParameters
 
         where:
         semanticdbVersion   || expectedSemanticdbJar
-        '4.8.3'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
-        '4.8.4'            || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.8.3'             || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
+        '4.8.4'             || "semanticdb-scalac_${SCALA_VERSION}-${semanticdbVersion}.jar"
     }
 
     def 'the semanticdb compiler plugin is not configured if semanticdb.autoConfigure is set to false'() {
@@ -403,7 +402,9 @@ class ScalafixPluginTest extends Specification {
         }
 
         then:
+        compileMainTask.scalaCompilerPlugins.empty
         compileMainTask.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
+        compileTestTask.scalaCompilerPlugins.empty
         compileTestTask.scalaCompileOptions.additionalParameters == DEFAULT_COMPILER_OPTS
         scalafixMainTask.compileOptions.get() == DEFAULT_COMPILER_OPTS
         scalafixTestTask.compileOptions.get() == DEFAULT_COMPILER_OPTS

@@ -97,15 +97,16 @@ class ScalafixPlugin implements Plugin<Project> {
     private void configureSemanticdbCompilerPlugin(Project project, ScalaSourceSet sourceSet, ScalafixExtension extension) {
         def scalaVersion = resolveScalaVersion(sourceSet)
         def semanticDbVersion = Optional.ofNullable(extension.semanticdb.version.orNull)
-        def semanticDbCoordinates = ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion)
-        def semanticDbDependency = project.dependencies.create(semanticDbCoordinates)
-        def configuration = project.configurations.detachedConfiguration(semanticDbDependency).setTransitive(false)
-        def compilerOpts = [
-                '-Xplugin:' + configuration.asPath,
-                '-P:semanticdb:sourceroot:' + project.projectDir,
+        def relSourceRoot = sourceSet.getOutputDir().toPath().relativize(project.projectDir.toPath())
+        sourceSet.addCompilerPlugin(ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion, semanticDbVersion))
+        sourceSet.addCompilerOptions([
+                // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
+                // aggressive caching: any difference in compiler options between machines forces Gradle to recompile,
+                // rather than to download existing compiled artifacts. For that reason, `sourceroot` is set relative
+                // to `targetroot`. For more context, see: https://github.com/scalameta/scalameta/issues/2515
+                '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot,
                 '-Yrangepos'
-        ]
-        sourceSet.addCompilerOptions(compilerOpts)
+        ])
     }
 
     private String resolveScalaVersion(ScalaSourceSet sourceSet) {
