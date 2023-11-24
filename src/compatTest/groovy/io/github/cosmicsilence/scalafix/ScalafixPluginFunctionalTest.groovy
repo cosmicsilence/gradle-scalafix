@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ScalafixPluginFunctionalTest extends Specification {
 
+    private static final String DEFAULT_SCALA_VERSION = '2.13.12'
+
     def 'scalafixMain task should run compileScala by default'() {
         given:
         File projectDir = createScalaProject()
@@ -232,11 +234,11 @@ scalafixTest - Runs Scalafix on Scala sources in 'test'
     def 'scalafix task should fail if the Scala version cannot be detected'() {
         given:
         File projectDir = createScalaProject('''
-sourceSets { 
-    noScala { } 
+sourceSets {
+    noScala { }
 }
 
-scalafix { 
+scalafix {
     semanticdb { autoConfigure = false }
 }
 ''')
@@ -894,6 +896,109 @@ object OrganizeImportsTest
         '2.13.12'     || _
     }
 
+    def 'scalafix should load local rules from a subproject'() {
+        given:
+        // Root project
+        def rootProject = Files.createTempDirectory("root").toFile()
+        new File(rootProject, "settings.gradle").write """
+rootProject.name = 'root'
+include 'scalafix-rules', 'scala-project'
+"""
+        new File(rootProject, "build.gradle").write """
+subprojects {
+    apply plugin: 'scala'
+    repositories { mavenCentral() }
+    dependencies {
+        implementation 'org.scala-lang:scala-library:${DEFAULT_SCALA_VERSION}'
+    }
+}
+"""
+        // Rules subproject
+        def rulesSubProject = mkDir(rootProject, "scalafix-rules")
+        new File(rulesSubProject, "build.gradle").write """
+dependencies {
+    compileOnly 'ch.epfl.scala:scalafix-core_2.13:+'
+}
+"""
+        def ruleServicesDir = mkDir(rulesSubProject, 'src/main/resources/META-INF/services')
+        new File(ruleServicesDir, 'scalafix.v1.Rule').write "rules.FooDummyRule\n"
+        def ruleSourcesDir = mkDir(rulesSubProject, 'src/main/scala/rules')
+        new File(ruleSourcesDir, 'FooDummyRule.scala').write """
+package rules
+import scalafix.v1._
+class FooDummyRule extends SemanticRule("FooDummyRule") {
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    println("##### Foo #####")
+    Patch.empty
+  }
+}
+"""
+        // Scala subproject (where the rule is used)
+        def scalaSubProject = mkDir(rootProject,  "scala-project")
+        new File(scalaSubProject, "build.gradle").write """
+plugins {
+    id 'io.github.cosmicsilence.scalafix'
+}
+dependencies {
+    scalafix project(':scalafix-rules')
+}
+"""
+        createScalafixConfig(scalaSubProject, 'rules = [ FooDummyRule ]')
+        createSourceFile(scalaSubProject, 'object Foo')
+
+        when:
+        BuildResult buildResult = runGradle(rootProject, ':scala-project:scalafix')
+
+        then:
+        buildResult.output.contains 'Task :scalafix-rules:compileScala'
+        buildResult.output.contains '''
+> Task :scala-project:scalafixMain
+Running Scalafix on 1 Scala source file(s)
+##### Foo #####
+'''
+        buildResult.output.contains 'BUILD SUCCESSFUL'
+    }
+
+    def 'scalafix should load local rules from a source set'() {
+        given:
+        File projectDir = createScalaProject("""
+sourceSets {
+     customScalafixRule { compileClasspath += sourceSets.main.compileClasspath }
+}
+dependencies {
+    customScalafixRuleCompileOnly 'ch.epfl.scala:scalafix-core_2.13:+'
+    scalafix sourceSets.customScalafixRule.output
+}
+""")
+        def ruleServicesDir = mkDir(projectDir, 'src/customScalafixRule/resources/META-INF/services')
+        new File(ruleServicesDir, 'scalafix.v1.Rule').write "rules.BarDummyRule\n"
+        def ruleSourcesDir = mkDir(projectDir, 'src/customScalafixRule/scala/rules')
+        new File(ruleSourcesDir, 'BarDummyRule.scala').write """
+package rules
+import scalafix.v1._
+class BarDummyRule extends SemanticRule("BarDummyRule") {
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    println("***** Bar *****")
+    Patch.empty
+  }
+}
+"""
+        createScalafixConfig(projectDir, 'rules = [ BarDummyRule ]')
+        createSourceFile(projectDir, 'object Bar')
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix')
+
+        then:
+        buildResult.output.contains 'Task :compileCustomScalafixRuleScala'
+        buildResult.output.contains '''
+> Task :scalafixMain
+Running Scalafix on 1 Scala source file(s)
+***** Bar *****
+'''
+        buildResult.output.contains 'BUILD SUCCESSFUL'
+    }
+
     private BuildResult runGradle(File projectDir, String... arguments) {
         return GradleRunner.create()
                 .withProjectDir(projectDir)
@@ -904,7 +1009,7 @@ object OrganizeImportsTest
                 .build()
     }
 
-    private File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = '2.13.12') {
+    private File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = DEFAULT_SCALA_VERSION) {
         File projectDir = Files.createTempDirectory("test").toFile()
 
         new File(projectDir, "build.gradle").write """
@@ -932,18 +1037,21 @@ $additionalBuildInstructions
         projectDir
     }
 
-    private File createScalafixConfig(File projectDir, String content) {
+    private static File createScalafixConfig(File projectDir, String content) {
         new File(projectDir, ".scalafix.conf").write content
     }
 
     private File createSourceFile(File projectDir, String content, String sourceSet = 'main', String pkgName = "dummy") {
-        File pkgFolder = new File(projectDir, "src/$sourceSet/scala/$pkgName")
-
-        if (!pkgFolder.exists()) pkgFolder.mkdirs()
-
+        File pkgFolder = mkDir(projectDir, "src/$sourceSet/scala/$pkgName")
         File scalaSrcFile = new File(pkgFolder, "source_${fileCount.incrementAndGet()}.scala")
         scalaSrcFile.write content
         scalaSrcFile
+    }
+
+    private File mkDir(File projectDir, String path) {
+        File dir = new File(projectDir, path)
+        dir.mkdirs()
+        return dir
     }
 
     private AtomicInteger fileCount = new AtomicInteger()

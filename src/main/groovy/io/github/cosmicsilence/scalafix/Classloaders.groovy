@@ -9,12 +9,12 @@ import scalafix.internal.interfaces.ScalafixInterfacesClassloader
 
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class CachedClassloaders {
+abstract class Classloaders {
 
-    private static final Logger logger = Logging.getLogger(CachedClassloaders)
+    private static final Logger logger = Logging.getLogger(Classloaders)
     private static final ConcurrentHashMap<Object, ClassLoader> cache = new ConcurrentHashMap<>()
 
-    private CachedClassloaders() {}
+    private Classloaders() {}
 
     static ClassLoader forScalafixCli(Project project, String scalafixCliCoordinates) {
         return cache.computeIfAbsent(scalafixCliCoordinates, {
@@ -27,14 +27,9 @@ abstract class CachedClassloaders {
     }
 
     static ClassLoader forExternalRules(Configuration rulesConfiguration, ClassLoader scalafixCliClassloader) {
-       def externalRuleCoordinates = rulesConfiguration.resolvedConfiguration.firstLevelModuleDependencies.collect {
-            "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
-        }.toSet().sort().join(";")
-        def cacheKey = new Tuple2(externalRuleCoordinates, scalafixCliClassloader)
-        return cache.computeIfAbsent(cacheKey, {
-            logger.info("Creating classloader for '${externalRuleCoordinates}'")
-            classloaderFrom(rulesConfiguration, scalafixCliClassloader)
-        })
+        // No cache in this case as rules can be loaded from a subproject or source set under the same project.
+        // There is no guarantee that rules would not be modified between executions.
+        return classloaderFrom(rulesConfiguration, scalafixCliClassloader)
     }
 
     private static URLClassLoader classloaderFrom(Configuration configuration, ClassLoader parent) {
