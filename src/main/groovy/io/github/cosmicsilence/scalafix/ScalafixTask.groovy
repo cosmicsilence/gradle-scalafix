@@ -103,7 +103,7 @@ class ScalafixTask extends SourceTask {
 
         if (!semanticRules.empty && !semanticdbConfigured) {
             def ruleNames = semanticRules.collect { it.name() }.join(", ")
-            throw new GradleException("The semanticdb compiler plugin is required to run semantic rules such as $ruleNames. " +
+            throw new GradleException("The SemanticDB compiler plugin is required to run semantic rules such as $ruleNames. " +
                     "To fix this problem, please enable 'semanticdb.autoConfigure' in the plugin extension")
         }
     }
