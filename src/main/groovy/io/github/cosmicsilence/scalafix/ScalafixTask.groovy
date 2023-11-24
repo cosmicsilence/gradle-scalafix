@@ -50,7 +50,7 @@ class ScalafixTask extends SourceTask {
     void run() {
         def sourcePaths = source.collect { it.toPath() }
         def configFilePath = java.util.Optional.ofNullable(configFile.orNull).map { it.asFile.toPath() }
-        def externalRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXTERNAL_RULES_CONFIGURATION)
+        def extRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXT_RULES_CONFIGURATION)
         def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion.get())
 
         logger.debug(
@@ -58,7 +58,7 @@ class ScalafixTask extends SourceTask {
                   | - Mode: ${mode}
                   | - Config file: ${configFilePath}
                   | - Scalafix cli artifact: ${scalafixCliCoordinates}
-                  | - External rules classpath: ${externalRulesConfiguration.asPath}
+                  | - External rules classpath: ${extRulesConfiguration.asPath}
                   | - Rules: ${rules.orNull}
                   | - Scala version: ${scalaVersion.get()}
                   | - Scalac options: ${compileOptions.orNull}
@@ -67,8 +67,8 @@ class ScalafixTask extends SourceTask {
                   | - Classpath: ${classpath.orNull}
                   |""".stripMargin())
 
-        def scalafixClassloader = CachedClassloaders.forScalafixCli(project, scalafixCliCoordinates)
-        def externalRulesClassloader = CachedClassloaders.forExternalRules(externalRulesConfiguration, scalafixClassloader)
+        def scalafixClassloader = Classloaders.forScalafixCli(project, scalafixCliCoordinates)
+        def externalRulesClassloader = Classloaders.forExternalRules(extRulesConfiguration, scalafixClassloader)
         def scalafixArgs = Scalafix.classloadInstance(scalafixClassloader)
                 .newArguments()
                 .withMode(mode)

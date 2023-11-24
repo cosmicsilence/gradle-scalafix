@@ -4,6 +4,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.scala.ScalaPlugin
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSet
@@ -16,28 +17,30 @@ import static scalafix.interfaces.ScalafixMainMode.IN_PLACE
 class ScalafixPlugin implements Plugin<Project> {
 
     private static final String EXTENSION = "scalafix"
-    private static final String EXTERNAL_RULES_CONFIGURATION = "scalafix"
+    private static final String EXT_RULES_CONFIGURATION = "scalafix"
     private static final String TASK_GROUP = "scalafix"
     private static final String FIX_TASK = "scalafix"
     private static final String CHECK_TASK = "checkScalafix"
+    private static final String SEMANTIC_DB_TASK = "configSemanticDB"
     private static final String RULES_PROPERTY = "scalafix.rules"
 
     @Override
     void apply(Project project) {
         def extension = project.extensions.create(EXTENSION, ScalafixExtension, project)
-        def externalRulesConfiguration = project.configurations.create(EXTERNAL_RULES_CONFIGURATION)
-        externalRulesConfiguration.description = "Dependencies containing external Scalafix rules"
+        def configuration = project.configurations.create(EXT_RULES_CONFIGURATION, { Configuration cfg ->
+            cfg.description = "Dependencies containing external Scalafix rules"
+        })
 
         project.afterEvaluate {
             if (!project.plugins.hasPlugin(ScalaPlugin)) {
                 throw new GradleException("The 'scala' plugin must be applied")
             }
 
-            configureTasks(project, extension)
+            configureTasks(project, extension, configuration)
         }
     }
 
-    private void configureTasks(Project project, ScalafixExtension extension) {
+    private void configureTasks(Project project, ScalafixExtension extension, Configuration configuration) {
         def fixTask = project.tasks.create(FIX_TASK, {
             group = ScalafixPlugin.TASK_GROUP
             description = 'Runs Scalafix on Scala sources'
@@ -53,7 +56,7 @@ class ScalafixPlugin implements Plugin<Project> {
 
             def scalaSourceSet = new ScalaSourceSet(project, ss)
             def configureSemanticDb = project.objects.property(Boolean)
-            def semanticDbTaskName = 'configSemanticDB' + ss.name.capitalize()
+            def semanticDbTaskName = SEMANTIC_DB_TASK + ss.name.capitalize()
             def semanticDbTask = project.tasks.register(semanticDbTaskName, ConfigSemanticDbTask, {
                 group = ScalafixPlugin.TASK_GROUP
                 description = "Configures the SemanticDB Scala compiler for '${ss.name}'"
@@ -63,8 +66,8 @@ class ScalafixPlugin implements Plugin<Project> {
                 onlyIf { configureSemanticDb.getOrElse(false) }
             })
             scalaSourceSet.getCompileTask().dependsOn semanticDbTask
-            configureScalafixTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configureSemanticDb)
-            configureScalafixTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configureSemanticDb)
+            configureScalafixTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configuration, configureSemanticDb)
+            configureScalafixTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configuration, configureSemanticDb)
         }
     }
 
@@ -73,6 +76,7 @@ class ScalafixPlugin implements Plugin<Project> {
                                                    ScalafixMainMode taskMode,
                                                    Task parentTask,
                                                    ScalafixExtension extension,
+                                                   Configuration extRulesConfiguration,
                                                    Property<Boolean> configureSemanticDb) {
         def taskName = parentTask.name + sourceSet.getName().capitalize()
         def scalafixTask = project.tasks.register(taskName, ScalafixTask, {
@@ -100,6 +104,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 configureSemanticDb.set(true)
                 dependsOn sourceSet.getCompileTask()
             }
+            dependsOn extRulesConfiguration
         })
 
         parentTask.dependsOn scalafixTask

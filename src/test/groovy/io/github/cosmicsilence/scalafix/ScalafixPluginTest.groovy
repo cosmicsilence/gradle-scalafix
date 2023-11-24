@@ -4,7 +4,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.tasks.TaskContainer
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
@@ -81,7 +81,8 @@ class ScalafixPluginTest extends Specification {
         scalaProject.tasks.configSemanticDBTest
 
         then:
-        scalaProject.configurations.compileClasspath.state == Configuration.State.UNRESOLVED
+        scalaProject.configurations.scalafix.state == Configuration.State.UNRESOLVED
+        scalaProject.configurations.testCompileClasspath.state == Configuration.State.UNRESOLVED
         scalaProject.configurations.testCompileClasspath.state == Configuration.State.UNRESOLVED
     }
 
@@ -114,9 +115,9 @@ class ScalafixPluginTest extends Specification {
 
         then:
         Task task = scalaProject.tasks.checkScalafix
-        task.dependsOn.find { it.name == 'checkScalafixMain' }
-        task.dependsOn.find { it.name == 'checkScalafixTest' }
-        scalaProject.tasks.check.dependsOn.find { it.name == 'checkScalafix' }
+        task.dependsOn.find { taskPredicate(it, 'checkScalafixMain') }
+        task.dependsOn.find { taskPredicate(it, 'checkScalafixTest') }
+        scalaProject.tasks.check.dependsOn.find { taskPredicate(it, 'checkScalafix') }
     }
 
     def 'checkScalafixMain task configuration validation'() {
@@ -130,7 +131,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.checkScalafixMain
-        task.dependsOn.find { it.name == 'compileScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -147,7 +149,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'checkScalafixTest task configuration validation'() {
@@ -161,7 +163,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.checkScalafixTest
-        task.dependsOn.find { it.name == 'compileTestScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileTestScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -178,7 +181,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'scalafix task configuration validation'() {
@@ -190,9 +193,9 @@ class ScalafixPluginTest extends Specification {
 
         then:
         Task task = scalaProject.tasks.scalafix
-        task.dependsOn.find { it.name == 'scalafixMain' }
-        task.dependsOn.find { it.name == 'scalafixTest' }
-        !scalaProject.tasks.check.dependsOn.find { it.name == 'scalafix' }
+        task.dependsOn.find { taskPredicate(it, 'scalafixMain') }
+        task.dependsOn.find { taskPredicate(it, 'scalafixTest') }
+        !scalaProject.tasks.check.dependsOn.find { taskPredicate(it, 'scalafix') }
     }
 
     def 'scalafixMain task configuration validation'() {
@@ -206,7 +209,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixMain
-        task.dependsOn.find { it.name == 'compileScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -223,7 +227,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'scalafixTest task configuration validation'() {
@@ -237,7 +241,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixTest
-        task.dependsOn.find { it.name == 'compileTestScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileTestScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -254,7 +259,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'scalafix<SourceSet> task configuration validation when additional source set is present'() {
@@ -269,7 +274,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.scalafixFoo
-        task.dependsOn.find { it.name == 'compileFooScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileFooScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.IN_PLACE
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -286,7 +292,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'checkScalafix<SourceSet> task configuration validation when additional source set is present'() {
@@ -301,7 +307,8 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ScalafixTask task = scalaProject.tasks.checkScalafixFoo
-        task.dependsOn.find { it.name == 'compileFooScala' }
+        task.dependsOn.find { taskPredicate(it, 'compileFooScala') }
+        task.dependsOn.find { configurationPredicate(it, 'scalafix') }
         task.mode == ScalafixMainMode.CHECK
         task.configFile.get().asFile.path == "${scalaProject.projectDir}/.custom.conf"
         task.sourceRoot == scalaProject.projectDir.path
@@ -318,7 +325,7 @@ class ScalafixPluginTest extends Specification {
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
         task.semanticdbConfigured
-        scalaProject.tasks.compileScala.dependsOn.find { it.hasProperty('name') && it.name == 'configSemanticDBMain' }
+        scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
     def 'scalafix* and checkScalafix* tasks configuration when semanticdb.autoconfigure is false'() {
@@ -330,10 +337,11 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        TaskContainer tasks = scalaProject.tasks
+        def tasks = scalaProject.tasks
         [tasks.scalafixMain, tasks.scalafixTest, tasks.checkScalafixMain, tasks.checkScalafixTest].each { ScalafixTask task ->
             assert !task.semanticdbConfigured
-            assert task.dependsOn.empty
+            assert !task.dependsOn.find { taskPredicate(it, 'compileScala') }
+            assert !task.dependsOn.find { taskPredicate(it, 'compileTestScala') }
         }
     }
 
@@ -526,5 +534,16 @@ class ScalafixPluginTest extends Specification {
         }
 
         return project
+    }
+
+    private static boolean configurationPredicate(Object obj, String name) {
+        if (obj instanceof Configuration) return obj.name == name
+        return false
+    }
+
+    private static boolean taskPredicate(Object obj, String name) {
+        if (obj instanceof Task) return obj.name == name
+        if (obj instanceof TaskProvider) return obj.name == name
+        return false
     }
 }

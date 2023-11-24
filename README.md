@@ -7,9 +7,13 @@ This plugin allows you to run [Scalafix](https://scalacenter.github.io/scalafix/
 on Gradle projects. It supports both syntactic and semantic rules and lets you load your own custom rules via Gradle dependencies.
 
 &nbsp;
-## Usage
+## Compatibility
 
-*Make sure you are using Gradle version 4.10 or later (except 5.0).*
+- **Gradle:** `4.10` or later (except `5.0`)
+- **Scala:** `2.12.x`, `2.13.x` (see [#60](https://github.com/cosmicsilence/gradle-scalafix/issues/60) for Scala 3 support)
+
+&nbsp;
+## Usage
 
 To use the Scalafix plugin, please include the following snippet in your build script:
 
@@ -37,8 +41,7 @@ for the rules you want to have enabled. The configuration uses the HOCON syntax 
 please take a look at the documentation provided by them. Below is a basic example of using one of the Scalafix's built-in 
 rules so you can quickly get started:
 
-
-```
+```hocon
 rules = [
   DisableSyntax
 ]
@@ -69,11 +72,10 @@ file. For those one-off scenarios, you can inform the rule(s) you want to run us
 Some Scalafix rules (e.g. `RemoveUnused`) require additional options to be passed into the Scala compiler. That can 
 be achieved as following:
 
-```
+```groovy
 tasks.withType(ScalaCompile) {
     scalaCompileOptions.additionalParameters = [ "-Ywarn-unused" ]
 }
-
 ```
 
 
@@ -115,7 +117,7 @@ The plugin defines an extension with the namespace `scalafix` that allows to cus
 |`version`      |`Property<String>`  | Used to override the version of the SemanticDB compiler plugin. By default, the plugin uses a version that is guaranteed to be compatible with Scalafix. Users **do not need** to set this property unless a specific version is required. This property is ignored when `autoConfigure` is disabled. |
 
 Example:
-```
+```hocon
 scalafix {
     configFile = file("config/myscalafix.conf")
     includes = ["/com/**/*.scala"]
@@ -130,19 +132,24 @@ scalafix {
 
 
 &nbsp;
-## Loading External Rules
+## Loading Custom Rules
 One of the nice things about the Scalafix tool is that it is extensible. That means that you can implement your own custom
-rules (or maybe simply reuse rules somebody else has already done) and load them into Scalafix to run in your projects.
+rules or reuse rules somebody else has already implemented and load them into Scalafix to run in your projects.
 The Gradle Scalafix plugin lets you take advantage of that feature by allowing external rules to be informed as regular
-dependencies in your Gradle build script using the `scalafix` configuration. Example:
+dependencies in your Gradle build script using the `scalafix` configuration. Examples:
 
-```
+```groovy
 dependencies {
-    scalafix "com.github.vovapolu:scaluzzi_${scalaBinaryVersion}:0.1.18"
-    scalafix "com.github.liancheng:organize-imports_${scalaBinaryVersion}:0.5.0"
+    // From a published jar
+    scalafix "com.github.liancheng:organize-imports_${scalaBinaryVersion}:+"
+
+    // From a local subproject
+    scalafix project(':my-scalafix-rules')
+
+    // From a local source set
+    scalafix sourceSets.myScalafixRules.output
 }
 ```
-
 
 &nbsp;
 ## Maintainers
