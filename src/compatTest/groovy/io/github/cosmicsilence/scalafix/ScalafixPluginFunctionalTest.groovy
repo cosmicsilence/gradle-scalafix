@@ -7,7 +7,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 class ScalafixPluginFunctionalTest extends Specification {
@@ -20,10 +19,17 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
-        buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':scalafixMain SKIPPED')
-        buildResult.output.contains(':scalafixTest SKIPPED')
+        buildResult.output.contains('''
+:configSemanticDBMain SKIPPED
+:compileScala SKIPPED
+:scalafixMain SKIPPED
+''')
+        buildResult.output.contains('''
+:configSemanticDBTest SKIPPED
+:compileTestScala SKIPPED
+:scalafixTest SKIPPED
+:scalafix SKIPPED
+''')
     }
 
     def 'scalafixMain task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
@@ -34,10 +40,17 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
-        buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':scalafixMain SKIPPED')
-        buildResult.output.contains(':scalafixTest SKIPPED')
+        buildResult.output.contains('''
+:configSemanticDBMain SKIPPED
+:compileScala SKIPPED
+:scalafixMain SKIPPED
+''')
+        buildResult.output.contains('''
+:configSemanticDBTest SKIPPED
+:compileTestScala SKIPPED
+:scalafixTest SKIPPED
+:scalafix SKIPPED
+''')
     }
 
     def 'scalafixMain task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
@@ -48,10 +61,14 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
-        !buildResult.output.contains(':compileScala SKIPPED')
-        !buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':scalafixMain SKIPPED')
-        buildResult.output.contains(':scalafixTest SKIPPED')
+        buildResult.output.contains(''':scalafixMain SKIPPED
+:scalafixTest SKIPPED
+:scalafix SKIPPED
+''')
+        !buildResult.output.contains(':configSemanticDBMain')
+        !buildResult.output.contains(':compileScala')
+        !buildResult.output.contains(':configSemanticDBTest')
+        !buildResult.output.contains(':compileTestScala')
     }
 
     def 'checkScalafix task should run compileScala by default'() {
@@ -62,10 +79,17 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
-        buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':checkScalafixMain SKIPPED')
-        buildResult.output.contains(':checkScalafixTest SKIPPED')
+        buildResult.output.contains('''
+:configSemanticDBMain SKIPPED
+:compileScala SKIPPED
+:checkScalafixMain SKIPPED
+''')
+        buildResult.output.contains('''
+:configSemanticDBTest SKIPPED
+:compileTestScala SKIPPED
+:checkScalafixTest SKIPPED
+:checkScalafix SKIPPED
+''')
     }
 
     def 'checkScalafix task should run compileScala when semanticdb.autoConfigure is enabled in the scalafix extension'() {
@@ -76,10 +100,17 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
-        buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':checkScalafixMain SKIPPED')
-        buildResult.output.contains(':checkScalafixTest SKIPPED')
+        buildResult.output.contains('''
+:configSemanticDBMain SKIPPED
+:compileScala SKIPPED
+:checkScalafixMain SKIPPED
+''')
+        buildResult.output.contains('''
+:configSemanticDBTest SKIPPED
+:compileTestScala SKIPPED
+:checkScalafixTest SKIPPED
+:checkScalafix SKIPPED
+''')
     }
 
     def 'checkScalafix task should not run compileScala when semanticdb.autoConfigure is disabled in the scalafix extension'() {
@@ -90,11 +121,14 @@ class ScalafixPluginFunctionalTest extends Specification {
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
-        !buildResult.output.contains(':compileScala SKIPPED')
-        !buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':checkScalafixMain SKIPPED')
-        buildResult.output.contains(':checkScalafixTest SKIPPED')
-
+        buildResult.output.contains(''':checkScalafixMain SKIPPED
+:checkScalafixTest SKIPPED
+:checkScalafix SKIPPED
+''')
+        !buildResult.output.contains(':configSemanticDBMain')
+        !buildResult.output.contains(':compileScala')
+        !buildResult.output.contains(':configSemanticDBTest')
+        !buildResult.output.contains(':compileTestScala')
     }
 
     def 'scalafix<SourceSet> task should be created and run compile<SourceSet>Scala by default when additional source set exists in the build script'() {
@@ -111,11 +145,14 @@ sourceSets {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
+        buildResult.output.contains(':configSemanticDBMain SKIPPED')
         buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
+        buildResult.output.contains(':configSemanticDBTest SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
+        buildResult.output.contains(':configSemanticDBIntegTest SKIPPED')
+        buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':scalafixIntegTest SKIPPED')
     }
 
@@ -133,11 +170,14 @@ sourceSets {
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
+        buildResult.output.contains(':configSemanticDBMain SKIPPED')
         buildResult.output.contains(':compileScala SKIPPED')
-        buildResult.output.contains(':compileTestScala SKIPPED')
-        buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixMain SKIPPED')
+        buildResult.output.contains(':configSemanticDBTest SKIPPED')
+        buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixTest SKIPPED')
+        buildResult.output.contains(':configSemanticDBIntegTest SKIPPED')
+        buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
 
@@ -179,6 +219,9 @@ checkScalafix - Fails if running Scalafix produces a diff or a linter error mess
 checkScalafixFoo - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'foo'
 checkScalafixMain - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'main'
 checkScalafixTest - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'test'
+configSemanticDBFoo - Configures the SemanticDB Scala compiler for 'foo'
+configSemanticDBMain - Configures the SemanticDB Scala compiler for 'main'
+configSemanticDBTest - Configures the SemanticDB Scala compiler for 'test'
 scalafix - Runs Scalafix on Scala sources
 scalafixFoo - Runs Scalafix on Scala sources in 'foo'
 scalafixMain - Runs Scalafix on Scala sources in 'main'
@@ -360,7 +403,7 @@ object HelloWorld
         then:
         UnexpectedBuildFailure err = thrown()
         err.message.contains 'Task :scalafixMain FAILED'
-        err.message.contains 'The semanticdb compiler plugin is required to run semantic rules such as RemoveUnused.'
+        err.message.contains 'The SemanticDB compiler plugin is required to run semantic rules such as RemoveUnused.'
     }
 
     def 'checkScalafix should fail to run semantic rules if the SemanticDB compiler plugin is not configured'() {
@@ -375,7 +418,7 @@ object HelloWorld
         then:
         UnexpectedBuildFailure err = thrown()
         err.message.contains 'Task :checkScalafixMain FAILED'
-        err.message.contains 'The semanticdb compiler plugin is required to run semantic rules such as ExplicitResultTypes.'
+        err.message.contains 'The SemanticDB compiler plugin is required to run semantic rules such as ExplicitResultTypes.'
     }
 
     def 'scalafix should skip non-included source files'() {
