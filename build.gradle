@@ -21,7 +21,7 @@ repositories {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion = JavaLanguageVersion.of(8) // target version
     }
 }
 
@@ -55,17 +55,18 @@ stutter {
                 languageVersion = JavaLanguageVersion.of(8)
             }
             gradleVersions {
-                compatible '4.10'
-                compatibleRange '5.1'
+                compatibleRange '4.10', '5.0'
+                compatibleRange '5.1', '8.5-rc-1'
             }
         }
-        java11 {
+
+        java21 {
             javaToolchain {
-                languageVersion = JavaLanguageVersion.of(11)
+                languageVersion = JavaLanguageVersion.of(21)
             }
             gradleVersions {
-                compatible '4.10'
-                compatibleRange '5.1'
+                compatibleRange '4.10', '5.0'
+                compatibleRange '5.1', '8.5-rc-1'
             }
         }
     }

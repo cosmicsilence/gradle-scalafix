@@ -23,9 +23,9 @@ jobs:
       matrix:
         java_version:
           - "8"
-          - "11"
+          - "21"
         gradle_version:
-          - "4.10"
+          - "4.10.3"
           - "5.1.1"
           - "5.6.4"
           - "6.0.1"
@@ -41,6 +41,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
+          # Version required to run the `./gradlew` command. The tests themselves use the version provided via `java_version`
           java-version: '11'
       - name: Run Gradle compat tests for Gradle ${{ matrix.gradle_version }} on Java ${{ matrix.java_version }}
-        run: ./gradlew compatTestJava${{ matrix.java_version }}Gradle${{ matrix.gradle_version }}
+        run: ./gradlew compatTestJava${{ matrix.java_version }}Gradle${{ matrix.gradle_version }} --stacktrace
