@@ -21,16 +21,23 @@ class ConfigSemanticDbTask extends DefaultTask {
 
     @TaskAction
     void run() {
-        def maybeSemanticDbVersion = java.util.Optional.ofNullable(semanticDbVersion)
-        def relSourceRoot = sourceSet.getOutputDir().toPath().relativize(project.projectDir.toPath())
-        sourceSet.addCompilerPlugin(ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion.get(), maybeSemanticDbVersion))
-        sourceSet.addCompilerOptions([
-                // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
-                // aggressive caching: any difference in compiler options between machines forces Gradle to recompile,
-                // rather than to download existing compiled artifacts. For that reason, `sourceroot` is set relative
-                // to `targetroot`. For more context, see: https://github.com/scalameta/scalameta/issues/2515
-                '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot,
-                '-Yrangepos'
-        ])
+        if (isScala3()) {
+            // Dotty does not currently allow `sourceroot` to be set relative to `targetroot` as described below (see
+            // https://github.com/gradle/gradle/issues/27161).
+            sourceSet.addCompilerOptions(['-Xsemanticdb', '-sourceroot', project.projectDir.absolutePath])
+        } else {
+            def maybeSemanticDbVersion = java.util.Optional.ofNullable(semanticDbVersion)
+            sourceSet.addCompilerPlugin(ScalafixProps.getSemanticDbArtifactCoordinates(scalaVersion.get(), maybeSemanticDbVersion))
+            // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
+            // aggressive caching: any difference in compiler options between machines forces Gradle to recompile,
+            // rather than to download existing compiled artifacts. For that reason, `sourceroot` is set relative
+            // to `targetroot`. For more context, see: https://github.com/scalameta/scalameta/issues/2515
+            def relSourceRoot = sourceSet.getOutputDir().toPath().relativize(project.projectDir.toPath())
+            sourceSet.addCompilerOptions(['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot])
+        }
+    }
+
+    private boolean isScala3() {
+        return scalaVersion.getOrNull()?.startsWith('3.')
     }
 }

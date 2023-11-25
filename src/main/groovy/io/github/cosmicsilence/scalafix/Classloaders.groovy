@@ -18,7 +18,7 @@ abstract class Classloaders {
 
     static ClassLoader forScalafixCli(Project project, String scalafixCliCoordinates) {
         return cache.computeIfAbsent(scalafixCliCoordinates, {
-            logger.info("Creating classloader for '${scalafixCliCoordinates}'")
+            logger.debug("Creating classloader for '${scalafixCliCoordinates}'")
             def cliDependency = project.dependencies.create(scalafixCliCoordinates)
             def cliConfiguration = project.configurations.detachedConfiguration(cliDependency)
             def parentClassloader = new ScalafixInterfacesClassloader(Scalafix.class.classLoader)

@@ -10,7 +10,8 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 ## Compatibility
 
 - **Gradle:** `4.10` or later (except `5.0`)
-- **Scala:** `2.12.x`, `2.13.x` (see [#60](https://github.com/cosmicsilence/gradle-scalafix/issues/60) for Scala 3 support)
+- **Scala:** `2.12.x`, `2.13.x` and `3.x` (requires [Gradle 7.3](https://docs.gradle.org/7.3/release-notes.html) or later)
+- **JDK:** `11` or later
 
 &nbsp;
 ## Usage
@@ -50,9 +51,9 @@ DisableSyntax.noNulls = true
 DisableSyntax.noVars = true
 ```
 
-> **TIP:** Multi-modules Gradle projects are allowed to define different combinations of Scalafix rules/settings for each individual 
-sub-project. This can be achieved by having a `.scalafix.conf` file defined in the sub-project folder. The Scalafix
-plugin will first try to locate the config file at the sub-project level and, if not found, at the root project level. It
+> **Tip:** Multi-modules Gradle projects are allowed to define different combinations of Scalafix rules/settings for each individual 
+subproject. This can be achieved by having a `.scalafix.conf` file defined in the subproject folder. The Scalafix
+plugin will first try to locate the config file at the subproject level and, if not found, at the root project level. It
 is also possible to inform a custom path via the plugin extension in the build script. See the [extension](#extension)
 section for more details.
 
@@ -62,15 +63,13 @@ There are times when it may be desirable to run a single or a subset of Scalafix
 file. For those one-off scenarios, you can inform the rule(s) you want to run using the `scalafix.rules` property:
 
 ```
-./gradlew scalafix -Pscalafix.rules=DisableSyntax
+./gradlew scalafix -Pscalafix.rules=DisableSyntax,RemoveUnused
 ```
-
->**TIP:** Use a comma character as delimiter when informing multiple rules.
 
 
 #### Required Compiler Options
-Some Scalafix rules (e.g. `RemoveUnused`) require additional options to be passed into the Scala compiler. That can 
-be achieved as following:
+Some Scalafix rules (e.g. `RemoveUnused` in Scala 2.x) require additional options to be passed into the Scala compiler.
+That can be achieved as following:
 
 ```groovy
 tasks.withType(ScalaCompile) {
@@ -84,14 +83,14 @@ tasks.withType(ScalaCompile) {
 
 The following Gradle tasks are created when the Scalafix plugin is applied to a project:
 
-| Name                       | Description          |
-|:---------------------------|----------------------|
-|*`scalafix`*                |Runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter rules will print diagnostics to Gradle's output.|
-|*`scalafix<SourceSet>`*     |Same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*, *`scalafixFoo`*).|
-|*`checkScalafix`*           |Checks that source files of all source sets are compliant to rewrite and linter rules. Any violation is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically triggered by the `check` task.|
-|*`checkScalafix<SourceSet>`*|Same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*, *`checkScalafixBar`*).|
+| Name                       | Description                                                                                                                                                                                                                                                  |
+|:---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|*`scalafix`*                | Runs rewrite and linter rules for all source sets. Rewrite rules may modify files in-place whereas linter rules will print diagnostics to Gradle's output.                                                                                                   |
+|*`scalafix<SourceSet>`*     | Same as above, but for a single source set (e.g. *`scalafixMain`*, *`scalafixTest`*, *`scalafixFoo`*).                                                                                                                                                       |
+|*`checkScalafix`*           | Checks that source files of all source sets are compliant to rewrite and linter rules. Any violation is printed to Gradle's output and the task exits with an error. No source file gets modified. This task is automatically triggered by the `check` task. |
+|*`checkScalafix<SourceSet>`*| Same as above, but for a single source set (e.g. *`checkScalafixMain`*, *`checkScalafixTest`*, *`checkScalafixBar`*).                                                                                                                                        |
 
->**NOTE:** If the **SemanticDB** Scala compiler plugin is enabled (see the [extension](#extension) section for more details),
+>**Note:** If the **SemanticDB** Scala compiler plugin is enabled (see the [extension](#extension) section for more details),
 any of these tasks will trigger partial or complete compilation of Scala source files.
 
 
@@ -100,21 +99,21 @@ any of these tasks will trigger partial or complete compilation of Scala source 
 ## Extension
 The plugin defines an extension with the namespace `scalafix` that allows to customise it. **None** of the properties are mandatory:
 
-| Property name                | Type                              | Description |
-|:-----------------------------|-----------------------------------|-------------|
-|`configFile`                  |`RegularFileProperty`              | Used to inform a different location/name for the Scalafix configuration file. If not informed, the plugin will search for a `.scalafix.conf` in the current project directory and (if not found) in the root project directory. |
-|`configFile`                  |`String`                           | Same as above. |
-|`includes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. Filter is applied to package portion of the source file path. By default all files are included. |
-|`excludes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded. |
-|`ignoreSourceSets`            |`SetProperty<String>`              | Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first.|
-|`semanticdb`                  |`SemanticdbParameters`             | Used to configure the SemanticDB compiler plugin. See [`semanticdb`](#semanticdb-closure) |
+| Property name                | Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|:-----------------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|`configFile`                  |`RegularFileProperty`              | Used to inform a different location/name for the Scalafix configuration file. If not informed, the plugin will search for a `.scalafix.conf` in the current project directory and (if not found) in the root project directory.                                                                                                                                                                                                                                 |
+|`configFile`                  |`String`                           | Same as above.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|`includes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to filter what Scala source files should be processed by Scalafix. Filter is applied to package portion of the source file path. By default all files are included.                                                                                                                                                                                                                             |
+|`excludes`                    |`SetProperty<String>`              | [Ant-like pattern](https://ant.apache.org/manual/dirtasks.html) to exclude Scala source files from being processed by Scalafix. Filter is applied to package portion of the source file path. By default no files are excluded.                                                                                                                                                                                                                                 |
+|`ignoreSourceSets`            |`SetProperty<String>`              | Name of source sets to which the Scalafix plugin should not be applied (by default this plugin is applied to all source sets defined in the project). This option can be used (e.g.) to ignore source sets that point to the same source files of other source sets (which would cause them to be processed twice). Be careful with plugin application ordering. E.g. when using this plugin together with scoverage, scoverage plugin should be applied first. |
+|`semanticdb`                  |`SemanticdbParameters`             | Used to configure the SemanticDB compiler plugin. See [`semanticdb`](#semanticdb-closure)                                                                                                                                                                                                                                                                                                                                                                       |
 
 <a name="semanticdb-closure"></a>`semanticdb` is a closure where the following properties can be configured:
 
-| Property name | Type               | Description |
-|:--------------|--------------------|-------------|
+| Property name | Type               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|:--------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |`autoConfigure`|`Property<Boolean>` | Used to indicate whether the SemanticDB compiler plugin should be automatically configured. This is mandatory to run semantic rules. If set to `true` (default), the Scalafix Gradle tasks will require the corresponding Scala compiler tasks to run prior to them. The Scalafix plugin only informs the necessary parameters to get the SemanticDB plugin set up (`-Xplugin:`, `-P:semanticdb:sourceroot:` and `-Yrangepos`). If you need to use more advanced settings, please consult the [Scalafix docs](https://scalacenter.github.io/scalafix/docs/users/installation.html#exclude-files-from-semanticdb) or the [SemanticDB docs](https://scalameta.org/docs/semanticdb/guide.html#scalac-compiler-plugin). Any additional SemanticDB parameters can be informed via the `ScalaCompile` tasks as shown earlier. **Important:** If your project only uses syntactic rules, we advise to set this property to `false` as that would make the Scalafix tasks run considerably faster. |
-|`version`      |`Property<String>`  | Used to override the version of the SemanticDB compiler plugin. By default, the plugin uses a version that is guaranteed to be compatible with Scalafix. Users **do not need** to set this property unless a specific version is required. This property is ignored when `autoConfigure` is disabled. |
+|`version`      |`Property<String>`  | (**Scala 2.x only**) Used to override the version of the SemanticDB compiler plugin. By default, the plugin uses a version that is guaranteed to be compatible with Scalafix. Users **do not need** to set this property unless a specific version is required. This property is ignored when `autoConfigure` is disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 Example:
 ```hocon
@@ -124,8 +123,7 @@ scalafix {
     excludes = ["**/generated/**"]
     ignoreSourceSets = ["scoverage"]
     semanticdb {
-        autoConfigure = true
-        version = '4.4.10'
+        autoConfigure = false
     }
 }
 ```
@@ -141,7 +139,7 @@ dependencies in your Gradle build script using the `scalafix` configuration. Exa
 ```groovy
 dependencies {
     // From a published jar
-    scalafix "com.github.liancheng:organize-imports_${scalaBinaryVersion}:+"
+    scalafix "org.typelevel:typelevel-scalafix_${scalaVersion}:+"
 
     // From a local subproject
     scalafix project(':my-scalafix-rules')

@@ -144,11 +144,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -176,11 +175,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -222,11 +220,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/main")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/main")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -254,11 +251,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/test")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/test")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -287,11 +283,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/foo")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -320,11 +315,10 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/scala/foo")
         task.classpath.get().contains(scalaProject.projectDir.path + "/build/classes/java/foo")
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
-        !task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.pom") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
         task.rules.get().containsAll(['Foo', 'Bar'])
-        task.semanticdbConfigured
+        task.semanticDbConfigured
         scalaProject.tasks.compileScala.dependsOn.find { taskPredicate(it, 'configSemanticDBMain') }
     }
 
@@ -339,7 +333,7 @@ class ScalafixPluginTest extends Specification {
         then:
         def tasks = scalaProject.tasks
         [tasks.scalafixMain, tasks.scalafixTest, tasks.checkScalafixMain, tasks.checkScalafixTest].each { ScalafixTask task ->
-            assert !task.semanticdbConfigured
+            assert !task.semanticDbConfigured
             assert !task.dependsOn.find { taskPredicate(it, 'compileScala') }
             assert !task.dependsOn.find { taskPredicate(it, 'compileTestScala') }
         }
@@ -514,7 +508,6 @@ class ScalafixPluginTest extends Specification {
 
             dependencies {
                 implementation group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION
-                implementation group: 'org.scala-lang', name: 'scala-library', version: SCALA_VERSION, ext: 'pom'
             }
 
             sourceSets {
