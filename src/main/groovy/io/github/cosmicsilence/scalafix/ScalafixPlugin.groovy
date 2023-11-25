@@ -96,7 +96,7 @@ class ScalafixPlugin implements Plugin<Project> {
             scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet) }))
             classpath.set(project.provider({ sourceSet.getFullClasspath().collect { it.path } }))
             compileOptions.set(project.provider({ sourceSet.getCompilerOptions() }))
-            semanticdbConfigured = extension.semanticdb.autoConfigure.get()
+            semanticDbConfigured = extension.semanticdb.autoConfigure.get()
 
             if (extension.semanticdb.autoConfigure.get()) {
                 // Auto-configures the SemanticDB compiler plugin and triggers compilation only if the Scalafix

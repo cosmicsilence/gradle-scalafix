@@ -31,19 +31,23 @@ abstract class ScalafixProps {
         return PROPS.getProperty("scala213")
     }
 
-    static String getSupportedScalaVersion(String projectScalaVersion) {
+    static String getScalafixCliArtifactCoordinates(String projectScalaVersion) {
+        return "ch.epfl.scala:scalafix-cli_${getSupportedScalaVersion(projectScalaVersion)}:${scalafixVersion}"
+    }
+
+    private static String getSupportedScalaVersion(String projectScalaVersion) {
         switch (projectScalaVersion) {
             case ~/^2\.12\..+$/:
                 return supportedScala212Version
             case ~/^2\.13\..+$/:
                 return supportedScala213Version
+            case ~/^3\..+$/:
+                // there's no Scala 3 artifact for Scalafix yet:
+                // https://github.com/cosmicsilence/gradle-scalafix/issues/60#issuecomment-996535305
+                return supportedScala213Version
             default:
                 throw new GradleException("Scala version '${projectScalaVersion}' is not supported")
         }
-    }
-
-    static String getScalafixCliArtifactCoordinates(String projectScalaVersion) {
-        return "ch.epfl.scala:scalafix-cli_${getSupportedScalaVersion(projectScalaVersion)}:${scalafixVersion}"
     }
 
     static String getSemanticDbArtifactCoordinates(String projectScalaVersion, Optional<String> scalametaVersionOverride) {

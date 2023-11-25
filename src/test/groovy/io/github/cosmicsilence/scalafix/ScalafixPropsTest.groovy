@@ -40,34 +40,6 @@ class ScalafixPropsTest extends Specification {
     }
 
     @Unroll
-    def 'it should return the supported Scala version for a #projectScalaVersion project'() {
-        when:
-        def version = ScalafixProps.getSupportedScalaVersion(projectScalaVersion)
-
-        then:
-        version == expectedScalaVersion
-
-        where:
-        projectScalaVersion || expectedScalaVersion
-        '2.12.0'            || ScalafixProps.supportedScala212Version
-        '2.13.0'            || ScalafixProps.supportedScala213Version
-    }
-
-    @Unroll
-    def 'it should fail to return a supported Scala version if project uses Scala #projectScalaVersion'() {
-        when:
-        ScalafixProps.getSupportedScalaVersion(projectScalaVersion)
-
-        then:
-        thrown GradleException
-
-        where:
-        projectScalaVersion || _
-        '2.9.3'             || _
-        '2.10.7'            || _
-    }
-
-    @Unroll
     def 'it should return the scalafix-cli artifact coordinates for a #projectScalaVersion project'() {
         when:
         def coordinates = ScalafixProps.getScalafixCliArtifactCoordinates(projectScalaVersion)
@@ -79,6 +51,21 @@ class ScalafixPropsTest extends Specification {
         projectScalaVersion || expectedCoordinates
         '2.12.10'           || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala212Version}:${ScalafixProps.scalafixVersion}"
         '2.13.0'            || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala213Version}:${ScalafixProps.scalafixVersion}"
+        '3.3.1'             || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala213Version}:${ScalafixProps.scalafixVersion}"
+    }
+
+    @Unroll
+    def 'it should fail to return the scalafix-cli artifact coordinates for Scala #projectScalaVersion'() {
+        when:
+        ScalafixProps.getScalafixCliArtifactCoordinates(projectScalaVersion)
+
+        then:
+        thrown GradleException
+
+        where:
+        projectScalaVersion || _
+        '2.9.3'             || _
+        '2.10.7'            || _
     }
 
     @Unroll

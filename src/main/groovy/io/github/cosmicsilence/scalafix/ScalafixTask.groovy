@@ -44,7 +44,7 @@ class ScalafixTask extends SourceTask {
     String sourceRoot
 
     @Internal
-    Boolean semanticdbConfigured
+    Boolean semanticDbConfigured
 
     @TaskAction
     void run() {
@@ -53,7 +53,7 @@ class ScalafixTask extends SourceTask {
         def extRulesConfiguration = project.configurations.getByName(ScalafixPlugin.EXT_RULES_CONFIGURATION)
         def scalafixCliCoordinates = ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion.get())
 
-        logger.debug(
+        logger.info(
                 """Running Scalafix with the following arguments:
                   | - Mode: ${mode}
                   | - Config file: ${configFilePath}
@@ -81,14 +81,14 @@ class ScalafixTask extends SourceTask {
                 .withScalaVersion(scalaVersion.get())
                 .withScalacOptions(compileOptions.getOrElse([]))
 
-        logger.debug(
+        logger.info(
                 """Scalafix rules:
                   | - Available: ${scalafixArgs.availableRules().collect { it.name() }}
                   | - That will run: ${scalafixArgs.rulesThatWillRun().collect { it.name() }}
                   |""".stripMargin())
 
         if (!scalafixArgs.rulesThatWillRun().empty) {
-            assertSemanticdbIsConfigured(scalafixArgs.rulesThatWillRun())
+            assertSemanticDbIsConfigured(scalafixArgs.rulesThatWillRun())
 
             logger.quiet("Running Scalafix on ${sourcePaths.size} Scala source file(s)")
             def errors = scalafixArgs.run()
@@ -98,12 +98,12 @@ class ScalafixTask extends SourceTask {
         }
     }
 
-    private void assertSemanticdbIsConfigured(List<ScalafixRule> rulesThatWillRun) {
+    private void assertSemanticDbIsConfigured(List<ScalafixRule> rulesThatWillRun) {
         def semanticRules = rulesThatWillRun.findAll { it.kind().isSemantic() }
 
-        if (!semanticRules.empty && !semanticdbConfigured) {
+        if (!semanticRules.empty && !semanticDbConfigured) {
             def ruleNames = semanticRules.collect { it.name() }.join(", ")
-            throw new GradleException("The SemanticDB compiler plugin is required to run semantic rules such as $ruleNames. " +
+            throw new GradleException("SemanticDB is required to run semantic rules such as $ruleNames. " +
                     "To fix this problem, please enable 'semanticdb.autoConfigure' in the plugin extension")
         }
     }

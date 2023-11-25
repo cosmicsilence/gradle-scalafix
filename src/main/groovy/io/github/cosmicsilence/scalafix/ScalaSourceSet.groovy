@@ -58,8 +58,11 @@ class ScalaSourceSet {
     @Memoized
     Optional<String> getScalaVersion() {
         def scalaRuntime = project.extensions.findByType(ScalaRuntime)
-        def scalaJar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
-        return Optional.ofNullable(scalaJar ? scalaRuntime.getScalaVersion(scalaJar) : null)
+        def scala3Jar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library_3')
+        if (scala3Jar) return Optional.of(scalaRuntime.getScalaVersion(scala3Jar))
+
+        def scala2Jar = scalaRuntime?.findScalaJar(compileTask.classpath, 'library')
+        return Optional.ofNullable(scala2Jar ? scalaRuntime.getScalaVersion(scala2Jar) : null)
     }
 
     List<String> getCompilerOptions() {
@@ -83,7 +86,8 @@ class ScalaSourceSet {
     }
 
     static boolean isScalaSourceSet(Project project, SourceSet sourceSet) {
-        return project.tasks.named(getCompileTaskName(sourceSet)).present
+        def taskName = getCompileTaskName(sourceSet)
+        return taskName ? project.tasks.findByName(taskName) : false
     }
 
     private static String getCompileTaskName(SourceSet sourceSet) {
