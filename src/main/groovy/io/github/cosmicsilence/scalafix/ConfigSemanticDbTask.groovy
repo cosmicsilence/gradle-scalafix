@@ -22,8 +22,8 @@ class ConfigSemanticDbTask extends DefaultTask {
     @TaskAction
     void run() {
         if (isScala3()) {
-            // Dotty does not currently allow `sourceroot` to be set relative to `targetroot` as described below (see
-            // https://github.com/gradle/gradle/issues/27161).
+            // It's currently not possible to set `-sourceroot` in a fully cache-friendly way (see comment below):
+            // https://github.com/gradle/gradle/issues/27161
             sourceSet.addCompilerOptions(['-Xsemanticdb', '-sourceroot', project.projectDir.absolutePath])
         } else {
             def maybeSemanticDbVersion = java.util.Optional.ofNullable(semanticDbVersion)
