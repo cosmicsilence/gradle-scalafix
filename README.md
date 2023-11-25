@@ -10,8 +10,8 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 ## Compatibility
 
 - **Gradle:** `4.10` or later (except `5.0`)
-- **Scala:** `2.12.x`, `2.13.x` and `3.x` (requires [Gradle 7.3](https://docs.gradle.org/7.3/release-notes.html) or later)
-- **JDK:** `11` or later
+- **Scala:** `2.12.x` / `2.13.x` / `3.x` (requires [Gradle 7.3](https://docs.gradle.org/7.3/release-notes.html) or later)
+- **JDK:** `8` or later
 
 &nbsp;
 ## Usage
