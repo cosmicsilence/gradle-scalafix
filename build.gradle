@@ -7,10 +7,9 @@ buildscript {
 plugins {
     id 'groovy'
     id 'java-gradle-plugin'
-    id 'maven-publish'
     id 'org.ajoberstar.stutter' version '0.7.3'
     id 'org.ajoberstar.reckon' version '0.18.1'
-    id 'com.gradle.plugin-publish' version '0.21.0'
+    id 'com.gradle.plugin-publish' version '1.2.1'
 }
 
 group 'io.github.cosmicsilence'
@@ -83,55 +82,18 @@ validatePlugins {
     failOnWarning = true
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-pluginBundle {
-    description = 'Gradle plugin for Scalafix'
+gradlePlugin {
     website = 'https://github.com/cosmicsilence/gradle-scalafix'
     vcsUrl = 'https://github.com/cosmicsilence/gradle-scalafix.git'
+
     plugins {
         scalafixPlugin {
             id = 'io.github.cosmicsilence.scalafix'
             displayName = 'Scalafix Plugin'
-            tags = ['scalafix']
+            description = 'Gradle plugin for Scalafix'
+            tags = ['scalafix', 'scala']
+            implementationClass = 'io.github.cosmicsilence.scalafix.ScalafixPlugin'
         }
-    }
-}
-
-def pomConfig = {
-    licenses {
-        license {
-            name 'BSD 3-Clause License'
-            url 'https://opensource.org/licenses/BSD-3-Clause'
-        }
-    }
-    developers {
-        developer {
-            name 'Marcelo Cenerino'
-            email 'marcelocenerine@gmail.com'
-            organization 'Cosmic Silence'
-            organizationUrl 'https://github.com/cosmicsilence'
-        }
-        developer {
-            name 'Felix Sanjuan'
-            email 'felix.sanjuan@icloud.com'
-            organization 'Cosmic Silence'
-            organizationUrl 'https://github.com/cosmicsilence'
-        }
-    }
-
-    scm {
-        url 'https://github.com/cosmicsilence/gradle-scalafix'
-        connection 'git@github.com:cosmicsilence/gradle-scalafix.git'
-        developerConnection 'git@github.com:cosmicsilence/gradle-scalafix.git'
     }
 }
 
@@ -148,14 +110,35 @@ publishing {
     }
     publications {
         pluginMaven(MavenPublication) {
-            artifact sourcesJar
-            artifact javadocJar
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('name', 'Gradle Plugin for Scalafix')
-                root.appendNode('description', 'This is a Gradle plugin for Scalafix, a refactoring and linting tool for Scala')
-                root.appendNode('url', 'https://github.com/cosmicsilence/gradle-scalafix')
-                root.children().last() + pomConfig
+            pom {
+                name = 'Gradle Plugin for Scalafix'
+                description = 'Gradle plugin for Scalafix, a refactoring and linting tool for Scala'
+                url = 'https://github.com/cosmicsilence/gradle-scalafix'
+                licenses {
+                    license {
+                        name = 'BSD 3-Clause License'
+                        url = 'https://opensource.org/licenses/BSD-3-Clause'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Marcelo Cenerino'
+                        email = 'marcelocenerine@gmail.com'
+                        organization = 'Cosmic Silence'
+                        organizationUrl = 'https://github.com/cosmicsilence'
+                    }
+                    developer {
+                        name = 'Felix Sanjuan'
+                        email = 'felix.sanjuan@icloud.com'
+                        organization = 'Cosmic Silence'
+                        organizationUrl = 'https://github.com/cosmicsilence'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/cosmicsilence/gradle-scalafix'
+                    connection = 'git@github.com:cosmicsilence/gradle-scalafix.git'
+                    developerConnection = 'git@github.com:cosmicsilence/gradle-scalafix.git'
+                }
             }
         }
     }
