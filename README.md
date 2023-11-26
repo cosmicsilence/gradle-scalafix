@@ -97,7 +97,7 @@ any of these tasks will trigger partial or complete compilation of Scala source 
 &nbsp;
 <a name="extension"></a>
 ## Extension
-The plugin defines an extension with the namespace `scalafix` that allows to customise it. **None** of the properties are mandatory:
+The plugin defines the `scalafix` extension which enables some customisations. **None** of the properties are mandatory:
 
 | Property name                | Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |:-----------------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
