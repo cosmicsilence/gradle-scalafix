@@ -923,7 +923,7 @@ subprojects {
         def rulesSubProject = mkDir(rootProject, 'scalafix-rules')
         new File(rulesSubProject, 'build.gradle').write """
 dependencies {
-    compileOnly 'ch.epfl.scala:scalafix-core_2.13:+'
+    compileOnly 'ch.epfl.scala:scalafix-core_2.13:0.11.1'
 }
 """
         def ruleServicesDir = mkDir(rulesSubProject, 'src/main/resources/META-INF/services')
@@ -972,7 +972,7 @@ sourceSets {
 }
 
 dependencies {
-    customScalafixRuleCompileOnly 'ch.epfl.scala:scalafix-core_2.13:+'
+    customScalafixRuleCompileOnly 'ch.epfl.scala:scalafix-core_2.13:0.11.1'
     scalafix sourceSets.customScalafixRule.output
 }
 """)
