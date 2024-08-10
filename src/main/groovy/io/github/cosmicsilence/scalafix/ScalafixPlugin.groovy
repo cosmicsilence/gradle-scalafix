@@ -54,18 +54,18 @@ class ScalafixPlugin implements Plugin<Project> {
         project.sourceSets.each { SourceSet ss ->
             if (!ScalaSourceSet.isScalaSourceSet(project, ss) || extension.ignoreSourceSets.get().contains(ss.name)) return
 
-            def scalaSourceSet = new ScalaSourceSet(project, ss)
             def configureSemanticDb = project.objects.property(Boolean)
             def semanticDbTaskName = SEMANTIC_DB_TASK + ss.name.capitalize()
+            def scalaSourceSet = new ScalaSourceSet(project, ss)
             def semanticDbTask = project.tasks.register(semanticDbTaskName, ConfigSemanticDbTask, {
                 group = ScalafixPlugin.TASK_GROUP
                 description = "Configures the SemanticDB Scala compiler for '${ss.name}'"
                 scalaVersion.set(project.provider({ resolveScalaVersion(scalaSourceSet) }))
                 semanticDbVersion = extension.semanticdb.version.orNull
-                sourceSet = scalaSourceSet
+                sourceSetName = ss.name
                 onlyIf { configureSemanticDb.getOrElse(false) }
             })
-            scalaSourceSet.getCompileTask().dependsOn semanticDbTask
+            project.tasks.named(ss.getCompileTaskName('scala')).get().dependsOn semanticDbTask
             configureScalafixTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configuration, configureSemanticDb)
             configureScalafixTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configuration, configureSemanticDb)
         }
@@ -78,9 +78,9 @@ class ScalafixPlugin implements Plugin<Project> {
                                                    ScalafixExtension extension,
                                                    Configuration extRulesConfiguration,
                                                    Property<Boolean> configureSemanticDb) {
-        def taskName = parentTask.name + sourceSet.getName().capitalize()
+        def taskName = parentTask.name + sourceSet.name.capitalize()
         def scalafixTask = project.tasks.register(taskName, ScalafixTask, {
-            description = "${parentTask.description} in '${sourceSet.getName()}'"
+            description = "${parentTask.description} in '${sourceSet.name}'"
             group = parentTask.group
             sourceRoot = project.projectDir.path
             source = sourceSet.getScalaSources().matching {

@@ -15,6 +15,17 @@ class ScalafixPluginFunctionalTest extends Specification {
     private static final String SCALA_2_VERSION = '2.13.12'
     private static final String SCALA_3_VERSION = '3.3.1'
 
+    def 'The scalafix plugin is applied successfully with no gradle configuration cache failures'() {
+        given:
+        File projectDir = createScalaProject()
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
+
+        then:
+        !buildResult.output.contains('ConfigurationCacheProblemsException')
+    }
+
     def 'scalafixMain task should run compileScala by default'() {
         given:
         File projectDir = createScalaProject()
@@ -1006,7 +1017,7 @@ class BarDummyRule extends SemanticRule("BarDummyRule") {
     private static BuildResult runGradle(File projectDir, String... arguments) {
         return GradleRunner.create()
                 .withProjectDir(projectDir)
-                .withArguments(arguments.toList() + '--stacktrace')
+                .withArguments(arguments.toList() + '--stacktrace' + '--configuration-cache')
                 .withGradleVersion(gradleVersion())
                 .withPluginClasspath()
                 .forwardOutput()
