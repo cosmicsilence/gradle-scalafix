@@ -3,9 +3,7 @@ package io.github.cosmicsilence.scalafix
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
 
 /** Configures the SemanticDB compiler plugin during the execution phase to avoid resolving dependencies too early. */
