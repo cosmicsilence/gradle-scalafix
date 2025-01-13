@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ScalafixPluginFunctionalTest extends Specification {
 
-    private static final String SCALA_2_VERSION = '2.13.12'
-    private static final String SCALA_3_VERSION = '3.3.1'
+    private static final String SCALA_2_VERSION = '2.13.16'
+    private static final String SCALA_3_VERSION = '3.3.4'
 
     def 'scalafixMain task should run compileScala by default'() {
         given:
@@ -825,12 +825,12 @@ object OrganizeImportsTest
 
         where:
         scalaVersion || _
-        '2.12.16'    || _
-        '2.12.17'    || _
         '2.12.18'    || _
-        '2.13.10'    || _
-        '2.13.11'    || _
-        '2.13.12'    || _
+        '2.12.19'    || _
+        '2.12.20'    || _
+        '2.13.14'    || _
+        '2.13.15'    || _
+        '2.13.16'    || _
     }
 
     @Unroll
@@ -897,7 +897,10 @@ trait OrganizeImportsTest(val x: String):
         '3.0.2'      || _
         '3.1.3'      || _
         '3.2.2'      || _
-        '3.3.1'      || _
+        '3.3.4'      || _
+        '3.4.3'      || _
+        '3.5.2'      || _
+        '3.6.2'      || _
     }
 
     def 'scalafix should load local rules from a subproject'() {
