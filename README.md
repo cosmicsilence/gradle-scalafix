@@ -9,8 +9,12 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 &nbsp;
 ## Compatibility
 
-- **Gradle:** `4.10` or later (except `5.0`)
-- **Scala:** `2.12.x` / `2.13.x` / `3.x` (requires [Gradle 7.3](https://docs.gradle.org/7.3/release-notes.html) or later)
+| Scala   | Gradle                                                                                   |
+|---------|------------------------------------------------------------------------------------------|
+| 2.12.x  | 4.10+ (except for `5.0`)                                                                 |
+| 2.13.x  | [6.0](https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036)+ |
+| 3.x     | [7.3](https://docs.gradle.org/7.3/release-notes.html)+                                   |
+
 - **JDK:** `8` or later
 
 &nbsp;
