@@ -31,9 +31,9 @@ jobs:
           - "6.0.1"
           - "6.9.4"
           - "7.0.2"
-          - "7.6.3"
+          - "7.6.4"
           - "8.0.2"
-          - "8.4"
+          - "8.12"
     steps:
       - name: Download repo
         uses: actions/checkout@v2

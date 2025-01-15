@@ -290,7 +290,7 @@ scalafix {
         new File(buildDir, "classes/scala/test/META-INF/semanticdb/src/test/scala/dummy/${testSrc.name}.semanticdb").exists()
     }
 
-    @Requires({ isScala3Supported() })
+    @Requires({ isScalaVersionSupported("3.x") })
     def 'SemanticDB files should be created when scalafix is run with Scala 3.x'() {
         given:
         File projectDir = createScalaProject('', SCALA_3_VERSION)
@@ -311,13 +311,13 @@ scalafix {
         File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createSourceFile(projectDir, 'object Foo', 'main')
         createSourceFile(projectDir, 'object FooTest', 'test')
-        File buildDir = new File(projectDir, 'build')
+        File classesDir = new File(projectDir, 'build/classes')
 
         when:
         runGradle(projectDir, 'scalafix')
 
         then:
-        !buildDir.exists()
+        !classesDir.exists()
     }
 
     def 'SemanticDB files should not be created when scalafix is not run'() {
@@ -838,7 +838,7 @@ object OrganizeImportsTest
     }
 
     @Unroll
-    @Requires({ isScala3Supported() })
+    @Requires({ isScalaVersionSupported(data.scalaVersion) })
     def 'scalafix should run built-in/external semantic and syntactic rules on Scala 3.x projects - #scalaVersion'() {
         given:
         File projectDir = createScalaProject("""
@@ -1021,7 +1021,6 @@ class BarDummyRule extends SemanticRule("BarDummyRule") {
         return System.getProperty('compat.gradle.version')
     }
 
-
     private static boolean isScalaVersionSupported(String scalaVersion) {
         return scalaVersion.startsWith("2.12")
 
@@ -1030,10 +1029,6 @@ class BarDummyRule extends SemanticRule("BarDummyRule") {
 
             // https://docs.gradle.org/7.3/release-notes.html
             || scalaVersion.startsWith("3") && gradleVersion() >= '7.3'
-    }
-
-    private static boolean isScala3Supported() {
-        return gradleVersion() >= '7.3' // https://docs.gradle.org/7.3/release-notes.html
     }
 
     private static File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = SCALA_2_VERSION) {
