@@ -311,13 +311,13 @@ scalafix {
         File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
         createSourceFile(projectDir, 'object Foo', 'main')
         createSourceFile(projectDir, 'object FooTest', 'test')
-        File buildDir = new File(projectDir, 'build')
+        File classesDir = new File(projectDir, 'build/classes')
 
         when:
         runGradle(projectDir, 'scalafix')
 
         then:
-        !buildDir.exists()
+        !classesDir.exists()
     }
 
     def 'SemanticDB files should not be created when scalafix is not run'() {
