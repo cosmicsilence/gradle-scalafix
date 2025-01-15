@@ -10,10 +10,13 @@ import spock.lang.Unroll
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 
+// needed for proper discovery of condition method
+import static io.github.cosmicsilence.scalafix.ScalafixPluginFunctionalTest.isScalaVersionSupported
+
 class ScalafixPluginFunctionalTest extends Specification {
 
-    private static final String SCALA_2_VERSION = '2.13.12'
-    private static final String SCALA_3_VERSION = '3.3.1'
+    private static final String SCALA_2_VERSION = '2.12.20'
+    private static final String SCALA_3_VERSION = '3.3.4'
 
     def 'scalafixMain task should run compileScala by default'() {
         given:
@@ -783,6 +786,7 @@ object Foo {
     }
 
     @Unroll
+    @Requires({ isScalaVersionSupported(data.scalaVersion) })
     def 'scalafix should run built-in/external semantic and syntactic rules on Scala 2.x projects - #scalaVersion'() {
         given:
         def scalaBinaryVersion = scalaVersion.substring(0, scalaVersion.lastIndexOf('.'))
@@ -825,12 +829,12 @@ object OrganizeImportsTest
 
         where:
         scalaVersion || _
-        '2.12.16'    || _
-        '2.12.17'    || _
         '2.12.18'    || _
-        '2.13.10'    || _
-        '2.13.11'    || _
-        '2.13.12'    || _
+        '2.12.19'    || _
+        '2.12.20'    || _
+        '2.13.14'    || _
+        '2.13.15'    || _
+        '2.13.16'    || _
     }
 
     @Unroll
@@ -894,10 +898,10 @@ trait OrganizeImportsTest(val x: String):
 
         where:
         scalaVersion || _
-        '3.0.2'      || _
-        '3.1.3'      || _
-        '3.2.2'      || _
-        '3.3.1'      || _
+        '3.3.4'      || _
+        '3.4.3'      || _
+        '3.5.2'      || _
+        '3.6.2'      || _
     }
 
     def 'scalafix should load local rules from a subproject'() {
@@ -1015,6 +1019,17 @@ class BarDummyRule extends SemanticRule("BarDummyRule") {
 
     private static String gradleVersion() {
         return System.getProperty('compat.gradle.version')
+    }
+
+
+    private static boolean isScalaVersionSupported(String scalaVersion) {
+        return scalaVersion.startsWith("2.12")
+
+            // https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036
+            || scalaVersion.startsWith("2.13") && gradleVersion() >= '6.0'
+
+            // https://docs.gradle.org/7.3/release-notes.html
+            || scalaVersion.startsWith("3") && gradleVersion() >= '7.3'
     }
 
     private static boolean isScala3Supported() {
