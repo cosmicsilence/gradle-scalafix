@@ -33,7 +33,7 @@ jobs:
           - "7.0.2"
           - "7.6.3"
           - "8.0.2"
-          - "8.4"
+          - "8.12"
     steps:
       - name: Download repo
         uses: actions/checkout@v2
