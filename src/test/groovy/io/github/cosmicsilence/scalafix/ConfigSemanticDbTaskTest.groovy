@@ -23,7 +23,7 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
+            sourceSetName = ss.name
             scalaVersion = '2.13.12'
         })
 
@@ -46,7 +46,7 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
+            sourceSetName = ss.name
             scalaVersion = '2.13.10'
             semanticDbVersion = semanticdbVersion
         })
@@ -69,7 +69,7 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
+            sourceSetName = ss.name
             scalaVersion = '3.3.1'
         })
 

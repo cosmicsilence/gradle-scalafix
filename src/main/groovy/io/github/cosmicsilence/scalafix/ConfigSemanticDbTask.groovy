@@ -10,7 +10,7 @@ import org.gradle.api.tasks.TaskAction
 class ConfigSemanticDbTask extends DefaultTask {
 
     @Input
-    ScalaSourceSet sourceSet
+    final Property<String> sourceSetName = project.objects.property(String)
 
     @Input
     final Property<String> scalaVersion = project.objects.property(String)
@@ -21,6 +21,7 @@ class ConfigSemanticDbTask extends DefaultTask {
 
     @TaskAction
     void run() {
+        final ScalaSourceSet sourceSet = new ScalaSourceSet(project, project.sourceSets.findByName(sourceSetName.get()))
         if (isScala3()) {
             // It's currently not possible to set `-sourceroot` in a fully cache-friendly way (see comment below):
             // https://github.com/gradle/gradle/issues/27161
