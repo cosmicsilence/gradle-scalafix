@@ -31,6 +31,10 @@ abstract class ScalafixProps {
         return PROPS.getProperty("scala213")
     }
 
+    static String getSupportedScala3Version() {
+        return PROPS.getProperty("scala3LTS")
+    }
+
     static String getScalafixCliArtifactCoordinates(String projectScalaVersion) {
         return "ch.epfl.scala:scalafix-cli_${getSupportedScalaVersion(projectScalaVersion)}:${scalafixVersion}"
     }
@@ -42,9 +46,7 @@ abstract class ScalafixProps {
             case ~/^2\.13\..+$/:
                 return supportedScala213Version
             case ~/^3\..+$/:
-                // there's no Scala 3 artifact for Scalafix yet:
-                // https://github.com/cosmicsilence/gradle-scalafix/issues/60#issuecomment-996535305
-                return supportedScala213Version
+                return supportedScala3Version
             default:
                 throw new GradleException("Scala version '${projectScalaVersion}' is not supported")
         }

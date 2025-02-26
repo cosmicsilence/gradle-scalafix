@@ -39,6 +39,14 @@ class ScalafixPropsTest extends Specification {
         version ==~ "2.13.\\d+"
     }
 
+    def 'it should return the supported Scala 3.x version'() {
+        when:
+        def version = ScalafixProps.supportedScala3Version
+
+        then:
+        version ==~ "3.\\d+.\\d+"
+    }
+
     @Unroll
     def 'it should return the scalafix-cli artifact coordinates for a #projectScalaVersion project'() {
         when:
@@ -51,7 +59,7 @@ class ScalafixPropsTest extends Specification {
         projectScalaVersion || expectedCoordinates
         '2.12.10'           || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala212Version}:${ScalafixProps.scalafixVersion}"
         '2.13.0'            || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala213Version}:${ScalafixProps.scalafixVersion}"
-        '3.3.1'             || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala213Version}:${ScalafixProps.scalafixVersion}"
+        '3.3.1'             || "ch.epfl.scala:scalafix-cli_${ScalafixProps.supportedScala3Version}:${ScalafixProps.scalafixVersion}"
     }
 
     @Unroll

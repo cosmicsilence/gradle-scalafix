@@ -26,7 +26,7 @@ abstract class Classloaders {
         })
     }
 
-    static ClassLoader forExternalRules(Configuration rulesConfiguration, ClassLoader scalafixCliClassloader) {
+    static URLClassLoader forExternalRules(Configuration rulesConfiguration, ClassLoader scalafixCliClassloader) {
         // No cache in this case as rules can be loaded from a subproject or source set under the same project.
         // There is no guarantee that rules would not be modified between executions.
         return classloaderFrom(rulesConfiguration, scalafixCliClassloader)
