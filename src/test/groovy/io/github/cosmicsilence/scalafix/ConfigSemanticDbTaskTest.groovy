@@ -24,7 +24,7 @@ class ConfigSemanticDbTaskTest extends Specification {
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
             sourceSet = new ScalaSourceSet(project, ss)
-            scalaVersion = '2.13.12'
+            scalaVersion = '2.13.15'
         })
 
         when:
@@ -35,7 +35,7 @@ class ConfigSemanticDbTaskTest extends Specification {
                 '-Yrangepos', '-P:semanticdb:sourceroot:targetroot:../../../..'
         ]
         compileTask.scalaCompilerPlugins.find {
-            it.absolutePath.endsWith("semanticdb-scalac_2.13.12-${ScalafixProps.scalametaVersion}.jar")
+            it.absolutePath.endsWith("semanticdb-scalac_2.13.15-${ScalafixProps.scalametaVersion}.jar")
         }
         !compileTask.scalaCompilerPlugins.find { it.name.contains("scala-library") }
     }
@@ -47,7 +47,7 @@ class ConfigSemanticDbTaskTest extends Specification {
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
             sourceSet = new ScalaSourceSet(project, ss)
-            scalaVersion = '2.13.10'
+            scalaVersion = '2.13.15'
             semanticDbVersion = semanticdbVersion
         })
 
@@ -59,8 +59,8 @@ class ConfigSemanticDbTaskTest extends Specification {
 
         where:
         semanticdbVersion   || expectedSemanticdbJar
-        '4.8.3'             || "semanticdb-scalac_2.13.10-${semanticdbVersion}.jar"
-        '4.8.4'             || "semanticdb-scalac_2.13.10-${semanticdbVersion}.jar"
+        '4.9.9'             || "semanticdb-scalac_2.13.15-${semanticdbVersion}.jar"
+        '4.10.0'            || "semanticdb-scalac_2.13.15-${semanticdbVersion}.jar"
     }
 
 

@@ -15,7 +15,7 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 | 2.13.x  | [6.0](https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036)+ |
 | 3.x     | [7.3](https://docs.gradle.org/7.3/release-notes.html)+                                   |
 
-- **JDK:** `8` or later
+JDK `8+` is required.
 
 &nbsp;
 ## Usage
