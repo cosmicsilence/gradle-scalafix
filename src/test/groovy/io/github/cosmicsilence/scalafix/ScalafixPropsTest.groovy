@@ -20,7 +20,7 @@ class ScalafixPropsTest extends Specification {
         def version = ScalafixProps.scalametaVersion
 
         then:
-        version ==~ "\\d+.\\d+.\\d+"
+        version ==~ "\\d+.\\d+.\\d+(?:.\\d+)*"
     }
 
     def 'it should return the supported Scala 2.12.x version'() {

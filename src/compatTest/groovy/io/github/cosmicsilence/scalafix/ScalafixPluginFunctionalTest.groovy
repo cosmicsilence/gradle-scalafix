@@ -16,7 +16,7 @@ import static io.github.cosmicsilence.scalafix.ScalafixPluginFunctionalTest.isSc
 class ScalafixPluginFunctionalTest extends Specification {
 
     private static final String SCALA_2_VERSION = '2.12.20'
-    private static final String SCALA_3_VERSION = '3.3.4'
+    private static final String SCALA_3_VERSION = '3.3.5'
 
     def 'scalafixMain task should run compileScala by default'() {
         given:
@@ -290,7 +290,7 @@ scalafix {
         new File(buildDir, "classes/scala/test/META-INF/semanticdb/src/test/scala/dummy/${testSrc.name}.semanticdb").exists()
     }
 
-    @Requires({ isScalaVersionSupported("3.x") })
+    @Requires({ isScalaVersionSupported(SCALA_3_VERSION) })
     def 'SemanticDB files should be created when scalafix is run with Scala 3.x'() {
         given:
         File projectDir = createScalaProject('', SCALA_3_VERSION)
@@ -937,8 +937,8 @@ dependencies {
 package rules
 import scalafix.v1._
 
-class FooDummyRule extends SemanticRule("FooDummyRule") {
-  override def fix(implicit doc: SemanticDocument): Patch = {
+class FooDummyRule extends SyntacticRule("FooDummyRule") {
+  override def fix(implicit doc: SyntacticDocument): Patch = {
     println("##### Foo #####")
     Patch.empty
   }
@@ -979,6 +979,8 @@ dependencies {
     customScalafixRuleCompileOnly 'ch.epfl.scala:scalafix-core_2.13:0.11.1'
     scalafix sourceSets.customScalafixRule.output
 }
+
+scalafix { semanticdb { autoConfigure = false } }
 """)
         def ruleServicesDir = mkDir(projectDir, 'src/customScalafixRule/resources/META-INF/services')
         new File(ruleServicesDir, 'scalafix.v1.Rule').write 'rules.BarDummyRule\n'
@@ -987,8 +989,8 @@ dependencies {
 package rules
 import scalafix.v1._
 
-class BarDummyRule extends SemanticRule("BarDummyRule") {
-  override def fix(implicit doc: SemanticDocument): Patch = {
+class BarDummyRule extends SyntacticRule("BarDummyRule") {
+  override def fix(implicit doc: SyntacticDocument): Patch = {
     println("***** Bar *****")
     Patch.empty
   }
@@ -1023,10 +1025,8 @@ class BarDummyRule extends SemanticRule("BarDummyRule") {
 
     private static boolean isScalaVersionSupported(String scalaVersion) {
         return scalaVersion.startsWith("2.12")
-
             // https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036
             || scalaVersion.startsWith("2.13") && gradleVersion() >= '6.0'
-
             // https://docs.gradle.org/7.3/release-notes.html
             || scalaVersion.startsWith("3") && gradleVersion() >= '7.3'
     }
