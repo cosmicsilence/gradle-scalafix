@@ -54,20 +54,27 @@ class ScalafixPlugin implements Plugin<Project> {
         project.sourceSets.each { SourceSet ss ->
             if (!ScalaSourceSet.isScalaSourceSet(project, ss) || extension.ignoreSourceSets.get().contains(ss.name)) return
 
-            def scalaSourceSet = new ScalaSourceSet(project, ss)
             def configureSemanticDb = project.objects.property(Boolean)
             def semanticDbTaskName = SEMANTIC_DB_TASK + ss.name.capitalize()
+            def scalaSourceSet = new ScalaSourceSet(project, ss)
             def semanticDbTask = project.tasks.register(semanticDbTaskName, ConfigSemanticDbTask, {
                 group = ScalafixPlugin.TASK_GROUP
                 description = "Configures the SemanticDB Scala compiler for '${ss.name}'"
                 scalaVersion.set(project.provider({ resolveScalaVersion(scalaSourceSet) }))
-                semanticDbVersion = extension.semanticdb.version.orNull
-                sourceSet = scalaSourceSet
+                semanticDbVersion.set(extension.semanticdb.version)
+                sourceSetName.set(ss.name)
+                projectDirPath.set(project.projectDir.absolutePath)
+                outputDir.set(scalaSourceSet.getCompileTask().destinationDirectory)
                 onlyIf { configureSemanticDb.getOrElse(false) }
             })
-            scalaSourceSet.getCompileTask().dependsOn semanticDbTask
-            configureScalafixTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configuration, configureSemanticDb)
-            configureScalafixTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configuration, configureSemanticDb)
+
+            // Set up the dependency outside of task configuration so it's available for unit tests
+            if (extension.semanticdb.autoConfigure.get()) {
+                scalaSourceSet.getCompileTask().dependsOn semanticDbTask
+            }
+
+            configureScalafixTaskForSourceSet(project, scalaSourceSet, IN_PLACE, fixTask, extension, configuration, configureSemanticDb, semanticDbTask)
+            configureScalafixTaskForSourceSet(project, scalaSourceSet, CHECK, checkTask, extension, configuration, configureSemanticDb, semanticDbTask)
         }
     }
 
@@ -77,7 +84,8 @@ class ScalafixPlugin implements Plugin<Project> {
                                                    Task parentTask,
                                                    ScalafixExtension extension,
                                                    Configuration extRulesConfiguration,
-                                                   Property<Boolean> configureSemanticDb) {
+                                                   Property<Boolean> configureSemanticDb,
+                                                   def semanticDbTask) {
         def taskName = parentTask.name + sourceSet.getName().capitalize()
         def scalafixTask = project.tasks.register(taskName, ScalafixTask, {
             description = "${parentTask.description} in '${sourceSet.getName()}'"

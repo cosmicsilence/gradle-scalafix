@@ -23,8 +23,10 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
-            scalaVersion = '2.13.15'
+            sourceSetName.set(ss.name)
+            scalaVersion.set('2.13.15')
+            projectDirPath.set(project.projectDir.absolutePath)
+            outputDir.set(compileTask.destinationDirectory)
         })
 
         when:
@@ -46,9 +48,11 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
-            scalaVersion = '2.13.15'
-            semanticDbVersion = semanticdbVersion
+            sourceSetName.set(ss.name)
+            scalaVersion.set('2.13.15')
+            semanticDbVersion.set(semanticdbVersion)
+            projectDirPath.set(project.projectDir.absolutePath)
+            outputDir.set(compileTask.destinationDirectory)
         })
 
         when:
@@ -69,8 +73,10 @@ class ConfigSemanticDbTaskTest extends Specification {
         ScalaCompile compileTask = project.tasks.compileScala
         SourceSet ss = project.sourceSets.main
         Task task = project.tasks.create('config', ConfigSemanticDbTask, {
-            sourceSet = new ScalaSourceSet(project, ss)
-            scalaVersion = '3.3.1'
+            sourceSetName.set(ss.name)
+            scalaVersion.set('3.3.1')
+            projectDirPath.set(project.projectDir.absolutePath)
+            outputDir.set(compileTask.destinationDirectory)
         })
 
         when:

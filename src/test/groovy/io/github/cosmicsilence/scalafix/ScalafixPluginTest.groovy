@@ -96,13 +96,13 @@ class ScalafixPluginTest extends Specification {
 
         then:
         ConfigSemanticDbTask mainTask = scalaProject.tasks.configSemanticDBMain
-        mainTask.sourceSet.name == 'main'
-        mainTask.semanticDbVersion == '4.8.3'
+        mainTask.sourceSetName.get() == 'main'
+        mainTask.semanticDbVersion.get() == '4.8.3'
         mainTask.scalaVersion.get() == SCALA_VERSION
 
         ConfigSemanticDbTask testTask = scalaProject.tasks.configSemanticDBTest
-        testTask.sourceSet.name == 'test'
-        testTask.semanticDbVersion == '4.8.3'
+        testTask.sourceSetName.get() == 'test'
+        testTask.semanticDbVersion.get() == '4.8.3'
         testTask.scalaVersion.get() == SCALA_VERSION
     }
 

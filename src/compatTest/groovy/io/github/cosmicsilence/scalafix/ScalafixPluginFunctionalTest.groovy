@@ -18,6 +18,17 @@ class ScalafixPluginFunctionalTest extends Specification {
     private static final String SCALA_2_VERSION = '2.12.20'
     private static final String SCALA_3_VERSION = '3.3.5'
 
+    def 'The scalafix plugin is applied successfully with no gradle configuration cache failures'() {
+        given:
+        File projectDir = createScalaProject()
+
+        when:
+        BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m', '--configuration-cache')
+
+        then:
+        !buildResult.output.contains('ConfigurationCacheProblemsException')
+    }
+
     def 'scalafixMain task should run compileScala by default'() {
         given:
         File projectDir = createScalaProject()
