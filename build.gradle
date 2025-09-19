@@ -55,7 +55,7 @@ stutter {
             }
             gradleVersions {
                 compatibleRange '4.10', '5.0'
-                compatibleRange '5.1', '8.13-rc-1'
+                compatibleRange '5.1', '8.14.3'
             }
         }
 
@@ -65,7 +65,16 @@ stutter {
             }
             gradleVersions {
                 compatibleRange '4.10', '5.0'
-                compatibleRange '5.1', '8.13-rc-1'
+                compatibleRange '5.1', '8.14.3'
+            }
+        }
+
+        java17 {
+            javaToolchain {
+                languageVersion = JavaLanguageVersion.of(17)
+            }
+            gradleVersions {
+                compatibleRange '9.0.0', '9.1.0'
             }
         }
     }

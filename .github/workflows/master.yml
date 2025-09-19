@@ -17,7 +17,7 @@ jobs:
           java-version: '11'
       - name: Run unit tests
         run: ./gradlew test
-  compat_tests:
+  compat_tests_gradle_4_to_8:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,9 +31,17 @@ jobs:
           - "6.0.1"
           - "6.9.4"
           - "7.0.2"
-          - "7.6.4"
+          - "7.6.6"
           - "8.0.2"
-          - "8.12"
+          - "8.14.3"
+  compat_tests_gradle_9:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java_version:
+          - "17"
+        gradle_version:
+          - "9.0.0"
     steps:
       - name: Download repo
         uses: actions/checkout@v2

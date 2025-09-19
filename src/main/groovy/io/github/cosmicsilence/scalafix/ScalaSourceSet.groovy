@@ -48,7 +48,11 @@ class ScalaSourceSet {
     }
 
     SourceDirectorySet getScalaSources() {
-        return sourceSet.allScala
+        if (sourceSet.hasProperty('allScala')) {
+            return sourceSet.allScala // removed in Gradle 9+ (https://github.com/gradle/gradle/pull/33153)
+        }
+
+        return sourceSet.getExtensions().findByName('scala') as SourceDirectorySet
     }
 
     ScalaCompile getCompileTask() {
