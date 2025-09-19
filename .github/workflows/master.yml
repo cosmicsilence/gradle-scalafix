@@ -17,7 +17,7 @@ jobs:
           java-version: '11'
       - name: Run unit tests
         run: ./gradlew test
-  compat_tests_gradle_4_to_8:
+  compat_tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,25 +34,9 @@ jobs:
           - "7.6.6"
           - "8.0.2"
           - "8.14.2"
-    steps:
-      - name: Download repo
-        uses: actions/checkout@v2
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          # Version required to run the `./gradlew` command. The tests themselves use the version provided via `java_version`
-          java-version: '11'
-      - name: Run Gradle compat tests for Gradle ${{ matrix.gradle_version }} on Java ${{ matrix.java_version }}
-        run: ./gradlew compatTestJava${{ matrix.java_version }}Gradle${{ matrix.gradle_version }} --stacktrace
-  compat_tests_gradle_9:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java_version:
-          - "17"
-        gradle_version:
-          - "9.0.0"
+        include:
+          - java_version: "17"
+            gradle_version: "9.0.0"
     steps:
       - name: Download repo
         uses: actions/checkout@v2
