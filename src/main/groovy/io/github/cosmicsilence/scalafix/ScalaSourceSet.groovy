@@ -73,22 +73,6 @@ class ScalaSourceSet {
         return compileTask.scalaCompileOptions.additionalParameters ?: []
     }
 
-    void addCompilerOptions(List<String> opts) {
-        compileTask.scalaCompileOptions.additionalParameters = getCompilerOptions() + opts
-    }
-
-    void addCompilerPlugin(String pluginCoordinates) {
-        def dependency = project.dependencies.create(pluginCoordinates)
-        def configuration = project.configurations.detachedConfiguration(dependency).setTransitive(false)
-
-        // Supported in Gradle >= 6.4
-        if (compileTask.hasProperty('scalaCompilerPlugins')) {
-            compileTask.scalaCompilerPlugins = (compileTask.scalaCompilerPlugins ?: project.files()) + configuration
-        } else {
-            addCompilerOptions(['-Xplugin:' + configuration.asPath])
-        }
-    }
-
     static boolean isScalaSourceSet(Project project, SourceSet sourceSet) {
         def taskName = getCompileTaskName(sourceSet)
         return taskName ? project.tasks.findByName(taskName) : false

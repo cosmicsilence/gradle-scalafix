@@ -27,12 +27,10 @@ class ScalafixPluginFunctionalTest extends Specification {
 
         then:
         buildResult.output.contains('''
-:configSemanticDBMain SKIPPED
 :compileScala SKIPPED
 :scalafixMain SKIPPED
 ''')
         buildResult.output.contains('''
-:configSemanticDBTest SKIPPED
 :compileTestScala SKIPPED
 :scalafixTest SKIPPED
 :scalafix SKIPPED
@@ -48,12 +46,10 @@ class ScalafixPluginFunctionalTest extends Specification {
 
         then:
         buildResult.output.contains('''
-:configSemanticDBMain SKIPPED
 :compileScala SKIPPED
 :scalafixMain SKIPPED
 ''')
         buildResult.output.contains('''
-:configSemanticDBTest SKIPPED
 :compileTestScala SKIPPED
 :scalafixTest SKIPPED
 :scalafix SKIPPED
@@ -72,9 +68,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 :scalafixTest SKIPPED
 :scalafix SKIPPED
 ''')
-        !buildResult.output.contains(':configSemanticDBMain')
         !buildResult.output.contains(':compileScala')
-        !buildResult.output.contains(':configSemanticDBTest')
         !buildResult.output.contains(':compileTestScala')
     }
 
@@ -87,12 +81,10 @@ class ScalafixPluginFunctionalTest extends Specification {
 
         then:
         buildResult.output.contains('''
-:configSemanticDBMain SKIPPED
 :compileScala SKIPPED
 :checkScalafixMain SKIPPED
 ''')
         buildResult.output.contains('''
-:configSemanticDBTest SKIPPED
 :compileTestScala SKIPPED
 :checkScalafixTest SKIPPED
 :checkScalafix SKIPPED
@@ -108,12 +100,10 @@ class ScalafixPluginFunctionalTest extends Specification {
 
         then:
         buildResult.output.contains('''
-:configSemanticDBMain SKIPPED
 :compileScala SKIPPED
 :checkScalafixMain SKIPPED
 ''')
         buildResult.output.contains('''
-:configSemanticDBTest SKIPPED
 :compileTestScala SKIPPED
 :checkScalafixTest SKIPPED
 :checkScalafix SKIPPED
@@ -132,9 +122,7 @@ class ScalafixPluginFunctionalTest extends Specification {
 :checkScalafixTest SKIPPED
 :checkScalafix SKIPPED
 ''')
-        !buildResult.output.contains(':configSemanticDBMain')
         !buildResult.output.contains(':compileScala')
-        !buildResult.output.contains(':configSemanticDBTest')
         !buildResult.output.contains(':compileTestScala')
     }
 
@@ -152,13 +140,10 @@ sourceSets {
         BuildResult buildResult = runGradle(projectDir, 'scalafix', '-m')
 
         then:
-        buildResult.output.contains(':configSemanticDBMain SKIPPED')
         buildResult.output.contains(':compileScala SKIPPED')
         buildResult.output.contains(':scalafixMain SKIPPED')
-        buildResult.output.contains(':configSemanticDBTest SKIPPED')
         buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':scalafixTest SKIPPED')
-        buildResult.output.contains(':configSemanticDBIntegTest SKIPPED')
         buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':scalafixIntegTest SKIPPED')
     }
@@ -177,13 +162,10 @@ sourceSets {
         BuildResult buildResult = runGradle(projectDir, 'checkScalafix', '-m')
 
         then:
-        buildResult.output.contains(':configSemanticDBMain SKIPPED')
         buildResult.output.contains(':compileScala SKIPPED')
         buildResult.output.contains(':checkScalafixMain SKIPPED')
-        buildResult.output.contains(':configSemanticDBTest SKIPPED')
         buildResult.output.contains(':compileTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixTest SKIPPED')
-        buildResult.output.contains(':configSemanticDBIntegTest SKIPPED')
         buildResult.output.contains(':compileIntegTestScala SKIPPED')
         buildResult.output.contains(':checkScalafixIntegTest SKIPPED')
     }
@@ -226,9 +208,6 @@ checkScalafix - Fails if running Scalafix produces a diff or a linter error mess
 checkScalafixFoo - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'foo'
 checkScalafixMain - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'main'
 checkScalafixTest - Fails if running Scalafix produces a diff or a linter error message. Won't write to files in 'test'
-configSemanticDBFoo - Configures the SemanticDB Scala compiler for 'foo'
-configSemanticDBMain - Configures the SemanticDB Scala compiler for 'main'
-configSemanticDBTest - Configures the SemanticDB Scala compiler for 'test'
 scalafix - Runs Scalafix on Scala sources
 scalafixFoo - Runs Scalafix on Scala sources in 'foo'
 scalafixMain - Runs Scalafix on Scala sources in 'main'
