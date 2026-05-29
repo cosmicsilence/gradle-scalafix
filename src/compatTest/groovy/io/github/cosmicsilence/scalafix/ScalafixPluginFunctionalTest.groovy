@@ -15,8 +15,8 @@ import static io.github.cosmicsilence.scalafix.ScalafixPluginFunctionalTest.isSc
 
 class ScalafixPluginFunctionalTest extends Specification {
 
-    private static final String SCALA_2_VERSION = '2.12.20'
-    private static final String SCALA_3_VERSION = '3.3.5'
+    private static final String SCALA_2_VERSION = '2.12.21'
+    private static final String SCALA_3_VERSION = '3.3.7'
 
     def 'scalafixMain task should run compileScala by default'() {
         given:
