@@ -15,12 +15,6 @@ abstract class GradleCompat {
     private static final boolean SUPPORTS_PROPERTY_CONVENTION = CURRENT >= GradleVersion.version("5.1")
     private static final boolean SUPPORTS_OBJECTS_FILE_COLLECTION = CURRENT >= GradleVersion.version("5.3")
 
-    /** ScalaCompile.scalaCompilerPlugins was added in Gradle 6.4 */
-    static final boolean SUPPORTS_SCALA_COMPILER_PLUGINS = CURRENT >= GradleVersion.version("6.4")
-
-    /** ScalaCompile.destinationDirectory was added in Gradle 6.1 */
-    static final boolean SUPPORTS_DESTINATION_DIRECTORY = CURRENT >= GradleVersion.version("6.1")
-
     private GradleCompat() {}
 
     static ConfigurableFileCollection fileCollection(ObjectFactory objects, ProjectLayout layout) {

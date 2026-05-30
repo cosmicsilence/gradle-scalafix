@@ -122,6 +122,7 @@ class ScalafixPlugin implements Plugin<Project> {
         semanticDbConfiguration.withDependencies { deps ->
             try {
                 def scalaVersion = resolveScalaVersion(sourceSet)
+
                 if (!ScalaVersions.isScala3(scalaVersion)) {
                     def coords = ScalafixProps.getSemanticDbArtifactCoordinates(
                             scalaVersion,
@@ -135,15 +136,17 @@ class ScalafixPlugin implements Plugin<Project> {
         }
 
         def compileTask = sourceSet.getCompileTask()
-        def semanticDbCompilerPluginFiles = project.files({ configureSemanticDb.getOrElse(false) ? semanticDbConfiguration : [] } as Closure)
+        def semanticDbCompilerPluginFiles = project.files({
+            configureSemanticDb.getOrElse(false) ? semanticDbConfiguration : []
+        } as Closure)
 
         // Defer resolution of the Scala version to execution time to avoid eagerly resolving the
         // compile classpath during the configuration phase (see https://github.com/cosmicsilence/gradle-scalafix/issues/49).
         def scalaVersionProp = project.objects.property(String)
         scalaVersionProp.set(project.provider({ resolveScalaVersion(sourceSet) }))
-
         FileCollection compilerPluginFilesFallback = null
-        if (GradleCompat.SUPPORTS_SCALA_COMPILER_PLUGINS) {
+
+        if (compileTask.hasProperty('scalaCompilerPlugins')) {
             // Gradle >= 6.4 — wire the gated file collection into ScalaCompile.scalaCompilerPlugins
             // so that its files (or none) are part of the task's input snapshot.
             def existing = compileTask.scalaCompilerPlugins ?: []
@@ -156,12 +159,15 @@ class ScalafixPlugin implements Plugin<Project> {
             compilerPluginFilesFallback = semanticDbCompilerPluginFiles
         }
 
-        compileTask.doFirst(new AppendSemanticDbCompilerOptionsAction(
-                configureSemanticDb,
-                scalaVersionProp,
-                extension.semanticdb.version,
-                project.projectDir,
-                compilerPluginFilesFallback))
+        compileTask.doFirst(
+                new AppendSemanticDbCompilerOptionsAction(
+                        configureSemanticDb,
+                        scalaVersionProp,
+                        extension.semanticdb.version,
+                        project.projectDir,
+                        compilerPluginFilesFallback
+                )
+        )
     }
 
     private void configureScalafixTaskForSourceSet(Project project,

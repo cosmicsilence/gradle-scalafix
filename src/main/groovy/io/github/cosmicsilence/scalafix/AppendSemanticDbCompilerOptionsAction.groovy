@@ -50,7 +50,8 @@ class AppendSemanticDbCompilerOptionsAction implements Action<Task> {
             // https://github.com/gradle/gradle/issues/27161
             additions = ['-Xsemanticdb', '-sourceroot', projectDir.absolutePath]
         } else {
-            def outputDir = GradleCompat.SUPPORTS_DESTINATION_DIRECTORY ?
+            // ScalaCompile.destinationDirectory was added in Gradle 6.1
+            def outputDir = compile.hasProperty('destinationDirectory') ?
                     compile.destinationDirectory.get().asFile.toPath() :
                     compile.destinationDir.toPath()
             // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
