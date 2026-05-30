@@ -139,7 +139,8 @@ class ScalafixPlugin implements Plugin<Project> {
 
         // Defer resolution of the Scala version to execution time to avoid eagerly resolving the
         // compile classpath during the configuration phase (see https://github.com/cosmicsilence/gradle-scalafix/issues/49).
-        def scalaVersionProp = project.objects.property(String).value(project.provider({ resolveScalaVersion(sourceSet) }))
+        def scalaVersionProp = project.objects.property(String)
+        scalaVersionProp.set(project.provider({ resolveScalaVersion(sourceSet) }))
 
         FileCollection compilerPluginFilesFallback = null
         if (GradleCompat.SUPPORTS_SCALA_COMPILER_PLUGINS) {
