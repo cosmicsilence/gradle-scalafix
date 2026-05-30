@@ -411,11 +411,11 @@ object HelloWorld {
   val i: Int = 3
 }
 ''', 'main')
-        new File(projectDir, 'settings.gradle') << '''
+        new File(projectDir, 'settings.gradle') << """
 buildCache {
-    local { directory = '.gradle/build-cache' }
+    local { directory = '${new File(projectDir, '.gradle/build-cache').absolutePath}' }
 }
-'''
+"""
 
         when:
         runGradle(projectDir, '--build-cache', 'scalafix')
