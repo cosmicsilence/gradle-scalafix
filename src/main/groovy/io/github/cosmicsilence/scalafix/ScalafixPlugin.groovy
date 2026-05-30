@@ -1,6 +1,5 @@
 package io.github.cosmicsilence.scalafix
 
-import io.github.cosmicsilence.compat.GradleCompat
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -20,8 +19,6 @@ class ScalafixPlugin implements Plugin<Project> {
 
     private static final String EXTENSION = "scalafix"
     private static final String EXT_RULES_CONFIGURATION = "scalafix"
-    private static final String SCALAFIX_CLI_CONFIGURATION_PREFIX = "scalafixCli"
-    private static final String SCALAFIX_SEMANTICDB_CONFIGURATION_PREFIX = "scalafixSemanticdb"
     private static final String TASK_GROUP = "scalafix"
     private static final String FIX_TASK = "scalafix"
     private static final String CHECK_TASK = "checkScalafix"
@@ -70,7 +67,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 wireSemanticDb(project, scalaSourceSet, extension, configureSemanticDb)
             }
 
-            def cliConfiguration = createCliConfiguration(project, scalaSourceSet)
+            def scalafixCliConfiguration = createScalafixCliConfiguration(project, scalaSourceSet)
             [[ScalafixMainMode.IN_PLACE, fixTask, fixDescription],
              [ScalafixMainMode.CHECK, checkTask, checkDescription]].each { mode, parentTask, parentDescription ->
                 configureScalafixTaskForSourceSet(
@@ -81,23 +78,23 @@ class ScalafixPlugin implements Plugin<Project> {
                         parentDescription,
                         extension,
                         extRulesConfiguration,
-                        cliConfiguration,
+                        scalafixCliConfiguration,
                         configureSemanticDb
                 )
             }
         }
     }
 
-    private Configuration createCliConfiguration(Project project, ScalaSourceSet sourceSet) {
-        def cfgName = SCALAFIX_CLI_CONFIGURATION_PREFIX + sourceSet.getName().capitalize()
-        def cliConfiguration = project.configurations.create(cfgName, { Configuration cfg ->
+    private Configuration createScalafixCliConfiguration(Project project, ScalaSourceSet sourceSet) {
+        def cfgName = "scalafixCli${sourceSet.getName().capitalize()}"
+        def scalafixCliConfiguration = project.configurations.create(cfgName, { Configuration cfg ->
             cfg.canBeConsumed = false
             cfg.canBeResolved = true
             cfg.visible = false
             cfg.transitive = true
             cfg.description = "Scalafix CLI dependencies for source set '${sourceSet.getName()}'"
         })
-        cliConfiguration.withDependencies { deps ->
+        scalafixCliConfiguration.withDependencies { deps ->
             try {
                 def scalaVersion = resolveScalaVersion(sourceSet)
                 deps.add(project.dependencies.create(ScalafixProps.getScalafixCliArtifactCoordinates(scalaVersion)))
@@ -107,63 +104,63 @@ class ScalafixPlugin implements Plugin<Project> {
                 // earlier during dependency resolution.
             }
         }
-        return cliConfiguration
+        return scalafixCliConfiguration
     }
 
     private void wireSemanticDb(Project project,
                                 ScalaSourceSet sourceSet,
                                 ScalafixExtension extension,
                                 Property<Boolean> configureSemanticDb) {
-        def cfgName = SCALAFIX_SEMANTICDB_CONFIGURATION_PREFIX + sourceSet.getName().capitalize()
-        def sdbConfiguration = project.configurations.create(cfgName, { Configuration cfg ->
+        def semanticDbCfgName = "scalafixSemanticdb${sourceSet.getName().capitalize()}"
+        def semanticDbConfiguration = project.configurations.create(semanticDbCfgName, { Configuration cfg ->
             cfg.canBeConsumed = false
             cfg.canBeResolved = true
             cfg.visible = false
             cfg.transitive = false
             cfg.description = "SemanticDB compiler plugin for source set '${sourceSet.getName()}'"
         })
-        sdbConfiguration.withDependencies { deps ->
+        semanticDbConfiguration.withDependencies { deps ->
             try {
                 def scalaVersion = resolveScalaVersion(sourceSet)
-                if (!scalaVersion.startsWith('3.')) {
+                if (!ScalaVersions.isScala3(scalaVersion)) {
                     def coords = ScalafixProps.getSemanticDbArtifactCoordinates(
                             scalaVersion,
                             java.util.Optional.ofNullable(extension.semanticdb.version.orNull))
                     deps.add(project.dependencies.create(coords))
                 }
             } catch (GradleException ignored) {
-                // Same rationale as in createCliConfiguration: let the error surface from the
+                // Same rationale as in createScalafixCliConfiguration: let the error surface from the
                 // scalafix task action rather than from dependency resolution.
             }
         }
 
         def compileTask = sourceSet.getCompileTask()
-        def gated = project.files({ configureSemanticDb.getOrElse(false) ? sdbConfiguration : [] } as Closure)
-        def projectDirPath = project.projectDir.absolutePath
+        def semanticDbCompilerPluginFiles = project.files({ configureSemanticDb.getOrElse(false) ? semanticDbConfiguration : [] } as Closure)
 
-        def scalaVersionProp = project.objects.property(String)
-        scalaVersionProp.set(project.provider({ resolveScalaVersion(sourceSet) }))
+        // Defer resolution of the Scala version to execution time to avoid eagerly resolving the
+        // compile classpath during the configuration phase (see https://github.com/cosmicsilence/gradle-scalafix/issues/49).
+        def scalaVersionProp = project.objects.property(String).value(project.provider({ resolveScalaVersion(sourceSet) }))
 
-        FileCollection pluginFilesFallback = null
-        if (compileTask.hasProperty('scalaCompilerPlugins')) {
+        FileCollection compilerPluginFilesFallback = null
+        if (GradleCompat.SUPPORTS_SCALA_COMPILER_PLUGINS) {
             // Gradle >= 6.4 — wire the gated file collection into ScalaCompile.scalaCompilerPlugins
             // so that its files (or none) are part of the task's input snapshot.
-            def existing = compileTask.scalaCompilerPlugins
-            compileTask.scalaCompilerPlugins = existing != null ? existing + gated : gated
+            def existing = compileTask.scalaCompilerPlugins ?: []
+            compileTask.scalaCompilerPlugins = existing + semanticDbCompilerPluginFiles
         } else {
             // Older Gradle — there is no scalaCompilerPlugins property, so the doFirst action will
             // emit -Xplugin:<paths> from the resolved file collection. Track the same FileCollection
             // as an explicit input so the cache key still reflects its contents.
-            compileTask.inputs.files(gated).withPropertyName(cfgName).optional(true)
-            pluginFilesFallback = gated
+            compileTask.inputs.files(semanticDbCompilerPluginFiles).withPropertyName(semanticDbCfgName).optional(true)
+            compilerPluginFilesFallback = semanticDbCompilerPluginFiles
         }
 
-        compileTask.doFirst(new AppendSemanticDbOptionsAction(
+        compileTask.doFirst(new AppendSemanticDbCompilerOptionsAction(
                 configureSemanticDb,
                 scalaVersionProp,
                 extension.semanticdb.version,
-                projectDirPath,
-                pluginFilesFallback))
+                project.projectDir,
+                compilerPluginFilesFallback))
     }
 
     private void configureScalafixTaskForSourceSet(Project project,

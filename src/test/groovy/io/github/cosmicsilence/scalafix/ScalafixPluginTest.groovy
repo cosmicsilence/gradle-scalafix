@@ -575,11 +575,11 @@ class ScalafixPluginTest extends Specification {
         // Gradle wraps actions registered via doFirst; the wrapper exposes the underlying
         // action via an 'action' field. Try the direct instanceof first and fall back to
         // reflective unwrap.
-        if (action instanceof AppendSemanticDbOptionsAction) return true
+        if (action instanceof AppendSemanticDbCompilerOptionsAction) return true
         def field = action.class.declaredFields.find { it.name == 'action' }
         if (field != null) {
             field.accessible = true
-            return field.get(action) instanceof AppendSemanticDbOptionsAction
+            return field.get(action) instanceof AppendSemanticDbCompilerOptionsAction
         }
         return false
     }

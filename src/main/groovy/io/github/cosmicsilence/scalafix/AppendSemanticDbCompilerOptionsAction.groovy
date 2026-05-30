@@ -17,23 +17,23 @@ import org.gradle.api.tasks.scala.ScalaCompile
  * to either the semanticdb plugin classpath or empty depending on the same Property), so cache
  * keys still vary correctly between invocations that wire SemanticDB and those that do not.
  */
-class AppendSemanticDbOptionsAction implements Action<Task> {
+class AppendSemanticDbCompilerOptionsAction implements Action<Task> {
 
     private final Property<Boolean> configureSemanticDb
     private final Property<String> scalaVersion
     private final Property<String> semanticDbVersion
-    private final String projectDirPath
+    private final File projectDir
     private final FileCollection compilerPluginFilesFallback
 
-    AppendSemanticDbOptionsAction(Property<Boolean> configureSemanticDb,
-                                  Property<String> scalaVersion,
-                                  Property<String> semanticDbVersion,
-                                  String projectDirPath,
-                                  FileCollection compilerPluginFilesFallback) {
+    AppendSemanticDbCompilerOptionsAction(Property<Boolean> configureSemanticDb,
+                                          Property<String> scalaVersion,
+                                          Property<String> semanticDbVersion,
+                                          File projectDir,
+                                          FileCollection compilerPluginFilesFallback) {
         this.configureSemanticDb = configureSemanticDb
         this.scalaVersion = scalaVersion
         this.semanticDbVersion = semanticDbVersion
-        this.projectDirPath = projectDirPath
+        this.projectDir = projectDir
         this.compilerPluginFilesFallback = compilerPluginFilesFallback
     }
 
@@ -43,21 +43,23 @@ class AppendSemanticDbOptionsAction implements Action<Task> {
 
         def compile = (ScalaCompile) task
         def existing = compile.scalaCompileOptions.additionalParameters ?: []
-        def v = scalaVersion.get()
         def additions
 
-        if (v.startsWith('3.')) {
-            // -sourceroot is set to the project's absolute path because Scala 3's SemanticDB does
-            // not yet support targetroot-relative sourceroots (see gradle/gradle#27161).
-            additions = ['-Xsemanticdb', '-sourceroot', projectDirPath]
+        if (ScalaVersions.isScala3(scalaVersion.get())) {
+            // It's currently not possible to set `-sourceroot` in a fully cache-friendly way:
+            // https://github.com/gradle/gradle/issues/27161
+            additions = ['-Xsemanticdb', '-sourceroot', projectDir.absolutePath]
         } else {
-            // ScalaCompile.destinationDirectory (DirectoryProperty) was added in Gradle 6.1; the
-            // older API exposes destinationDir as a plain File.
-            def outputDir = compile.hasProperty('destinationDirectory') ?
+            def outputDir = GradleCompat.SUPPORTS_DESTINATION_DIRECTORY ?
                     compile.destinationDirectory.get().asFile.toPath() :
                     compile.destinationDir.toPath()
-            def relSourceRoot = outputDir.relativize(new File(projectDirPath).toPath())
+            // Setting `sourceroot` to the project's absolute path is problematic for large code bases that require
+            // aggressive caching: any difference in compiler options between machines forces Gradle to recompile,
+            // rather than to download existing compiled artifacts. For that reason, `sourceroot` is set relative
+            // to `targetroot`. For more context, see: https://github.com/scalameta/scalameta/issues/2515
+            def relSourceRoot = outputDir.relativize(projectDir.toPath())
             additions = ['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot]
+
             if (compilerPluginFilesFallback != null) {
                 // Gradle < 6.4 has no ScalaCompile.scalaCompilerPlugins property; fall back to
                 // injecting the semanticdb-scalac jar via -Xplugin:<paths>.

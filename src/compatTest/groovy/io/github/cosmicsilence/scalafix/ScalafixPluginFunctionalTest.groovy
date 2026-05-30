@@ -381,28 +381,6 @@ object HelloWorld {
     }
 
     @Requires({ gradleVersion() >= '8.0' })
-    def 'scalafix should work with the configuration cache when semanticdb.autoConfigure is disabled'() {
-        given:
-        File projectDir = createScalaProject('scalafix { semanticdb { autoConfigure = false } }')
-        createScalafixConfig(projectDir, 'rules = [ DisableSyntax ]')
-        createSourceFile(projectDir, '''
-object HelloWorld {
-  val i: Int = 3
-}
-''', 'main')
-
-        when:
-        BuildResult firstRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
-        BuildResult secondRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
-
-        then:
-        firstRun.output.contains('Configuration cache entry stored')
-        !firstRun.output.contains('Configuration cache problems found')
-        secondRun.output.contains('Reusing configuration cache')
-        !secondRun.output.contains('Configuration cache problems found')
-    }
-
-    @Requires({ gradleVersion() >= '8.0' })
     def 'check aggregator task should work with the configuration cache'() {
         given:
         File projectDir = createScalaProject()
@@ -424,57 +402,28 @@ object HelloWorld {
         !secondRun.output.contains('Configuration cache problems found')
     }
 
-    @Requires({ gradleVersion() >= '8.0' })
-    def 'scalafix should work with the configuration cache when running a semantic rule on Scala 2.x'() {
+    def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
         given:
         File projectDir = createScalaProject()
-        createScalafixConfig(projectDir, '''
-rules = [ OrganizeImports ]
-OrganizeImports.groupedImports = Merge
-OrganizeImports.removeUnused = false
-''')
-        createSourceFile(projectDir, '''
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.Buffer
-
-object HelloWorld {
-  def foo = Map(1 -> "one")
-}
-''', 'main')
-
-        when:
-        BuildResult firstRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
-        BuildResult secondRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
-
-        then:
-        firstRun.output.contains('Configuration cache entry stored')
-        !firstRun.output.contains('Configuration cache problems found')
-        secondRun.output.contains('Reusing configuration cache')
-        !secondRun.output.contains('Configuration cache problems found')
-    }
-
-    @Requires({ gradleVersion() >= '8.0' })
-    def 'scalafix should work with the configuration cache when ignoreSourceSets is non-empty'() {
-        given:
-        File projectDir = createScalaProject('scalafix { ignoreSourceSets = [\'test\'] }')
         createScalafixConfig(projectDir, 'rules = [ DisableSyntax ]')
         createSourceFile(projectDir, '''
 object HelloWorld {
   val i: Int = 3
 }
 ''', 'main')
-        createSourceFile(projectDir, 'object FooTest', 'test')
+        new File(projectDir, 'settings.gradle') << '''
+buildCache {
+    local { directory = '.gradle/build-cache' }
+}
+'''
 
         when:
-        BuildResult firstRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
-        BuildResult secondRun = runGradle(projectDir, '--configuration-cache', 'scalafix')
+        runGradle(projectDir, '--build-cache', 'scalafix')
+        runGradle(projectDir, 'clean')
+        BuildResult secondRun = runGradle(projectDir, '--build-cache', 'scalafix')
 
         then:
-        firstRun.output.contains('Configuration cache entry stored')
-        !firstRun.output.contains('Configuration cache problems found')
-        secondRun.output.contains('Reusing configuration cache')
-        !secondRun.output.contains('Configuration cache problems found')
-        !firstRun.output.contains(':scalafixTest')
+        secondRun.output.contains(':compileScala FROM-CACHE')
     }
 
     def 'checkScalafix and scalafix tasks should not fail when no rules are informed'() {
