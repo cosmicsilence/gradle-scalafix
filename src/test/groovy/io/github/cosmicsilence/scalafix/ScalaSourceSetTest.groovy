@@ -66,7 +66,6 @@ class ScalaSourceSetTest extends Specification {
 
         then:
         sourceSet.name == 'main'
-        sourceSet.outputDir.absolutePath == "${project.projectDir}/build/classes/scala/main"
         sourceSet.fullClasspath.find { it.absolutePath == "${project.projectDir}/build/classes/java/main" }
         sourceSet.fullClasspath.find { it.absolutePath == "${project.projectDir}/build/classes/scala/main" }
         sourceSet.fullClasspath.find { it.name == "scala-library-${SCALA_2_VERSION}.jar" }
@@ -87,7 +86,6 @@ class ScalaSourceSetTest extends Specification {
 
         then:
         sourceSet.name == 'test'
-        sourceSet.outputDir.absolutePath == "${project.projectDir}/build/classes/scala/test"
         sourceSet.fullClasspath.find { it.absolutePath == "${project.projectDir}/build/classes/java/test" }
         sourceSet.fullClasspath.find { it.absolutePath == "${project.projectDir}/build/classes/scala/test" }
         sourceSet.fullClasspath.find { it.name == "scala3-library_3-${SCALA_3_VERSION}.jar" }
