@@ -17,6 +17,8 @@ abstract class GradleCompat {
     private static final boolean SUPPORTS_PROPERTY_CONVENTION = CURRENT >= GradleVersion.version("5.1")
     private static final boolean SUPPORTS_OBJECTS_FILE_COLLECTION = CURRENT >= GradleVersion.version("5.3")
     private static final boolean SUPPORTS_GRADLE_PROPERTY_PROVIDER = CURRENT >= GradleVersion.version("6.2")
+    // Provider.map() added in 5.0; Provider.orElse(T) added in 5.6
+    private static final boolean SUPPORTS_PROVIDER_MAP_AND_ORELSE = CURRENT >= GradleVersion.version("5.6")
 
     private GradleCompat() {}
 
@@ -39,6 +41,19 @@ abstract class GradleCompat {
             return project.providers.gradleProperty(name)
         }
         return project.provider { project.findProperty(name)?.toString() }
+    }
+
+    static Provider<List<String>> gradlePropertyAsList(Project project, String name) {
+        if (SUPPORTS_PROVIDER_MAP_AND_ORELSE) {
+            // Gradle 5.6+: map() and orElse(T) are safe to chain
+            return gradleProperty(project, name).map { String prop ->
+                prop.split(/\s*,\s*/).findAll { it }.toList()
+            }.orElse([])
+        }
+        // Gradle < 5.6: evaluate eagerly at configuration time (no CC support on these versions anyway)
+        def value = project.findProperty(name)?.toString() ?: ''
+        def rules = value.split(/\s*,\s*/).findAll { it }.toList()
+        return project.provider { rules }
     }
 
     static <T> Property<T> setConvention(Property<T> prop, T value) {
