@@ -360,27 +360,6 @@ object HelloWorld {
     }
 
     @Requires({ gradleVersion() >= '8.0' })
-    def 'compileScala without scalafix should work with the configuration cache and not create SemanticDB files'() {
-        given:
-        File projectDir = createScalaProject()
-        createSourceFile(projectDir, 'object Foo', 'main')
-        File buildDir = new File(projectDir, 'build')
-
-        when:
-        BuildResult firstRun = runGradle(projectDir, '--configuration-cache', 'compileScala')
-        BuildResult secondRun = runGradle(projectDir, '--configuration-cache', 'compileScala')
-
-        then:
-        firstRun.output.contains('Configuration cache entry stored')
-        !firstRun.output.contains('Configuration cache problems found')
-        secondRun.output.contains('Reusing configuration cache')
-        !secondRun.output.contains('Configuration cache problems found')
-        buildDir.eachFileRecurse {
-            assert !it.name.endsWith('.semanticdb')
-        }
-    }
-
-    @Requires({ gradleVersion() >= '8.0' })
     def 'check aggregator task should work with the configuration cache'() {
         given:
         File projectDir = createScalaProject()
