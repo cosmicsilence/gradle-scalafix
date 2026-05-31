@@ -129,8 +129,9 @@ class ScalafixPlugin implements Plugin<Project> {
 
                 if (!ScalaVersions.isScala3(scalaVersion)) {
                     def coords = ScalafixProps.getSemanticDbArtifactCoordinates(
-                            scalaVersion,
-                            Optional.ofNullable(semanticDbVersion.orNull))
+                        scalaVersion,
+                        Optional.ofNullable(semanticDbVersion.orNull)
+                    )
                     deps.add(project.dependencies.create(coords))
                 }
             } catch (GradleException ignored) {
@@ -148,7 +149,7 @@ class ScalafixPlugin implements Plugin<Project> {
         // compile classpath during the configuration phase (see https://github.com/cosmicsilence/gradle-scalafix/issues/49).
         def scalaVersionProp = project.objects.property(String)
         scalaVersionProp.set(project.provider({ resolveScalaVersion(sourceSet) }))
-        FileCollection compilerPluginFilesFallback = null
+        FileCollection scala2CompilerPluginFiles = null
 
         if (compileTask.hasProperty('scalaCompilerPlugins')) {
             // Gradle >= 6.4 — wire the gated file collection into ScalaCompile.scalaCompilerPlugins
@@ -162,16 +163,15 @@ class ScalafixPlugin implements Plugin<Project> {
             compileTask.inputs.files(semanticDbCompilerPluginFiles)
                     .withPropertyName(semanticDbCfgName)
                     .optional(true)
-            compilerPluginFilesFallback = semanticDbCompilerPluginFiles
+            scala2CompilerPluginFiles = semanticDbCompilerPluginFiles
         }
 
         compileTask.doFirst(
                 new AppendSemanticDbCompilerOptionsAction(
                         configureSemanticDb,
                         scalaVersionProp,
-                        semanticDbVersion,
                         project.projectDir,
-                        compilerPluginFilesFallback
+                        scala2CompilerPluginFiles
                 )
         )
     }

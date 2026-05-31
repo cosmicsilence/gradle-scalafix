@@ -18,7 +18,7 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
     def 'should no-op when configureSemanticDb is false'() {
         given:
         def compileTask = project.tasks.compileScala
-        def action = action(false, '2.13.15', null, null)
+        def action = action(false, '2.13.15', null)
 
         when:
         action.execute(compileTask)
@@ -34,7 +34,6 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
         def action = new AppendSemanticDbCompilerOptionsAction(
                 configureSemanticDb,
                 project.objects.property(String).value('2.13.15'),
-                project.objects.property(String),
                 project.projectDir,
                 null)
 
@@ -48,7 +47,7 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
     def 'should append SemanticDB compiler options for Scala 2.x'() {
         given:
         def compileTask = project.tasks.compileScala
-        def action = action(true, '2.13.15', null, null)
+        def action = action(true, '2.13.15', null)
 
         when:
         action.execute(compileTask)
@@ -62,7 +61,7 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
     def 'should append SemanticDB compiler options for Scala 3.x'() {
         given:
         def compileTask = project.tasks.compileScala
-        def action = action(true, '3.3.1', null, null)
+        def action = action(true, '3.3.1', null)
 
         when:
         action.execute(compileTask)
@@ -73,13 +72,13 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
         ]
     }
 
-    def 'should include -Xplugin flag when compilerPluginFilesFallback is provided'() {
+    def 'should include -Xplugin flag when scala2CompilerPluginFiles is provided'() {
         given:
         def compileTask = project.tasks.compileScala
         def pluginJar = new File(project.projectDir, 'semanticdb.jar')
         pluginJar.createNewFile()
         def fallback = project.files(pluginJar)
-        def action = action(true, '2.13.15', null, fallback)
+        def action = action(true, '2.13.15', fallback)
 
         when:
         action.execute(compileTask)
@@ -89,13 +88,13 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
         params.any { it.startsWith('-Xplugin:') && it.contains('semanticdb.jar') }
     }
 
-    def 'should not include -Xplugin flag for Scala 3.x even when compilerPluginFilesFallback is provided'() {
+    def 'should not include -Xplugin flag for Scala 3.x even when scala2CompilerPluginFiles is provided'() {
         given:
         def compileTask = project.tasks.compileScala
         def pluginJar = new File(project.projectDir, 'semanticdb.jar')
         pluginJar.createNewFile()
         def fallback = project.files(pluginJar)
-        def action = action(true, '3.3.1', null, fallback)
+        def action = action(true, '3.3.1', fallback)
 
         when:
         action.execute(compileTask)
@@ -107,19 +106,12 @@ class AppendSemanticDbCompilerOptionsActionTest extends Specification {
 
     private AppendSemanticDbCompilerOptionsAction action(boolean configureSemanticDb,
                                                          String scalaVersion,
-                                                         String semanticDbVersion,
-                                                         def compilerPluginFilesFallback) {
-        def configureProp = project.objects.property(Boolean).value(configureSemanticDb)
-        def scalaVersionProp = project.objects.property(String).value(scalaVersion)
-        def semanticDbVersionProp = project.objects.property(String)
-        if (semanticDbVersion) semanticDbVersionProp.set(semanticDbVersion)
-
+                                                         def scala2CompilerPluginFiles) {
         return new AppendSemanticDbCompilerOptionsAction(
-                configureProp,
-                scalaVersionProp,
-                semanticDbVersionProp,
+                project.objects.property(Boolean).value(configureSemanticDb),
+                project.objects.property(String).value(scalaVersion),
                 project.projectDir,
-                compilerPluginFilesFallback)
+                scala2CompilerPluginFiles)
     }
 
     private Project buildScalaProject() {

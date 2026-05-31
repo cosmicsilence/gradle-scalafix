@@ -21,20 +21,17 @@ class AppendSemanticDbCompilerOptionsAction implements Action<Task> {
 
     private final Property<Boolean> configureSemanticDb
     private final Property<String> scalaVersion
-    private final Property<String> semanticDbVersion
     private final File projectDir
-    private final FileCollection compilerPluginFilesFallback
+    private final FileCollection scala2CompilerPluginFiles
 
     AppendSemanticDbCompilerOptionsAction(Property<Boolean> configureSemanticDb,
                                           Property<String> scalaVersion,
-                                          Property<String> semanticDbVersion,
                                           File projectDir,
-                                          FileCollection compilerPluginFilesFallback) {
+                                          FileCollection scala2CompilerPluginFiles) {
         this.configureSemanticDb = configureSemanticDb
         this.scalaVersion = scalaVersion
-        this.semanticDbVersion = semanticDbVersion
         this.projectDir = projectDir
-        this.compilerPluginFilesFallback = compilerPluginFilesFallback
+        this.scala2CompilerPluginFiles = scala2CompilerPluginFiles
     }
 
     @Override
@@ -61,10 +58,10 @@ class AppendSemanticDbCompilerOptionsAction implements Action<Task> {
             def relSourceRoot = outputDir.relativize(projectDir.toPath())
             additions = ['-Yrangepos', '-P:semanticdb:sourceroot:targetroot:' + relSourceRoot]
 
-            if (compilerPluginFilesFallback != null) {
+            if (scala2CompilerPluginFiles != null) {
                 // Gradle < 6.4 has no ScalaCompile.scalaCompilerPlugins property; fall back to
                 // injecting the semanticdb-scalac jar via -Xplugin:<paths>.
-                additions += ['-Xplugin:' + compilerPluginFilesFallback.asPath]
+                additions += ['-Xplugin:' + scala2CompilerPluginFiles.asPath]
             }
         }
 
