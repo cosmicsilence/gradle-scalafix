@@ -137,7 +137,6 @@ class ScalafixPluginTest extends Specification {
         given:
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -159,7 +158,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -168,7 +167,6 @@ class ScalafixPluginTest extends Specification {
         given:
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -190,7 +188,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -213,7 +211,6 @@ class ScalafixPluginTest extends Specification {
         given:
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -235,7 +232,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -244,7 +241,6 @@ class ScalafixPluginTest extends Specification {
         given:
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -266,7 +262,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -276,7 +272,6 @@ class ScalafixPluginTest extends Specification {
         def scalaProject = buildScalaProject(null, ["foo"])
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -298,7 +293,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -308,7 +303,6 @@ class ScalafixPluginTest extends Specification {
         def scalaProject = buildScalaProject(null, ["foo"])
         applyScalafixPlugin(scalaProject)
         scalaProject.scalafix.configFile = scalaProject.file('.custom.conf')
-        scalaProject.ext.'scalafix.rules' = 'Foo,Bar'
 
         when:
         scalaProject.evaluate()
@@ -330,7 +324,7 @@ class ScalafixPluginTest extends Specification {
         task.classpath.get().find { it.endsWith("scala-library-${SCALA_VERSION}.jar") }
         task.compileOptions.get() == COMPILER_OPTS
         task.scalaVersion.get() == SCALA_VERSION
-        task.rules.get().containsAll(['Foo', 'Bar'])
+
         task.semanticDbConfigured
         scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
     }

@@ -1,11 +1,13 @@
 package io.github.cosmicsilence.scalafix
 
+import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.util.GradleVersion
 
 abstract class GradleCompat {
@@ -14,6 +16,7 @@ abstract class GradleCompat {
     private static final boolean SUPPORTS_OBJECTS_FILE_PROPERTY = CURRENT >= GradleVersion.version("5.0")
     private static final boolean SUPPORTS_PROPERTY_CONVENTION = CURRENT >= GradleVersion.version("5.1")
     private static final boolean SUPPORTS_OBJECTS_FILE_COLLECTION = CURRENT >= GradleVersion.version("5.3")
+    private static final boolean SUPPORTS_GRADLE_PROPERTY_PROVIDER = CURRENT >= GradleVersion.version("6.2")
 
     private GradleCompat() {}
 
@@ -29,6 +32,13 @@ abstract class GradleCompat {
     static Property<Boolean> booleanProperty(ObjectFactory objects, Boolean defaultBoolean = null) {
         def prop = objects.property(Boolean)
         return setConvention(prop, defaultBoolean)
+    }
+
+    static Provider<String> gradleProperty(Project project, String name) {
+        if (SUPPORTS_GRADLE_PROPERTY_PROVIDER) {
+            return project.providers.gradleProperty(name)
+        }
+        return project.provider { project.findProperty(name)?.toString() }
     }
 
     static <T> Property<T> setConvention(Property<T> prop, T value) {
