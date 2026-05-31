@@ -39,8 +39,8 @@ class ScalafixPluginTest extends Specification {
         scalaProject.configurations.scalafix
         scalaProject.configurations.scalafixCliMain
         scalaProject.configurations.scalafixCliTest
-        scalaProject.configurations.scalafixSemanticdbMain
-        scalaProject.configurations.scalafixSemanticdbTest
+        scalaProject.configurations.semanticdbMain
+        scalaProject.configurations.semanticdbTest
     }
 
     def 'The plugin throws an exception if the scala plugin has not been applied to the project'() {
@@ -84,8 +84,8 @@ class ScalafixPluginTest extends Specification {
         scalaProject.configurations.scalafix.state == Configuration.State.UNRESOLVED
         scalaProject.configurations.scalafixCliMain.state == Configuration.State.UNRESOLVED
         scalaProject.configurations.scalafixCliTest.state == Configuration.State.UNRESOLVED
-        scalaProject.configurations.scalafixSemanticdbMain.state == Configuration.State.UNRESOLVED
-        scalaProject.configurations.scalafixSemanticdbTest.state == Configuration.State.UNRESOLVED
+        scalaProject.configurations.semanticdbMain.state == Configuration.State.UNRESOLVED
+        scalaProject.configurations.semanticdbTest.state == Configuration.State.UNRESOLVED
         scalaProject.configurations.compileClasspath.state == Configuration.State.UNRESOLVED
         scalaProject.configurations.testCompileClasspath.state == Configuration.State.UNRESOLVED
     }
@@ -113,8 +113,8 @@ class ScalafixPluginTest extends Specification {
         scalaProject.evaluate()
 
         then:
-        !scalaProject.configurations.findByName('scalafixSemanticdbMain')
-        !scalaProject.configurations.findByName('scalafixSemanticdbTest')
+        !scalaProject.configurations.findByName('semanticdbMain')
+        !scalaProject.configurations.findByName('semanticdbTest')
         !scalaProject.tasks.compileScala.actions.any { semanticDbActionPredicate(it) }
         !scalaProject.tasks.compileTestScala.actions.any { semanticDbActionPredicate(it) }
     }
@@ -503,10 +503,10 @@ class ScalafixPluginTest extends Specification {
         !scalaProject.tasks.findByName('checkScalafixMain')
         !scalaProject.tasks.findByName('scalafixBar')
         !scalaProject.tasks.findByName('checkScalafixBar')
-        !scalaProject.configurations.findByName('scalafixSemanticdbBar')
+        !scalaProject.configurations.findByName('semanticdbBar')
         scalaProject.tasks.findByName('scalafixTest')
         scalaProject.tasks.findByName('checkScalafixTest')
-        scalaProject.configurations.findByName('scalafixSemanticdbTest')
+        scalaProject.configurations.findByName('semanticdbTest')
     }
 
     private applyScalaPlugin(Project project) {
