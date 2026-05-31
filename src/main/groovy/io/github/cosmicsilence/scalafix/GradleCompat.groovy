@@ -46,7 +46,7 @@ abstract class GradleCompat {
     static Provider<List<String>> gradlePropertyAsList(Project project, String name) {
         if (SUPPORTS_PROVIDER_MAP_AND_ORELSE) {
             return gradleProperty(project, name)
-                    .map { String prop -> splitCommaSeparated(prop) }
+                    .map { String prop -> GradleCompat.splitCommaSeparated(prop) }
                     .orElse([])
         }
 
@@ -54,13 +54,11 @@ abstract class GradleCompat {
         return project.provider { items }
     }
 
-    private static List<String> splitCommaSeparated(String value) {
+    static List<String> splitCommaSeparated(String value) {
         value.split(/\s*,\s*/).findAll { it }.toList()
     }
 
     static <T> Property<T> setConvention(Property<T> prop, T value) {
-        // Property.convention() was added in Gradle 5.1; on older versions use .set() as a best-effort fallback
-        // (set() puts the property in the "explicit value" state, which user-supplied conventions cannot override).
         if (value == null) return prop
 
         if (SUPPORTS_PROPERTY_CONVENTION) {

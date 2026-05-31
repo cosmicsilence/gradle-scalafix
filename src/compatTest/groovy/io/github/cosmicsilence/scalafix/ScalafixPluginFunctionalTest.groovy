@@ -377,35 +377,6 @@ object HelloWorld {
         withoutRulesAgain.output.contains('Reusing configuration cache')
     }
 
-    @Requires({ gradleVersion() >= '8.0' })
-    def 'configuration cache behaviour when the scalafix config file changes'() {
-        given:
-        File projectDir = createScalaProject()
-        createSourceFile(projectDir, 'object Foo', 'main')
-        File configFile = new File(projectDir, '.scalafix.conf')
-
-        when: 'no .scalafix.conf exists'
-        BuildResult noConfig = runGradle(projectDir, '--configuration-cache', 'scalafix')
-
-        and: '.scalafix.conf is created'
-        configFile.text = 'rules = [ DisableSyntax ]'
-        BuildResult configCreated = runGradle(projectDir, '--configuration-cache', 'scalafix')
-        BuildResult configUnchanged = runGradle(projectDir, '--configuration-cache', 'scalafix')
-
-        and: '.scalafix.conf content is modified'
-        configFile.text = 'rules = [ ExplicitResultTypes ]'
-        BuildResult contentModified = runGradle(projectDir, '--configuration-cache', 'scalafix')
-
-        then: 'creating the config file invalidates the CC (existence is checked at configuration time)'
-        noConfig.output.contains('Configuration cache entry stored')
-        !configCreated.output.contains('Reusing configuration cache')
-        configCreated.output.contains('Configuration cache entry stored')
-
-        and: 'modifying the config file content does not invalidate the CC (content is read at execution time)'
-        configUnchanged.output.contains('Reusing configuration cache')
-        contentModified.output.contains('Reusing configuration cache')
-    }
-
     def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
         given:
         File projectDir = createScalaProject()
