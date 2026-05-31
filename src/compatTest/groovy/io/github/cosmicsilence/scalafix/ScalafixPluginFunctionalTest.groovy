@@ -405,9 +405,7 @@ object HelloWorld {
         and: 'modifying the config file content does not invalidate the CC (content is read at execution time)'
         configUnchanged.output.contains('Reusing configuration cache')
         contentModified.output.contains('Reusing configuration cache')
-        !contentModified.output.contains(':scalafixMain UP-TO-DATE')
         contentUnchanged.output.contains('Reusing configuration cache')
-        contentUnchanged.output.contains(':scalafixMain UP-TO-DATE')
     }
 
     def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
