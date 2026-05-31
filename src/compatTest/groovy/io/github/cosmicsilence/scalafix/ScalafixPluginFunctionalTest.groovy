@@ -402,7 +402,7 @@ object HelloWorld {
         !secondRun.output.contains('Configuration cache problems found')
     }
 
-    def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
+    def 'compileScala should be restored from the build cache when switching between scalafix and non-scalafix invocations'() {
         given:
         File projectDir = createScalaProject()
         createScalafixConfig(projectDir, 'rules = [ DisableSyntax ]')
@@ -417,13 +417,13 @@ buildCache {
 }
 """
 
-        when:
-        runGradle(projectDir, '--build-cache', 'scalafix')
+        when: 'warm the cache by running compileScala without scalafix'
+        runGradle(projectDir, '--build-cache', 'compileScala')
         runGradle(projectDir, 'clean')
-        BuildResult secondRun = runGradle(projectDir, '--build-cache', 'scalafix')
 
-        then:
-        secondRun.output.contains(':compileScala FROM-CACHE')
+        then: 'running scalafix afterwards restores compileScala from the cache'
+        BuildResult result = runGradle(projectDir, '--build-cache', 'scalafix')
+        result.output.contains(':compileScala FROM-CACHE')
     }
 
     def 'checkScalafix and scalafix tasks should not fail when no rules are informed'() {
