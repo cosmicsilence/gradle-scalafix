@@ -45,15 +45,17 @@ abstract class GradleCompat {
 
     static Provider<List<String>> gradlePropertyAsList(Project project, String name) {
         if (SUPPORTS_PROVIDER_MAP_AND_ORELSE) {
-            // Gradle 5.6+: map() and orElse(T) are safe to chain
-            return gradleProperty(project, name).map { String prop ->
-                prop.split(/\s*,\s*/).findAll { it }.toList()
-            }.orElse([])
+            return gradleProperty(project, name)
+                    .map { String prop -> splitCommaSeparated(prop) }
+                    .orElse([])
         }
-        // Gradle < 5.6: evaluate eagerly at configuration time (no CC support on these versions anyway)
+
         def value = project.findProperty(name)?.toString() ?: ''
-        def rules = value.split(/\s*,\s*/).findAll { it }.toList()
-        return project.provider { rules }
+        return project.provider { splitCommaSeparated(value) }
+    }
+
+    private static List<String> splitCommaSeparated(String value) {
+        value.split(/\s*,\s*/).findAll { it }.toList()
     }
 
     static <T> Property<T> setConvention(Property<T> prop, T value) {
