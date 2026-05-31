@@ -10,6 +10,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import scalafix.interfaces.ScalafixMainMode
 import spock.lang.Specification
 
+
 class ScalafixPluginTest extends Specification {
 
     private static final String SCALA_VERSION = '2.13.12'

@@ -195,10 +195,8 @@ class ScalafixPlugin implements Plugin<Project> {
                 exclude(extension.excludes.get())
             }
             configFile = extension.configFile
-            rules.set(project.provider({
-                String prop = project.findProperty(RULES_PROPERTY) ?: ''
-                prop.split('\\s*,\\s*').findAll { !it.empty }.toList()
-            }))
+            rules.set(((project.findProperty(RULES_PROPERTY) ?: '') as String)
+                    .split('\\s*,\\s*').findAll { !it.empty }.toList())
             mode = taskMode
             scalaVersion.set(project.provider({ resolveScalaVersion(sourceSet) }))
             classpath.set(project.provider({ sourceSet.getFullClasspath().collect { it.path } }))
