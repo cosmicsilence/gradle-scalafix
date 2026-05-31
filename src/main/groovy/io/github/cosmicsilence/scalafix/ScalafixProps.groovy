@@ -40,9 +40,9 @@ abstract class ScalafixProps {
     }
 
     private static String getSupportedScalaVersion(String projectScalaVersion) {
-        if (ScalaVersions.isScala212(projectScalaVersion)) return supportedScala212Version
-        if (ScalaVersions.isScala213(projectScalaVersion)) return supportedScala213Version
         if (ScalaVersions.isScala3(projectScalaVersion)) return supportedScala3Version
+        if (ScalaVersions.isScala213(projectScalaVersion)) return supportedScala213Version
+        if (ScalaVersions.isScala212(projectScalaVersion)) return supportedScala212Version
         throw new GradleException("Scala version '${projectScalaVersion}' is not supported")
     }
 

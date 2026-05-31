@@ -58,7 +58,10 @@ class ScalafixPlugin implements Plugin<Project> {
         project.tasks.named('check').configure { it.dependsOn checkTask }
 
         project.sourceSets.configureEach { SourceSet ss ->
-            if (!ScalaSourceSet.isScalaSourceSet(project, ss) || extension.ignoreSourceSets.get().contains(ss.name)) return
+            if (!ScalaSourceSet.isScalaSourceSet(project, ss) ||
+                    extension.ignoreSourceSets.get().contains(ss.name)) {
+                return
+            }
 
             def scalaSourceSet = new ScalaSourceSet(project, ss)
             def configureSemanticDb = project.objects.property(Boolean)
@@ -111,7 +114,7 @@ class ScalafixPlugin implements Plugin<Project> {
                                 ScalaSourceSet sourceSet,
                                 ScalafixExtension extension,
                                 Property<Boolean> configureSemanticDb) {
-        def semanticDbCfgName = "scalafixSemanticdb${sourceSet.getName().capitalize()}"
+        def semanticDbCfgName = "semanticdb${sourceSet.getName().capitalize()}"
         def semanticDbConfiguration = project.configurations.create(semanticDbCfgName, { Configuration cfg ->
             cfg.canBeConsumed = false
             cfg.canBeResolved = true
@@ -155,7 +158,9 @@ class ScalafixPlugin implements Plugin<Project> {
             // Older Gradle — there is no scalaCompilerPlugins property, so the doFirst action will
             // emit -Xplugin:<paths> from the resolved file collection. Track the same FileCollection
             // as an explicit input so the cache key still reflects its contents.
-            compileTask.inputs.files(semanticDbCompilerPluginFiles).withPropertyName(semanticDbCfgName).optional(true)
+            compileTask.inputs.files(semanticDbCompilerPluginFiles)
+                    .withPropertyName(semanticDbCfgName)
+                    .optional(true)
             compilerPluginFilesFallback = semanticDbCompilerPluginFiles
         }
 
