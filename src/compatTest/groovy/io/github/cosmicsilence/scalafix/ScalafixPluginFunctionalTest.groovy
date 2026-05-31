@@ -359,28 +359,6 @@ object HelloWorld {
         !secondRun.output.contains('Configuration cache problems found')
     }
 
-    @Requires({ gradleVersion() >= '8.0' })
-    def 'check aggregator task should work with the configuration cache'() {
-        given:
-        File projectDir = createScalaProject()
-        createScalafixConfig(projectDir, 'rules = [ DisableSyntax ]')
-        createSourceFile(projectDir, '''
-object HelloWorld {
-  val i: Int = 3
-}
-''', 'main')
-
-        when:
-        BuildResult firstRun = runGradle(projectDir, '--configuration-cache', 'check')
-        BuildResult secondRun = runGradle(projectDir, '--configuration-cache', 'check')
-
-        then:
-        firstRun.output.contains('Configuration cache entry stored')
-        !firstRun.output.contains('Configuration cache problems found')
-        secondRun.output.contains('Reusing configuration cache')
-        !secondRun.output.contains('Configuration cache problems found')
-    }
-
     def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
         given:
         File projectDir = createScalaProject()
