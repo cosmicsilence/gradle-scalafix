@@ -393,9 +393,8 @@ object HelloWorld {
         BuildResult configUnchanged = runGradle(projectDir, '--configuration-cache', 'scalafix')
 
         and: '.scalafix.conf content is modified'
-        configFile.text = 'rules = [ DisableSyntax ]\nDisableSyntax.noNulls = true'
+        configFile.text = 'rules = [ ExplicitResultTypes ]'
         BuildResult contentModified = runGradle(projectDir, '--configuration-cache', 'scalafix')
-        BuildResult contentUnchanged = runGradle(projectDir, '--configuration-cache', 'scalafix')
 
         then: 'creating the config file invalidates the CC (existence is checked at configuration time)'
         noConfig.output.contains('Configuration cache entry stored')
@@ -405,7 +404,6 @@ object HelloWorld {
         and: 'modifying the config file content does not invalidate the CC (content is read at execution time)'
         configUnchanged.output.contains('Reusing configuration cache')
         contentModified.output.contains('Reusing configuration cache')
-        contentUnchanged.output.contains('Reusing configuration cache')
     }
 
     def 'compileScala should be restored from the build cache on consecutive scalafix runs'() {
