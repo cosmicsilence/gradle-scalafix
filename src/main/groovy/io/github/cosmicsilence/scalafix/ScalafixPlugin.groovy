@@ -1,5 +1,6 @@
 package io.github.cosmicsilence.scalafix
 
+import java.util.Optional
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -67,7 +68,7 @@ class ScalafixPlugin implements Plugin<Project> {
             def configureSemanticDb = project.objects.property(Boolean)
 
             if (extension.semanticdb.autoConfigure.get()) {
-                wireSemanticDb(project, scalaSourceSet, extension, configureSemanticDb)
+                wireSemanticDb(project, scalaSourceSet, configureSemanticDb, extension.semanticdb.version)
             }
 
             def scalafixCliConfiguration = createScalafixCliConfiguration(project, scalaSourceSet)
@@ -112,8 +113,8 @@ class ScalafixPlugin implements Plugin<Project> {
 
     private void wireSemanticDb(Project project,
                                 ScalaSourceSet sourceSet,
-                                ScalafixExtension extension,
-                                Property<Boolean> configureSemanticDb) {
+                                Property<Boolean> configureSemanticDb,
+                                Property<String> semanticDbVersion) {
         def semanticDbCfgName = "semanticdb${sourceSet.getName().capitalize()}"
         def semanticDbConfiguration = project.configurations.create(semanticDbCfgName, { Configuration cfg ->
             cfg.canBeConsumed = false
@@ -129,7 +130,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 if (!ScalaVersions.isScala3(scalaVersion)) {
                     def coords = ScalafixProps.getSemanticDbArtifactCoordinates(
                             scalaVersion,
-                            java.util.Optional.ofNullable(extension.semanticdb.version.orNull))
+                            Optional.ofNullable(semanticDbVersion.orNull))
                     deps.add(project.dependencies.create(coords))
                 }
             } catch (GradleException ignored) {
@@ -168,7 +169,7 @@ class ScalafixPlugin implements Plugin<Project> {
                 new AppendSemanticDbCompilerOptionsAction(
                         configureSemanticDb,
                         scalaVersionProp,
-                        extension.semanticdb.version,
+                        semanticDbVersion,
                         project.projectDir,
                         compilerPluginFilesFallback
                 )
