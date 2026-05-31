@@ -50,8 +50,8 @@ abstract class GradleCompat {
                     .orElse([])
         }
 
-        def value = project.findProperty(name)?.toString() ?: ''
-        return project.provider { splitCommaSeparated(value) }
+        def items = splitCommaSeparated(project.findProperty(name)?.toString() ?: '')
+        return project.provider { items }
     }
 
     private static List<String> splitCommaSeparated(String value) {
