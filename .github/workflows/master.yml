@@ -41,8 +41,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          # Version required to run the `./gradlew` command. The tests themselves use the version provided via `java_version`
-          java-version: '11'
+          java-version: '11' # Version required to run the `./gradlew` command
       - name: Run Gradle compat tests for Gradle ${{ matrix.gradle_version }} on Java ${{ matrix.java_version }}
         run: ./gradlew compatTestJava${{ matrix.java_version }}Gradle${{ matrix.gradle_version }} --stacktrace
   compat_tests_java17:
@@ -51,7 +50,7 @@ jobs:
       matrix:
         gradle_version:
           - "9.0.0"
-          - "9.5.1"
+          - "9.5.0"
     steps:
       - name: Download repo
         uses: actions/checkout@v2
@@ -59,7 +58,6 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          # Version required to run the `./gradlew` command. The tests themselves use the version provided via `java_version`
-          java-version: '11'
+          java-version: '11' # Version required to run the `./gradlew` command
       - name: Run Gradle compat tests for Gradle ${{ matrix.gradle_version }} on Java 17
         run: ./gradlew compatTestJava17Gradle${{ matrix.gradle_version }} --stacktrace
