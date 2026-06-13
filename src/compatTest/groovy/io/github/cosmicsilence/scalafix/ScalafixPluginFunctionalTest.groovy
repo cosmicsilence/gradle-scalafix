@@ -442,7 +442,10 @@ object HelloWorld {
 
         then:
         src.getText() == '''
-import scala.collection.mutable.{ArrayBuffer, Buffer}
+import scala.collection.mutable.{
+  ArrayBuffer,
+  Buffer
+}
 
 object HelloWorld {
   def foo: Map[Int,String] = Map(1 -> "one")
@@ -870,7 +873,10 @@ object OrganizeImportsTest
         redundantSyntaxSource.getText() == 'object RedundantSyntaxTest'
         missingFinalSource.getText() == 'final case class MissingFinalTest(i: Int)'
         organizeImportsSource.getText() == '''
-import scala.collection.mutable.{ArrayBuffer, Buffer}
+import scala.collection.mutable.{
+  ArrayBuffer,
+  Buffer
+}
 object OrganizeImportsTest
 '''
 
@@ -938,7 +944,10 @@ final case class MissingFinalTest(i: Int):
     println("i < 0")
 '''
         organizeImportsSource.getText() == '''
-import scala.collection.mutable.{ArrayBuffer, Buffer}
+import scala.collection.mutable.{
+  ArrayBuffer,
+  Buffer
+}
 
 trait OrganizeImportsTest(val x: String):
   println(x)
