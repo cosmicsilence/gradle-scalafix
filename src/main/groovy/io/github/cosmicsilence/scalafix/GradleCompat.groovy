@@ -21,8 +21,8 @@ abstract class GradleCompat {
     private static final boolean SUPPORTS_GRADLE_PROPERTY_PROVIDER = CURRENT >= GradleVersion.version("6.2")
     // Provider.map() added in 5.0; Provider.orElse(T) added in 5.6
     private static final boolean SUPPORTS_PROVIDER_MAP_AND_ORELSE = CURRENT >= GradleVersion.version("5.6")
-    // Substitution.using() added in 5.6, superseding Substitution.with(), which was removed in 8.0
-    private static final boolean SUPPORTS_SUBSTITUTION_USING = CURRENT >= GradleVersion.version("5.6")
+    // Substitution.using() added in 6.6, superseding Substitution.with(), which was removed in 8.0
+    private static final boolean SUPPORTS_SUBSTITUTION_USING = CURRENT >= GradleVersion.version("6.6")
 
     private GradleCompat() {}
 
