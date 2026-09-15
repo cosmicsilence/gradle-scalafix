@@ -98,6 +98,10 @@ class ScalafixPlugin implements Plugin<Project> {
             cfg.transitive = true
             cfg.description = "Scalafix CLI dependencies for source set '${sourceSet.getName()}'"
         })
+        // scala3-presentation-compiler 3.9.0 depends on org.lz4:lz4-java:1.8.1, a relocation POM whose target
+        // declares the org.lz4:lz4-java capability, leaving two providers of it in the graph and failing resolution.
+        // TODO: remove once Scalafix stops resolving Scala 3.9.0 (fixed upstream by scala/scala3#26707).
+        GradleCompat.substituteModule(scalafixCliConfiguration, "org.lz4:lz4-java:1.8.1", "at.yawk.lz4:lz4-java:1.8.1")
         scalafixCliConfiguration.withDependencies { deps ->
             try {
                 def scalaVersion = resolveScalaVersion(sourceSet)
