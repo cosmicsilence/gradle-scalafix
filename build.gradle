@@ -55,7 +55,7 @@ stutter {
             }
             gradleVersions {
                 compatibleRange '4.10', '5.0'
-                compatibleRange '5.1', '8.14.3'
+                compatibleRange '5.1', '8.15'
             }
         }
 
@@ -65,7 +65,7 @@ stutter {
             }
             gradleVersions {
                 compatibleRange '4.10', '5.0'
-                compatibleRange '5.1', '8.14.3'
+                compatibleRange '5.1', '8.15'
             }
         }
 
@@ -74,7 +74,10 @@ stutter {
                 languageVersion = JavaLanguageVersion.of(17)
             }
             gradleVersions {
-                compatibleRange '9.0.0', '9.5.0'
+                // Scala 3.8+ requires JDK 17 (https://contributors.scala-lang.org/t/scala-3-8-0-release-thread/7291).
+                // Gradle 7.3 is the first version that both compiles Scala 3 and runs on JDK 17
+                // https://docs.gradle.org/7.3/release-notes.html
+                compatibleRange '7.3', '9.8'
             }
         }
     }

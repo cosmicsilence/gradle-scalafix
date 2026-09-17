@@ -9,13 +9,11 @@ on Gradle projects. It supports both syntactic and semantic rules and lets you l
 &nbsp;
 ## Compatibility
 
-| Scala   | Gradle                                                                                   |
-|---------|------------------------------------------------------------------------------------------|
-| 2.12.x  | 4.10+ (except for `5.0`)                                                                 |
-| 2.13.x  | [6.0](https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036)+ |
-| 3.x     | [7.3](https://docs.gradle.org/7.3/release-notes.html)+                                   |
-
-JDK `8+` is required.
+| Scala   | Gradle                                                                                  | JDK                                                                          |
+|---------|-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| 2.12.x  | 4.10+ (except for 5.0)                                                                 | 8+                                                                           |
+| 2.13.x  | [6.0+](https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036) | 8+                                                                           |
+| 3.x     | [7.3+](https://docs.gradle.org/7.3/release-notes.html)                                  | [17+](https://contributors.scala-lang.org/t/scala-3-8-0-release-thread/7291) |
 
 &nbsp;
 ## Usage
