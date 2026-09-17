@@ -1,6 +1,8 @@
 package io.github.cosmicsilence.scalafix
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.DependencySubstitutions
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
@@ -19,6 +21,8 @@ abstract class GradleCompat {
     private static final boolean SUPPORTS_GRADLE_PROPERTY_PROVIDER = CURRENT >= GradleVersion.version("6.2")
     // Provider.map() added in 5.0; Provider.orElse(T) added in 5.6
     private static final boolean SUPPORTS_PROVIDER_MAP_AND_ORELSE = CURRENT >= GradleVersion.version("5.6")
+    // Substitution.using() added in 6.6, superseding Substitution.with(), which was removed in 8.0
+    private static final boolean SUPPORTS_SUBSTITUTION_USING = CURRENT >= GradleVersion.version("6.6")
 
     private GradleCompat() {}
 
@@ -56,6 +60,19 @@ abstract class GradleCompat {
 
     static List<String> splitCommaSeparated(String value) {
         value.split(/\s*,\s*/).findAll { it }.toList()
+    }
+
+    static void substituteModule(Configuration cfg, String substituted, String replacement) {
+        cfg.resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
+            def substitution = subs.substitute(subs.module(substituted))
+            def replacementSelector = subs.module(replacement)
+
+            if (SUPPORTS_SUBSTITUTION_USING) {
+                substitution.using(replacementSelector)
+            } else {
+                substitution.with(replacementSelector)
+            }
+        }
     }
 
     static <T> Property<T> setConvention(Property<T> prop, T value) {

@@ -1084,8 +1084,13 @@ class BarDummyRule extends SyntacticRule("BarDummyRule") {
         return scalaVersion.startsWith("2.12")
             // https://github.com/cosmicsilence/gradle-scalafix/pull/85#issuecomment-2588144036
             || scalaVersion.startsWith("2.13") && gradleVersion() >= '6.0'
-            // https://docs.gradle.org/7.3/release-notes.html
-            || scalaVersion.startsWith("3") && gradleVersion() >= '7.3'
+            // Scala 3 needs Zinc 1.6.1, shipped from Gradle 7.5 on (https://docs.gradle.org/7.5/release-notes.html),
+            // and JDK 17 (https://contributors.scala-lang.org/t/scala-3-8-0-release-thread/7291)
+            || scalaVersion.startsWith("3") && gradleVersion() >= '7.5' && javaVersion() >= 17
+    }
+
+    private static int javaVersion() {
+        return Integer.parseInt(System.getProperty('java.specification.version').split(/\./).last())
     }
 
     private static File createScalaProject(String additionalBuildInstructions = '', String scalaVersion = SCALA_2_VERSION) {
