@@ -16,7 +16,9 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '11'
+          java-version: |
+            8
+            11
       - name: Configure Gradle
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
@@ -27,6 +29,7 @@ jobs:
           echo gradle.publish.secret=$GRADLE_PUBLISH_SECRET >> $HOME/.gradle/gradle.properties
       - name: Publish to GitHub Packages and Gradle Plugins
         env:
+          JAVA_HOME: ${{ env.JAVA_HOME_11_X64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew publish publishPlugins
       - name: Create GitHub release
